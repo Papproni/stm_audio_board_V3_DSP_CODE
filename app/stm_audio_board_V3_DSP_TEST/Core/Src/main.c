@@ -77,26 +77,43 @@ volatile uint32_t output_i2s_buffer_au32[16];
 
 void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai){
 	DAC_HALF_COMPLETE_FLAG = 0;
+	SCB_CleanDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32));
+	SCB_InvalidateDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32));
 }
 void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai){
 	DAC_HALF_COMPLETE_FLAG = 1;
+	SCB_CleanDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32));
+		SCB_InvalidateDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32));
 }
 
 void HAL_SAI_RxCpltCallback(SAI_HandleTypeDef *hsai){
 	ADC_HALF_COMPLETE_FLAG = 0;
+
+	SCB_CleanDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32));
+	SCB_InvalidateDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32));
 	output_i2s_buffer_au32[14] = input_i2s_buffer_au32[10];
 	output_i2s_buffer_au32[15] = input_i2s_buffer_au32[11];
+
+	SCB_CleanDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32));
+	SCB_InvalidateDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32));
 }
 void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai){
 	ADC_HALF_COMPLETE_FLAG = 1;
+
+
+	SCB_CleanDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32));
+	SCB_InvalidateDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32));
 	output_i2s_buffer_au32[6] = input_i2s_buffer_au32[2];
 	output_i2s_buffer_au32[7] = input_i2s_buffer_au32[3];
+
+	SCB_CleanDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32));
+	SCB_InvalidateDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32));
 }
 
 
 
 #define SDRAM_ADDRESS_START 0xC0000000
-#define SDRAM_SIZE 			0x10000 // 16Mb
+#define SDRAM_SIZE 			0x100000 // 16Mb
 /* USER CODE END 0 */
 
 /**
@@ -108,6 +125,13 @@ int main(void)
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
+/* Enable the CPU Cache */
+
+  /* Enable I-Cache---------------------------------------------------------*/
+  SCB_EnableICache();
+
+  /* Enable D-Cache---------------------------------------------------------*/
+  SCB_EnableDCache();
 
   /* MCU Configuration--------------------------------------------------------*/
 
@@ -149,28 +173,41 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+	  __attribute__((at(0xC0000000)));
   while (1)
   {
 	  uint32_t fmctestStart;
 	  uint32_t fmctestStop;
 
 	  fmctestStart = HAL_GetTick();
+	  uint32_t errorCounter =0;
+//	  for(uint32_t i = 0; i<z10000;i++){
+//
+//		  for(uint8_t j=0; j<250;j++){
+//			  fmctestStart = HAL_GetTick();
+//			  for(uint32_t counter = 0; counter<SDRAM_SIZE; counter++){
+//				  *(__IO uint8_t*)(SDRAM_ADDRESS_START + counter) = (uint8_t) j;
+//			  }
+//
+//
+//
+//			  for(uint32_t counter = 0; counter<SDRAM_SIZE; counter++){
+//				  if(*(__IO uint8_t*)(SDRAM_ADDRESS_START + counter) != j){
+//					  errorCounter++;
+//				  }
+//
+//			  }
+//			  fmctestStop = (HAL_GetTick()-fmctestStart);
+//		  }
+//
+//	  }
 
-	  for(uint32_t counter = 0; counter<SDRAM_SIZE; counter++){
-		  *(__IO uint8_t*)(SDRAM_ADDRESS_START + counter) = (uint8_t) 0x0;
+	  if(errorCounter){
+		  while(1){
+
+		  }
 	  }
 
-	  fmctestStop = HAL_GetTick();
-
-	  HAL_Delay(50);
-
-	  fmctestStart = HAL_GetTick();
-
-	  for(uint32_t counter = 0; counter<SDRAM_SIZE; counter++){
-		  *(__IO uint8_t*)(SDRAM_ADDRESS_START + counter) = (uint8_t) 0x11;
-	  }
-
-	  fmctestStop = HAL_GetTick()-fmctestStart;
 	  uint8_t var = *(__IO uint8_t*)(SDRAM_ADDRESS_START);
 	  HAL_Delay(50);
 
@@ -409,8 +446,8 @@ static void MX_FMC_Init(void)
   hsdram1.Init.CASLatency = FMC_SDRAM_CAS_LATENCY_3;
   hsdram1.Init.WriteProtection = FMC_SDRAM_WRITE_PROTECTION_DISABLE;
   hsdram1.Init.SDClockPeriod = FMC_SDRAM_CLOCK_PERIOD_2;
-  hsdram1.Init.ReadBurst = FMC_SDRAM_RBURST_DISABLE;
-  hsdram1.Init.ReadPipeDelay = FMC_SDRAM_RPIPE_DELAY_2;
+  hsdram1.Init.ReadBurst = FMC_SDRAM_RBURST_ENABLE;
+  hsdram1.Init.ReadPipeDelay = FMC_SDRAM_RPIPE_DELAY_0;
   /* SdramTiming */
   SdramTiming.LoadToActiveDelay = 2;
   SdramTiming.ExitSelfRefreshDelay = 7;
@@ -451,7 +488,7 @@ static void MX_FMC_Init(void)
      * COUNT = [(SDRAM self refresh time / number of row) x  SDRAM CLK] – 20
              = [(32ms/2048) * 270/2MHz] - 20 = 2089*/
 
-    HAL_SDRAM_ProgramRefreshRate(&hsdram1, 2090);
+    HAL_SDRAM_ProgramRefreshRate(&hsdram1, 2156);
   /* USER CODE END FMC_Init 2 */
 }
 
