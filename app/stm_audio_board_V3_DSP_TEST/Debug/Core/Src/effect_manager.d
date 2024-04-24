@@ -1,5 +1,5 @@
-Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pwr.o: \
- ../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pwr.c \
+Core/Src/effect_manager.o: ../Core/Src/effect_manager.c \
+ ../Core/Inc/effect_manager.h ../Core/Inc/main.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal.h \
  ../Core/Inc/stm32h7xx_hal_conf.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_rcc.h \
@@ -34,6 +34,8 @@ Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pwr.o: \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_ll_fmc.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_spi.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_spi_ex.h
+../Core/Inc/effect_manager.h:
+../Core/Inc/main.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal.h:
 ../Core/Inc/stm32h7xx_hal_conf.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_rcc.h:

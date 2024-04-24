@@ -5,6 +5,7 @@
  extern "C" {
 #endif
 
+#include "main.h"
 // effect_manager > loops > effects
 #define MAX_SERIES_SLOT_SIZE 	8
 #define MAX_PARALEL_SLOT_SIZE 	3
@@ -31,7 +32,7 @@ typedef struct effect_managers_st{
 
 
 
-	delay_parameters_tst 	parameters_st;
+	//delay_parameters_tst 	parameters_st;
 
 	// functions
 	int8_t (*callback) (struct effect_managers_st* self);
