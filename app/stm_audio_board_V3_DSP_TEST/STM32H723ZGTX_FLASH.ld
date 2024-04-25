@@ -49,7 +49,6 @@ MEMORY
   RAM_D1  (xrw)    : ORIGIN = 0x24000000,   LENGTH = 320K
   RAM_D2  (xrw)    : ORIGIN = 0x30000000,   LENGTH = 32K
   RAM_D3  (xrw)    : ORIGIN = 0x38000000,   LENGTH = 16K
-  SDRAM	  (rwxa)  : ORIGIN = 0xC0000000,  LENGTH = 2M
 }
 
 /* Define output sections */
@@ -62,15 +61,7 @@ SECTIONS
     KEEP(*(.isr_vector)) /* Startup code */
     . = ALIGN(4);
   } >FLASH
- .sdram_section(NOLOAD) :
-  {
-    . = ALIGN(4);
-    __SDARAM_START__ = .;
-    *(.sdram)
-    *(.sdram*)
-    . = ALIGN(4);
-    __SDRAM_END__ = .;
-  } >SDRAM
+
   /* The program code and other data goes into FLASH */
   .text :
   {

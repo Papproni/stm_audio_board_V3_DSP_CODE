@@ -18,9 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "AD1939_driver.h"
-#include "arm_math.h"
-//#include "arm_math.h"
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -116,10 +114,6 @@ void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai){
 
 #define SDRAM_ADDRESS_START 0xC0000000
 #define SDRAM_SIZE 			0x100000 // 16Mb
-
-#define ARRAY_SIZE			48000
-__attribute__((section(".sdram_section"))) volatile float32_t sdram_array[ARRAY_SIZE];
-volatile float32_t normal_array[ARRAY_SIZE];
 /* USER CODE END 0 */
 
 /**
@@ -179,64 +173,34 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-
+	  __attribute__((at(0xC0000000)));
   while (1)
   {
 	  uint32_t fmctestStart;
 	  uint32_t fmctestStop;
 
-
 	  fmctestStart = HAL_GetTick();
 	  uint32_t errorCounter =0;
-
-
-
-
-	  for(uint8_t j=0; j<250;j++){
-	  			  fmctestStart = HAL_GetTick();
-	  			  for(uint32_t counter = 0; counter<ARRAY_SIZE; counter++){
-	  				normal_array[counter] = j;
-	  				  //*(__IO uint8_t*)(SDRAM_ADDRESS_START + counter) = (uint8_t) j;
-	  			  }
-
-
-
-	  			  for(uint32_t counter = 0; counter<ARRAY_SIZE; counter++){
-	  //				  if(*(__IO uint8_t*)(SDRAM_ADDRESS_START + counter) != j){
-	  //					  errorCounter++;
-	  //				  }
-	  				  if(normal_array[counter] != j){
-	  							  errorCounter++;
-	  						  }
-
-	  			  }
-	  			  fmctestStop = (HAL_GetTick()-fmctestStart);
-	  		  }
-
-	  for(uint32_t i = 0; i<10000;i++){
-
-		  for(uint8_t j=0; j<250;j++){
-			  fmctestStart = HAL_GetTick();
-			  for(uint32_t counter = 0; counter<ARRAY_SIZE; counter++){
-				  sdram_array[counter] = j;
-				  //*(__IO uint8_t*)(SDRAM_ADDRESS_START + counter) = (uint8_t) j;
-			  }
-
-
-
-			  for(uint32_t counter = 0; counter<ARRAY_SIZE; counter++){
+//	  for(uint32_t i = 0; i<z10000;i++){
+//
+//		  for(uint8_t j=0; j<250;j++){
+//			  fmctestStart = HAL_GetTick();
+//			  for(uint32_t counter = 0; counter<SDRAM_SIZE; counter++){
+//				  *(__IO uint8_t*)(SDRAM_ADDRESS_START + counter) = (uint8_t) j;
+//			  }
+//
+//
+//
+//			  for(uint32_t counter = 0; counter<SDRAM_SIZE; counter++){
 //				  if(*(__IO uint8_t*)(SDRAM_ADDRESS_START + counter) != j){
 //					  errorCounter++;
 //				  }
-				  if(sdram_array[counter] != j){
-							  errorCounter++;
-						  }
-
-			  }
-			  fmctestStop = (HAL_GetTick()-fmctestStart);
-		  }
-
-	  }
+//
+//			  }
+//			  fmctestStop = (HAL_GetTick()-fmctestStart);
+//		  }
+//
+//	  }
 
 	  if(errorCounter){
 		  while(1){
