@@ -5,11 +5,11 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_def.h \
  ../Drivers/CMSIS/Device/ST/STM32H7xx/Include/stm32h7xx.h \
  ../Drivers/CMSIS/Device/ST/STM32H7xx/Include/stm32h723xx.h \
- ../Drivers/CMSIS/Include/core_cm7.h \
- ../Drivers/CMSIS/Include/cmsis_version.h \
- ../Drivers/CMSIS/Include/cmsis_compiler.h \
- ../Drivers/CMSIS/Include/cmsis_gcc.h \
- ../Drivers/CMSIS/Include/mpu_armv7.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/Include/core_cm7.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/Include/cmsis_version.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/Include/cmsis_compiler.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/Include/cmsis_gcc.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/Include/mpu_armv7.h \
  ../Drivers/CMSIS/Device/ST/STM32H7xx/Include/system_stm32h7xx.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy/stm32_hal_legacy.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_rcc_ex.h \
@@ -32,7 +32,40 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_sdram.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_ll_fmc.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_spi.h \
- ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_spi_ex.h
+ ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_spi_ex.h \
+ ../Core/Inc/AD1939_driver.h ../Core/Inc/main.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/arm_math.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/arm_math_types.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/Include/cmsis_compiler.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/arm_math_memory.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/none.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/arm_math_types.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/utils.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/basic_math_functions.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/arm_math_memory.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/none.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/utils.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/interpolation_functions.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/bayes_functions.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/statistics_functions.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/basic_math_functions.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/fast_math_functions.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/matrix_functions.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/complex_math_functions.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/statistics_functions.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/controller_functions.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/support_functions.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/distance_functions.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/matrix_functions.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/svm_functions.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/svm_defines.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/fast_math_functions.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/transform_functions.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/complex_math_functions.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/filtering_functions.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/support_functions.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/quaternion_math_functions.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/window_functions.h
 ../Core/Inc/main.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal.h:
 ../Core/Inc/stm32h7xx_hal_conf.h:
@@ -40,11 +73,11 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_def.h:
 ../Drivers/CMSIS/Device/ST/STM32H7xx/Include/stm32h7xx.h:
 ../Drivers/CMSIS/Device/ST/STM32H7xx/Include/stm32h723xx.h:
-../Drivers/CMSIS/Include/core_cm7.h:
-../Drivers/CMSIS/Include/cmsis_version.h:
-../Drivers/CMSIS/Include/cmsis_compiler.h:
-../Drivers/CMSIS/Include/cmsis_gcc.h:
-../Drivers/CMSIS/Include/mpu_armv7.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/Include/core_cm7.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/Include/cmsis_version.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/Include/cmsis_compiler.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/Include/cmsis_gcc.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/Include/mpu_armv7.h:
 ../Drivers/CMSIS/Device/ST/STM32H7xx/Include/system_stm32h7xx.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy/stm32_hal_legacy.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_rcc_ex.h:
@@ -68,3 +101,37 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_ll_fmc.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_spi.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_spi_ex.h:
+../Core/Inc/AD1939_driver.h:
+../Core/Inc/main.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/arm_math.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/arm_math_types.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/Include/cmsis_compiler.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/arm_math_memory.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/none.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/arm_math_types.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/utils.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/basic_math_functions.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/arm_math_memory.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/none.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/utils.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/interpolation_functions.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/bayes_functions.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/statistics_functions.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/basic_math_functions.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/fast_math_functions.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/matrix_functions.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/complex_math_functions.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/statistics_functions.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/controller_functions.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/support_functions.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/distance_functions.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/matrix_functions.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/svm_functions.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/svm_defines.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/fast_math_functions.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/transform_functions.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/complex_math_functions.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/filtering_functions.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/support_functions.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/quaternion_math_functions.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/DSP/Include/dsp/window_functions.h:

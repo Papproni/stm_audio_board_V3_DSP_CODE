@@ -48,6 +48,7 @@ MEMORY
   ITCMRAM (xrw)   : ORIGIN = 0x00000000, LENGTH = 64K
   RAM_D2  (xrw)   : ORIGIN = 0x30000000, LENGTH = 32K
   RAM_D3  (xrw)   : ORIGIN = 0x38000000, LENGTH = 16K
+  SDRAM	  (rwxa)  : ORIGIN = 0xC0000000,  LENGTH = 2M
 }
 
 /* Define output sections */
@@ -61,6 +62,7 @@ SECTIONS
     . = ALIGN(4);
   } >RAM_EXEC
 
+	
   /* The program code and other data goes into RAM_EXEC */
   .text :
   {
