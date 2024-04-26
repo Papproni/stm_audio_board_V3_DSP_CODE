@@ -107,7 +107,7 @@ void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai){
 #define SDRAM_ADDRESS_START 0xC0000000
 #define SDRAM_SIZE 			0x100000 // 16Mb
 
-#define ARRAY_SIZE 20
+#define ARRAY_SIZE 96000*4
 // Define a padding variable to offset the array by 2 bytes
 __attribute__((section(".sdram_section"))) volatile uint32_t sdram_array[ARRAY_SIZE];
 __attribute__((section(".sdram_section"))) volatile uint16_t sdram_byte;
@@ -176,28 +176,20 @@ int main(void)
 		  for(uint32_t j=256*256-2; j<256*256+200;j++){
 			  fmctestStart = HAL_GetTick();
 			  uint8_t number_inc = 0;
-			  for(uint32_t counter = 0; counter<SDRAM_SIZE; counter++){
-				  *(__IO uint8_t*)(SDRAM_ADDRESS_START+6 + counter) = (uint8_t) number_inc;
-				  number_inc++;
-			  }
-			  for(uint32_t counter = 1; counter<SDRAM_SIZE; counter=counter+2){
-				  *(__IO uint8_t*)(SDRAM_ADDRESS_START + counter) = (uint8_t) number_inc;
-				  number_inc++;
-			  }
+//			  for(uint32_t counter = 0; counter<SDRAM_SIZE; counter++){
+//				  *(__IO uint8_t*)(SDRAM_ADDRESS_START+6 + counter) = (uint8_t) number_inc;
+//				  number_inc++;
+//			  }
+//			  for(uint32_t counter = 1; counter<SDRAM_SIZE; counter=counter+2){
+//				  *(__IO uint8_t*)(SDRAM_ADDRESS_START + counter) = (uint8_t) number_inc;
+//				  number_inc++;
+//			  }
 
 			  for(uint32_t counter = 0; counter<ARRAY_SIZE; counter++){
-			 				  sdram_array[counter] = 0xDEADBEEF;
+			 				  sdram_array[counter] = j;
 			 			  }
 
-			  sdram_byte = 0xFE;
-			  j=0x111111AA;
-			  sdram_array[0] = j;
 
-			  j=0x222222BB;
-			  sdram_array[1] = j;
-
-			  j=0x333333CC;
-			  sdram_array[2] = j;
 //			  for(uint32_t counter = 0; counter<SDRAM_SIZE; counter++){
 //			  				  if(*(__IO uint8_t*)(SDRAM_ADDRESS_START + counter) != j){
 //			  					  errorCounter++;
