@@ -60,8 +60,8 @@ all: main-build
 main-build: stm_audio_board_V3_DSP_TEST.elf secondary-outputs
 
 # Tool invocations
-stm_audio_board_V3_DSP_TEST.elf stm_audio_board_V3_DSP_TEST.map: $(OBJS) $(USER_OBJS) C:\Users\Aron\Documents\GitHub\DSP_CODE\stm_audio_board_V3_DSP_CODE\app\stm_audio_board_V3_DSP_TEST\STM32H723ZGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "stm_audio_board_V3_DSP_TEST.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m7 -T"C:\Users\Aron\Documents\GitHub\DSP_CODE\stm_audio_board_V3_DSP_CODE\app\stm_audio_board_V3_DSP_TEST\STM32H723ZGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="stm_audio_board_V3_DSP_TEST.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+stm_audio_board_V3_DSP_TEST.elf stm_audio_board_V3_DSP_TEST.map: $(OBJS) $(USER_OBJS) C:\Projects\SDRAM_STUFF\stm_audio_board_V3_DSP_CODE\app\stm_audio_board_V3_DSP_TEST\STM32H723ZGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "stm_audio_board_V3_DSP_TEST.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m7 -T"C:\Projects\SDRAM_STUFF\stm_audio_board_V3_DSP_CODE\app\stm_audio_board_V3_DSP_TEST\STM32H723ZGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="stm_audio_board_V3_DSP_TEST.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

@@ -3,6 +3,7 @@
 "./Core/Src/effect_manager.o"
 "./Core/Src/fmc.o"
 "./Core/Src/gpio.o"
+"./Core/Src/is42s16800j.o"
 "./Core/Src/main.o"
 "./Core/Src/sai.o"
 "./Core/Src/spi.o"

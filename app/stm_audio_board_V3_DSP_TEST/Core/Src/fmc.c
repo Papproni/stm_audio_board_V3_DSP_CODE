@@ -95,6 +95,17 @@ void MX_FMC_Init(void)
              = [(32ms/2048) * 270/2MHz] - 20 = 2089*/
 
     HAL_SDRAM_ProgramRefreshRate(&hsdram1, 2500);
+
+
+    IS42S16800J_Context_t my_sdram;
+    my_sdram.TargetBank  = FMC_SDRAM_CMD_TARGET_BANK1;
+    my_sdram.RefreshMode = FMC_SDRAM_CMD_AUTOREFRESH_MODE;
+    my_sdram.RefreshRate = REFRESH_COUNT;
+    my_sdram.CASLatency  = IS42S16800J_CAS_LATENCY_3;
+    my_sdram.OperationMode = IS42S16800J_OPERATING_MODE_STANDARD;
+    my_sdram.WriteBurstMode = IS42S16800J_BURST_LENGTH_1;
+
+    IS42S16800J_Init(&hsdram1, &my_sdram);
   /* USER CODE END FMC_Init 2 */
 }
 

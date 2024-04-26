@@ -1,0 +1,11 @@
+../Core/Src/is42s16800j.c:63:9:IS42S16800J_Init	6
+../Core/Src/is42s16800j.c:101:9:IS42S16800J_ClockEnable	2
+../Core/Src/is42s16800j.c:125:9:IS42S16800J_Precharge	2
+../Core/Src/is42s16800j.c:149:9:IS42S16800J_ModeRegConfig	2
+../Core/Src/is42s16800j.c:182:9:IS42S16800J_TimingConfig	2
+../Core/Src/is42s16800j.c:203:9:IS42S16800J_RefreshMode	2
+../Core/Src/is42s16800j.c:227:9:IS42S16800J_RefreshRate	2
+../Core/Src/is42s16800j.c:246:9:IS42S16800J_EnterPowerMode	2
+../Core/Src/is42s16800j.c:270:9:IS42S16800J_ExitPowerMode	2
+../Core/Src/is42s16800j.c:294:9:IS42S16800J_Sendcmd	2
+../Core/Src/is42s16800j.c:315:16:IS42S16800J_Delay	2
