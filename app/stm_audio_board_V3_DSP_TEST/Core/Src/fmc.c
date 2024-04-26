@@ -22,7 +22,7 @@
 #include "fmc.h"
 
 /* USER CODE BEGIN 0 */
-
+#include "is42s16800j.h"
 /* USER CODE END 0 */
 
 SDRAM_HandleTypeDef hsdram1;
@@ -69,32 +69,32 @@ void MX_FMC_Init(void)
   }
 
   /* USER CODE BEGIN FMC_Init 2 */
-  FMC_SDRAM_CommandTypeDef Command;
-   /* Step 1 and Step 2 already done in HAL_SDRAM_Init() */
-   /* Step 3: Configure a clock configuration enable command */
-    Command.CommandMode            = FMC_SDRAM_CMD_CLK_ENABLE; /* Set MODE bits to "001" */
-    Command.CommandTarget          = FMC_SDRAM_CMD_TARGET_BANK1; /* configure the Target Bank bits */
-    Command.AutoRefreshNumber      = 1;
-    Command.ModeRegisterDefinition = 0;
-    HAL_SDRAM_SendCommand(&hsdram1, &Command, 0xfff);
-    HAL_Delay(1); /* Step 4: Insert 100 us minimum delay - Min HAL Delay is 1ms */
-    /* Step 5: Configure a PALL (precharge all) command */
-    Command.CommandMode            = FMC_SDRAM_CMD_PALL; /* Set MODE bits to "010" */
-    HAL_SDRAM_SendCommand(&hsdram1, &Command, 0xfff);
-    /* Step 6: Configure an Auto Refresh command */
-    Command.CommandMode            = FMC_SDRAM_CMD_AUTOREFRESH_MODE; /* Set MODE bits to "011" */
-    Command.AutoRefreshNumber      = 2;
-    HAL_SDRAM_SendCommand(&hsdram1, &Command, 0xfff);
-    /* Step 7: Program the external memory mode register */
-    Command.CommandMode            = FMC_SDRAM_CMD_LOAD_MODE;/*set the MODE bits to "100" */
-    Command.ModeRegisterDefinition =  (uint32_t)0 | 0<<3 | 2<<4 | 0<<7 | 1<<9;
-    HAL_SDRAM_SendCommand(&hsdram1, &Command, 0xfff);
-    /* Step 8: Set the refresh rate counter - refer to section SDRAM refresh timer register in RM0455 */
-    /* Set the device refresh rate
-     * COUNT = [(SDRAM self refresh time / number of row) x  SDRAM CLK] – 20
-             = [(32ms/2048) * 270/2MHz] - 20 = 2089*/
+//  FMC_SDRAM_CommandTypeDef Command;
+//   /* Step 1 and Step 2 already done in HAL_SDRAM_Init() */
+//   /* Step 3: Configure a clock configuration enable command */
+//    Command.CommandMode            = FMC_SDRAM_CMD_CLK_ENABLE; /* Set MODE bits to "001" */
+//    Command.CommandTarget          = FMC_SDRAM_CMD_TARGET_BANK1; /* configure the Target Bank bits */
+//    Command.AutoRefreshNumber      = 1;
+//    Command.ModeRegisterDefinition = 0;
+//    HAL_SDRAM_SendCommand(&hsdram1, &Command, 0xfff);
+//    HAL_Delay(1); /* Step 4: Insert 100 us minimum delay - Min HAL Delay is 1ms */
+//    /* Step 5: Configure a PALL (precharge all) command */
+//    Command.CommandMode            = FMC_SDRAM_CMD_PALL; /* Set MODE bits to "010" */
+//    HAL_SDRAM_SendCommand(&hsdram1, &Command, 0xfff);
+//    /* Step 6: Configure an Auto Refresh command */
+//    Command.CommandMode            = FMC_SDRAM_CMD_AUTOREFRESH_MODE; /* Set MODE bits to "011" */
+//    Command.AutoRefreshNumber      = 2;
+//    HAL_SDRAM_SendCommand(&hsdram1, &Command, 0xfff);
+//    /* Step 7: Program the external memory mode register */
+//    Command.CommandMode            = FMC_SDRAM_CMD_LOAD_MODE;/*set the MODE bits to "100" */
+//    Command.ModeRegisterDefinition =  (uint32_t)0 | 0<<3 | 2<<4 | 0<<7 | 1<<9;
+//    HAL_SDRAM_SendCommand(&hsdram1, &Command, 0xfff);
+//    /* Step 8: Set the refresh rate counter - refer to section SDRAM refresh timer register in RM0455 */
+//    /* Set the device refresh rate
+//     * COUNT = [(SDRAM self refresh time / number of row) x  SDRAM CLK] – 20
+//             = [(32ms/2048) * 270/2MHz] - 20 = 2089*/
 
-    HAL_SDRAM_ProgramRefreshRate(&hsdram1, 2500);
+//    HAL_SDRAM_ProgramRefreshRate(&hsdram1, 2500);
 
 
     IS42S16800J_Context_t my_sdram;
@@ -103,7 +103,9 @@ void MX_FMC_Init(void)
     my_sdram.RefreshRate = REFRESH_COUNT;
     my_sdram.CASLatency  = IS42S16800J_CAS_LATENCY_3;
     my_sdram.OperationMode = IS42S16800J_OPERATING_MODE_STANDARD;
-    my_sdram.WriteBurstMode = IS42S16800J_BURST_LENGTH_1;
+    my_sdram.WriteBurstMode = IS42S16800J_WRITEBURST_MODE_SINGLE;
+    my_sdram.BurstType 		= IS42S16800J_BURST_TYPE_SEQUENTIAL;
+    my_sdram.BurstLength 	= IS42S16800J_BURST_LENGTH_1;
 
     IS42S16800J_Init(&hsdram1, &my_sdram);
   /* USER CODE END FMC_Init 2 */

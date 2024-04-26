@@ -187,20 +187,16 @@ int main(void)
 
 			  for(uint32_t counter = 0; counter<ARRAY_SIZE; counter++){
 			 				  sdram_array[counter] = 0xDEADBEEF;
-			 				  if(counter+1 == ARRAY_SIZE){
-			 					 sdram_array[counter] = j<<16 | j>>16;
-
-			 				  }
 			 			  }
 
 			  sdram_byte = 0xFE;
-			  j=0x11111100;
+			  j=0x111111AA;
 			  sdram_array[0] = j;
 
-			  j=0x22222200;
+			  j=0x222222BB;
 			  sdram_array[1] = j;
 
-			  j=0x33333300;
+			  j=0x333333CC;
 			  sdram_array[2] = j;
 //			  for(uint32_t counter = 0; counter<SDRAM_SIZE; counter++){
 //			  				  if(*(__IO uint8_t*)(SDRAM_ADDRESS_START + counter) != j){
