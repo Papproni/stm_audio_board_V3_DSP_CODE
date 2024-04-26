@@ -2,7 +2,7 @@
 ../Core/Src/main.c:75:6:HAL_SAI_TxHalfCpltCallback	5
 ../Core/Src/main.c:81:6:HAL_SAI_RxCpltCallback	9
 ../Core/Src/main.c:92:6:HAL_SAI_RxHalfCpltCallback	9
-../Core/Src/main.c:119:5:main	9
-../Core/Src/main.c:225:6:SystemClock_Config	4
-../Core/Src/main.c:283:6:PeriphCommonClock_Config	2
-../Core/Src/main.c:314:6:Error_Handler	1
+../Core/Src/main.c:121:5:main	10
+../Core/Src/main.c:241:6:SystemClock_Config	4
+../Core/Src/main.c:299:6:PeriphCommonClock_Config	2
+../Core/Src/main.c:330:6:Error_Handler	1

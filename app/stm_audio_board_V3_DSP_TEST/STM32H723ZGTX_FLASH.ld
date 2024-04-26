@@ -63,15 +63,12 @@ SECTIONS
     . = ALIGN(4);
   } >FLASH
 	
-	 .sdram_section(NOLOAD) :
-  {
-    . = ALIGN(4);
-    __SDARAM_START__ = .;
-    *(.sdram)
-    *(.sdram*)
-    . = ALIGN(4);
-    __SDRAM_END__ = .;
-  } >SDRAM
+	.sdram_section (NOLOAD) :
+    {
+        . = ORIGIN(SDRAM); /* Offset within SDRAM */
+        *(.sdram_section)
+
+    } >SDRAM
   /* The program code and other data goes into FLASH */
   .text :
   {
