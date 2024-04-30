@@ -107,7 +107,7 @@ void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai){
 #define SDRAM_ADDRESS_START 0xC0000000
 #define SDRAM_SIZE 			0x100000 // 16Mb
 
-#define ARRAY_SIZE 96000*4
+#define ARRAY_SIZE 10
 // Define a padding variable to offset the array by 2 bytes
 __attribute__((section(".sdram_section"))) volatile uint32_t sdram_array[ARRAY_SIZE];
 __attribute__((section(".sdram_section"))) volatile uint16_t sdram_byte;
@@ -152,11 +152,11 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   // init SAI interface
-//	HAL_SAI_Transmit_DMA(&hsai_BlockA1, output_i2s_buffer_au32, 	16);
-//	HAL_SAI_Receive_DMA(&hsai_BlockB1, input_i2s_buffer_au32, 	16);
-//
-//  // init CODEC
-//	ad1939_init(&hspi1);
+	HAL_SAI_Transmit_DMA(&hsai_BlockA1, output_i2s_buffer_au32, 	16);
+	HAL_SAI_Receive_DMA(&hsai_BlockB1, input_i2s_buffer_au32, 	16);
+
+  // init CODEC
+	ad1939_init(&hspi1);
 
 
 
