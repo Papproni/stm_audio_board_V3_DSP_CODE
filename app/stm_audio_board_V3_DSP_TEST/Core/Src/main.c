@@ -19,15 +19,18 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "dma.h"
+#include "octospi.h"
 #include "sai.h"
 #include "spi.h"
+#include "usb_device.h"
 #include "gpio.h"
 #include "fmc.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "AD1939_driver.h"
-
+#include "usbd_cdc_if.h"
+#include "string.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -105,7 +108,7 @@ void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai){
 
 
 #define SDRAM_ADDRESS_START 0xC0000000
-#define SDRAM_SIZE 			0x100000 // 16Mb
+#define SDRAM_SIZE 			0x100000 // 16Mb = 2MB
 
 #define ARRAY_SIZE 10
 // Define a padding variable to offset the array by 2 bytes
@@ -149,6 +152,8 @@ int main(void)
   MX_SAI1_Init();
   MX_SPI1_Init();
   MX_FMC_Init();
+  MX_OCTOSPI1_Init();
+  MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
 
   // init SAI interface
@@ -164,6 +169,12 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+	// FLASH TESTING START
+
+
+
+	char* mymsg= "Hello World!";
+	// FLASH TESTING END
   while (1)
   {
 	  uint32_t fmctestStart;
@@ -171,7 +182,12 @@ int main(void)
 
 	  fmctestStart = HAL_GetTick();
 	  uint32_t errorCounter =0;
+	  uint32_t usb_state=0;
 	  for(uint32_t i = 0; i<10000;i++){
+
+
+		  usb_state = CDC_Transmit_HS((uint8_t*)mymsg, strlen(mymsg));
+		  HAL_Delay(100);
 
 		  for(uint32_t j=256*256-2; j<256*256+200;j++){
 			  fmctestStart = HAL_GetTick();
@@ -244,8 +260,9 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI48|RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.HSI48State = RCC_HSI48_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 2;
