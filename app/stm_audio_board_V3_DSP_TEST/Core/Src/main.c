@@ -28,9 +28,15 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "stm32h7xx_hal.h"
 #include "AD1939_driver.h"
-#include "usbd_cdc_if.h"
+#include "usbd_core.h"
+//#include "usbd_audio.h"
+#include "usbd_desc.h"
+//#include "usbd_audio_if.h"
+#include "usb_device.h"
 #include "string.h"
+#include <math.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -65,6 +71,28 @@ void PeriphCommonClock_Config(void);
 /* USER CODE BEGIN 0 */
 
 
+
+// USB AUDIO DEVICE TEST CODE START
+#define AUDIO_FREQ 48000
+#define AUDIO_BLOCK_SIZE 48  // block size in samples
+#define PI 3.14159265358979f
+
+//static int16_t audio_buffer[AUDIO_BLOCK_SIZE];
+//void AUDIO_Init(void)
+//{
+//    for (int i = 0; i < AUDIO_BLOCK_SIZE; i++) {
+//        audio_buffer[i] = (int16_t)(32760 * sin(2 * PI * 440 * i / AUDIO_FREQ));
+//    }
+//}
+//
+//int8_t AUDIO_Transmit_FS(uint8_t* Buf, uint32_t *Len)
+//{
+//    memcpy(Buf, audio_buffer, AUDIO_BLOCK_SIZE * sizeof(int16_t));
+//    *Len = AUDIO_BLOCK_SIZE * sizeof(int16_t);
+//    return USBD_OK;
+//}
+// USB AUDIO DEVICE TEST CODE END
+
 volatile uint8_t 			ADC_HALF_COMPLETE_FLAG = 0;
 volatile uint8_t 			DAC_HALF_COMPLETE_FLAG = 0;
 volatile uint32_t input_i2s_buffer_au32[16];
@@ -74,6 +102,7 @@ void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai){
 	DAC_HALF_COMPLETE_FLAG = 0;
 	SCB_CleanDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32));
 	SCB_InvalidateDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32));
+
 }
 void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai){
 	DAC_HALF_COMPLETE_FLAG = 1;
@@ -103,6 +132,8 @@ void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai){
 
 	SCB_CleanDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32));
 	SCB_InvalidateDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32));
+
+
 }
 
 
@@ -115,6 +146,52 @@ void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai){
 __attribute__((section(".sdram_section"))) volatile uint32_t sdram_array[ARRAY_SIZE];
 __attribute__((section(".sdram_section"))) volatile uint16_t sdram_byte;
 
+/*
+ * This function puts the device into DFU (bootloader mode)
+ * After you entered this, you can update FW via USB.
+ */
+void JumpToBootloader(void)
+{
+	  uint32_t i=0;
+	  void (*SysMemBootJump)(void);
+
+	  /* Set the address of the entry point to bootloader */
+	     volatile uint32_t BootAddr = 0x1FF09800;
+
+	  /* Disable all interrupts */
+	     __disable_irq();
+
+	  /* Disable Systick timer */
+	     SysTick->CTRL = 0;
+
+	  /* Set the clock to the default state */
+	     HAL_RCC_DeInit();
+
+	  /* Clear Interrupt Enable Register & Interrupt Pending Register */
+	     for (i=0;i<5;i++)
+	     {
+		  NVIC->ICER[i]=0xFFFFFFFF;
+		  NVIC->ICPR[i]=0xFFFFFFFF;
+	     }
+
+	  /* Re-enable all interrupts */
+	     __enable_irq();
+
+	  /* Set up the jump to booloader address + 4 */
+	     SysMemBootJump = (void (*)(void)) (*((uint32_t *) ((BootAddr + 4))));
+
+	  /* Set the main stack pointer to the bootloader stack */
+	     __set_MSP(*(uint32_t *)BootAddr);
+
+	  /* Call the function to jump to bootloader location */
+	     SysMemBootJump();
+
+	  /* Jump is done successfully */
+	     while (1)
+	     {
+	      /* Code should never reach this loop */
+	     }
+}
 /* USER CODE END 0 */
 
 /**
@@ -171,10 +248,9 @@ int main(void)
   /* USER CODE BEGIN WHILE */
 	// FLASH TESTING START
 
-
-
-	char* mymsg= "Hello World!";
-	// FLASH TESTING END
+//	AUDIO_Init();
+	JumpToBootloader();
+		// FLASH TESTING END
   while (1)
   {
 	  uint32_t fmctestStart;
@@ -186,8 +262,8 @@ int main(void)
 	  for(uint32_t i = 0; i<10000;i++){
 
 
-		  usb_state = CDC_Transmit_HS((uint8_t*)mymsg, strlen(mymsg));
-		  HAL_Delay(100);
+		  //usb_state = CDC_Transmit_HS((uint8_t*)mymsg, strlen(mymsg));
+		  //HAL_Delay(100);
 
 		  for(uint32_t j=256*256-2; j<256*256+200;j++){
 			  fmctestStart = HAL_GetTick();
