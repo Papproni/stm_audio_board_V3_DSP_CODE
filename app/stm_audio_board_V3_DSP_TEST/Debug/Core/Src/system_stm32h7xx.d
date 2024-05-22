@@ -1,11 +1,11 @@
 Core/Src/system_stm32h7xx.o: ../Core/Src/system_stm32h7xx.c \
  ../Drivers/CMSIS/Device/ST/STM32H7xx/Include/stm32h7xx.h \
  ../Drivers/CMSIS/Device/ST/STM32H7xx/Include/stm32h723xx.h \
- C:/Projects/SDRAM_STUFF/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/Include/core_cm7.h \
- C:/Projects/SDRAM_STUFF/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/Include/cmsis_version.h \
- C:/Projects/SDRAM_STUFF/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/Include/cmsis_compiler.h \
- C:/Projects/SDRAM_STUFF/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/Include/cmsis_gcc.h \
- C:/Projects/SDRAM_STUFF/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/Include/mpu_armv7.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/Include/core_cm7.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/Include/cmsis_version.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/Include/cmsis_compiler.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/Include/cmsis_gcc.h \
+ C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/Include/mpu_armv7.h \
  ../Drivers/CMSIS/Device/ST/STM32H7xx/Include/system_stm32h7xx.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal.h \
  ../Core/Inc/stm32h7xx_hal_conf.h \
@@ -39,11 +39,11 @@ Core/Src/system_stm32h7xx.o: ../Core/Src/system_stm32h7xx.c \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_pcd_ex.h
 ../Drivers/CMSIS/Device/ST/STM32H7xx/Include/stm32h7xx.h:
 ../Drivers/CMSIS/Device/ST/STM32H7xx/Include/stm32h723xx.h:
-C:/Projects/SDRAM_STUFF/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/Include/core_cm7.h:
-C:/Projects/SDRAM_STUFF/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/Include/cmsis_version.h:
-C:/Projects/SDRAM_STUFF/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/Include/cmsis_compiler.h:
-C:/Projects/SDRAM_STUFF/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/Include/cmsis_gcc.h:
-C:/Projects/SDRAM_STUFF/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/Include/mpu_armv7.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/Include/core_cm7.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/Include/cmsis_version.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/Include/cmsis_compiler.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/Include/cmsis_gcc.h:
+C:/Users/Aron/Documents/GitHub/DSP_CODE/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Drivers/CMSIS/Include/mpu_armv7.h:
 ../Drivers/CMSIS/Device/ST/STM32H7xx/Include/system_stm32h7xx.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal.h:
 ../Core/Inc/stm32h7xx_hal_conf.h:

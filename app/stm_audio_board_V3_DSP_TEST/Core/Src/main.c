@@ -76,16 +76,19 @@ void PeriphCommonClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+// IN2 - OUT1
+//
+
 // ADC4-ADC1 position in TDM I2S
 #define IN1_ADC_NUM 3
 #define IN2_ADC_NUM 2
 #define IN3_ADC_NUM 1
 #define IN4_ADC_NUM 0
 // DAC position in TDM I2S
-#define OUT1_DAC_NUM 5
-#define OUT2_DAC_NUM 7
-#define OUT3_DAC_NUM 6
-#define OUT4_DAC_NUM 4
+#define OUT1_DAC_NUM 7 // ok
+#define OUT2_DAC_NUM 6
+#define OUT3_DAC_NUM 4
+#define OUT4_DAC_NUM 5
 
 volatile uint8_t 			ADC_HALF_COMPLETE_FLAG = 0;
 volatile uint8_t 			DAC_HALF_COMPLETE_FLAG = 0;
@@ -106,23 +109,25 @@ struct{
 
 void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai){
 	DAC_HALF_COMPLETE_FLAG = 0;
-	SCB_CleanDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32));
-	SCB_InvalidateDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32));
+//	SCB_CleanDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32));
+//	SCB_InvalidateDCache_by_Addr(&output_i2s_buffer_au32[8], sizeof(output_i2s_buffer_au32)/2);
 
-	output_i2s_buffer_au32[8+OUT1_DAC_NUM] = effects_io_port.out1_i32;
-	output_i2s_buffer_au32[8+OUT2_DAC_NUM] = effects_io_port.out2_i32;
-	output_i2s_buffer_au32[8+OUT3_DAC_NUM] = effects_io_port.out3_i32;
-	output_i2s_buffer_au32[8+OUT4_DAC_NUM] = effects_io_port.out4_i32;
+	output_i2s_buffer_au32[8+OUT1_DAC_NUM] = effects_io_port.out1_i32>>8;
+	output_i2s_buffer_au32[8+OUT2_DAC_NUM] = effects_io_port.out2_i32>>8;
+	output_i2s_buffer_au32[8+OUT3_DAC_NUM] = effects_io_port.out3_i32>>8;
+	output_i2s_buffer_au32[8+OUT4_DAC_NUM] = effects_io_port.out4_i32>>8;
+	SCB_CleanDCache_by_Addr(&output_i2s_buffer_au32[8], sizeof(output_i2s_buffer_au32)/2);
 }
 void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai){
 	DAC_HALF_COMPLETE_FLAG = 1;
-	SCB_CleanDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32));
-	SCB_InvalidateDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32));
+//	SCB_CleanDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32));
+//	SCB_InvalidateDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32)/2);
 
-	output_i2s_buffer_au32[OUT1_DAC_NUM] = effects_io_port.out1_i32;
-	output_i2s_buffer_au32[OUT2_DAC_NUM] = effects_io_port.out2_i32;
-	output_i2s_buffer_au32[OUT3_DAC_NUM] = effects_io_port.out3_i32;
-	output_i2s_buffer_au32[OUT4_DAC_NUM] = effects_io_port.out4_i32;
+	output_i2s_buffer_au32[OUT1_DAC_NUM] = effects_io_port.out1_i32>>8;
+	output_i2s_buffer_au32[OUT2_DAC_NUM] = effects_io_port.out2_i32>>8;
+	output_i2s_buffer_au32[OUT3_DAC_NUM] = effects_io_port.out3_i32>>8;
+	output_i2s_buffer_au32[OUT4_DAC_NUM] = effects_io_port.out4_i32>>8;
+	SCB_CleanDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32)/2);
 }
 
 volatile uint8_t 			ADC_READY_FLAG = 0;
@@ -130,30 +135,31 @@ volatile uint8_t 			ADC_READY_FLAG = 0;
 void HAL_SAI_RxCpltCallback(SAI_HandleTypeDef *hsai){
 	ADC_HALF_COMPLETE_FLAG = 0;
 	ADC_READY_FLAG = 1;
-	SCB_CleanDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32));
-	SCB_InvalidateDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32));
+//	SCB_CleanDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32));
+//	SCB_InvalidateDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32));
 
-	effects_io_port.in1_i32 = input_i2s_buffer_au32[8+IN1_ADC_NUM];
-	effects_io_port.in2_i32 = input_i2s_buffer_au32[8+IN2_ADC_NUM];
-	effects_io_port.in3_i32 = input_i2s_buffer_au32[8+IN3_ADC_NUM];
-	effects_io_port.in4_i32 = input_i2s_buffer_au32[8+IN4_ADC_NUM];
+	SCB_InvalidateDCache_by_Addr(&input_i2s_buffer_au32[8], sizeof(input_i2s_buffer_au32)/2);
+	effects_io_port.in1_i32 = input_i2s_buffer_au32[8+IN1_ADC_NUM]<<8;
+	effects_io_port.in2_i32 = input_i2s_buffer_au32[8+IN2_ADC_NUM]<<8;
+	effects_io_port.in3_i32 = input_i2s_buffer_au32[8+IN3_ADC_NUM]<<8;
+	effects_io_port.in4_i32 = input_i2s_buffer_au32[8+IN4_ADC_NUM]<<8;
 
-	SCB_CleanDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32));
-	SCB_InvalidateDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32));
+//	SCB_CleanDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32));
+//	SCB_InvalidateDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32));
 }
 void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai){
 	ADC_HALF_COMPLETE_FLAG = 1;
 	ADC_READY_FLAG = 1;
-	SCB_CleanDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32));
-	SCB_InvalidateDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32));
+//	SCB_CleanDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32));
+//	SCB_InvalidateDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32));
+	SCB_InvalidateDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32)/2);
+	effects_io_port.in1_i32 = input_i2s_buffer_au32[IN1_ADC_NUM]<<8;
+	effects_io_port.in2_i32 = input_i2s_buffer_au32[IN2_ADC_NUM]<<8;
+	effects_io_port.in3_i32 = input_i2s_buffer_au32[IN3_ADC_NUM]<<8;
+	effects_io_port.in4_i32 = input_i2s_buffer_au32[IN4_ADC_NUM]<<8;
 
-	effects_io_port.in1_i32 = input_i2s_buffer_au32[IN1_ADC_NUM];
-	effects_io_port.in2_i32 = input_i2s_buffer_au32[IN2_ADC_NUM];
-	effects_io_port.in3_i32 = input_i2s_buffer_au32[IN3_ADC_NUM];
-	effects_io_port.in4_i32 = input_i2s_buffer_au32[IN4_ADC_NUM];
+//	SCB_CleanDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32));
 
-	SCB_CleanDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32));
-	SCB_InvalidateDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32));
 }
 
 
@@ -317,7 +323,7 @@ int Do_PitchShift(int sample) {
 }
 
 // Effect instances
-__attribute__((section(".sdram_section"))) delay_effects_tst delay_effect;
+//__attribute__((section(".sdram_section"))) delay_effects_tst delay_effect;
 octave_effects_tst octave_effects_st;
 /* USER CODE END 0 */
 
@@ -330,6 +336,13 @@ int main(void)
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
+/* Enable the CPU Cache */
+
+  /* Enable I-Cache---------------------------------------------------------*/
+  SCB_EnableICache();
+
+  /* Enable D-Cache---------------------------------------------------------*/
+  SCB_EnableDCache();
 
   /* MCU Configuration--------------------------------------------------------*/
 
@@ -367,7 +380,7 @@ int main(void)
   // init CODEC
 	ad1939_init(&hspi1);
 
-	init_guitar_effect_delay(&delay_effect);
+//	init_guitar_effect_delay(&delay_effect);
 
 	init_guitar_effect_octave(&octave_effects_st);
 
@@ -383,21 +396,33 @@ int main(void)
 		// FLASH TESTING END
   while (1)
   {
+	  if(ADC_READY_FLAG){
+		  ADC_READY_FLAG = 0;
+
+	  // LOOPBACK TESTING
+	  //	  effects_io_port.out1_i32 = effects_io_port.in1_i32;
+	  //	  effects_io_port.out2_i32 = effects_io_port.in2_i32;
+	  //	  effects_io_port.out3_i32 = effects_io_port.in3_i32;
+	  //	  effects_io_port.out4_i32 = effects_io_port.in4_i32;
+
 	  // LOOP1
-	  effects_io_port.out1_i32 = octave_effects_st.callback(&octave_effects_st,effects_io_port.in1_i32);
-	  effects_io_port.out1_i32= Do_PitchShift(effects_io_port.in1_i32) + effects_io_port.out1_i32;
+	  effects_io_port.out1_i32 = octave_effects_st.callback(&octave_effects_st,effects_io_port.in1_i32/2);
+
+//	  effects_io_port.out1_i32= Do_PitchShift(effects_io_port.in1_i32/2) + effects_io_port.out1_i32/2;
+
+
 
 	  // LOOP2
-	  effects_io_port.out2_i32 = delay_effect.callback(&delay_effect,effects_io_port.in2_i32);
+//	  effects_io_port.out2_i32 = delay_effect.callback(&delay_effect,effects_io_port.in2_i32);
 
 	  // LOOP3
 
 	  // LOOP4
 
 
-
+	  }
     /* USER CODE END WHILE */
-	  
+
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
