@@ -4,6 +4,8 @@
 "./Core/Src/effect_manager.o"
 "./Core/Src/fmc.o"
 "./Core/Src/gpio.o"
+"./Core/Src/guitar_effect_delay.o"
+"./Core/Src/guitar_effect_octave.o"
 "./Core/Src/is42s16800j.o"
 "./Core/Src/main.o"
 "./Core/Src/octospi.o"

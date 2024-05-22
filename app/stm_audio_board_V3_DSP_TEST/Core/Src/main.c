@@ -37,6 +37,12 @@
 #include "usb_device.h"
 #include "string.h"
 #include <math.h>
+#include "arm_math.h"
+
+// Effects libs
+#include "guitar_effect_delay.h"
+#include "guitar_effect_octave.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -70,70 +76,84 @@ void PeriphCommonClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-
-
-// USB AUDIO DEVICE TEST CODE START
-#define AUDIO_FREQ 48000
-#define AUDIO_BLOCK_SIZE 48  // block size in samples
-#define PI 3.14159265358979f
-
-//static int16_t audio_buffer[AUDIO_BLOCK_SIZE];
-//void AUDIO_Init(void)
-//{
-//    for (int i = 0; i < AUDIO_BLOCK_SIZE; i++) {
-//        audio_buffer[i] = (int16_t)(32760 * sin(2 * PI * 440 * i / AUDIO_FREQ));
-//    }
-//}
-//
-//int8_t AUDIO_Transmit_FS(uint8_t* Buf, uint32_t *Len)
-//{
-//    memcpy(Buf, audio_buffer, AUDIO_BLOCK_SIZE * sizeof(int16_t));
-//    *Len = AUDIO_BLOCK_SIZE * sizeof(int16_t);
-//    return USBD_OK;
-//}
-// USB AUDIO DEVICE TEST CODE END
+// ADC4-ADC1 position in TDM I2S
+#define IN1_ADC_NUM 3
+#define IN2_ADC_NUM 2
+#define IN3_ADC_NUM 1
+#define IN4_ADC_NUM 0
+// DAC position in TDM I2S
+#define OUT1_DAC_NUM 5
+#define OUT2_DAC_NUM 7
+#define OUT3_DAC_NUM 6
+#define OUT4_DAC_NUM 4
 
 volatile uint8_t 			ADC_HALF_COMPLETE_FLAG = 0;
 volatile uint8_t 			DAC_HALF_COMPLETE_FLAG = 0;
 volatile uint32_t input_i2s_buffer_au32[16];
 volatile uint32_t output_i2s_buffer_au32[16];
 
+struct{
+	int32_t in1_i32;
+	int32_t in2_i32;
+	int32_t in3_i32;
+	int32_t in4_i32;
+
+	int32_t out1_i32;
+	int32_t out2_i32;
+	int32_t out3_i32;
+	int32_t out4_i32;
+}effects_io_port;
+
 void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai){
 	DAC_HALF_COMPLETE_FLAG = 0;
 	SCB_CleanDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32));
 	SCB_InvalidateDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32));
 
+	output_i2s_buffer_au32[8+OUT1_DAC_NUM] = effects_io_port.out1_i32;
+	output_i2s_buffer_au32[8+OUT2_DAC_NUM] = effects_io_port.out2_i32;
+	output_i2s_buffer_au32[8+OUT3_DAC_NUM] = effects_io_port.out3_i32;
+	output_i2s_buffer_au32[8+OUT4_DAC_NUM] = effects_io_port.out4_i32;
 }
 void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai){
 	DAC_HALF_COMPLETE_FLAG = 1;
 	SCB_CleanDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32));
-		SCB_InvalidateDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32));
+	SCB_InvalidateDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32));
+
+	output_i2s_buffer_au32[OUT1_DAC_NUM] = effects_io_port.out1_i32;
+	output_i2s_buffer_au32[OUT2_DAC_NUM] = effects_io_port.out2_i32;
+	output_i2s_buffer_au32[OUT3_DAC_NUM] = effects_io_port.out3_i32;
+	output_i2s_buffer_au32[OUT4_DAC_NUM] = effects_io_port.out4_i32;
 }
+
+volatile uint8_t 			ADC_READY_FLAG = 0;
 
 void HAL_SAI_RxCpltCallback(SAI_HandleTypeDef *hsai){
 	ADC_HALF_COMPLETE_FLAG = 0;
-
+	ADC_READY_FLAG = 1;
 	SCB_CleanDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32));
 	SCB_InvalidateDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32));
-	output_i2s_buffer_au32[14] = input_i2s_buffer_au32[10];
-	output_i2s_buffer_au32[15] = input_i2s_buffer_au32[11];
+
+	effects_io_port.in1_i32 = input_i2s_buffer_au32[8+IN1_ADC_NUM];
+	effects_io_port.in2_i32 = input_i2s_buffer_au32[8+IN2_ADC_NUM];
+	effects_io_port.in3_i32 = input_i2s_buffer_au32[8+IN3_ADC_NUM];
+	effects_io_port.in4_i32 = input_i2s_buffer_au32[8+IN4_ADC_NUM];
 
 	SCB_CleanDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32));
 	SCB_InvalidateDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32));
 }
 void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai){
 	ADC_HALF_COMPLETE_FLAG = 1;
-
-
+	ADC_READY_FLAG = 1;
 	SCB_CleanDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32));
 	SCB_InvalidateDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32));
-	output_i2s_buffer_au32[6] = input_i2s_buffer_au32[2];
-	output_i2s_buffer_au32[7] = input_i2s_buffer_au32[3];
+
+	effects_io_port.in1_i32 = input_i2s_buffer_au32[IN1_ADC_NUM];
+	effects_io_port.in2_i32 = input_i2s_buffer_au32[IN2_ADC_NUM];
+	effects_io_port.in3_i32 = input_i2s_buffer_au32[IN3_ADC_NUM];
+	effects_io_port.in4_i32 = input_i2s_buffer_au32[IN4_ADC_NUM];
 
 	SCB_CleanDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32));
 	SCB_InvalidateDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32));
-
-
 }
 
 
@@ -141,7 +161,7 @@ void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai){
 #define SDRAM_ADDRESS_START 0xC0000000
 #define SDRAM_SIZE 			0x100000 // 16Mb = 2MB
 
-#define ARRAY_SIZE 10
+#define ARRAY_SIZE 96000
 // Define a padding variable to offset the array by 2 bytes
 __attribute__((section(".sdram_section"))) volatile uint32_t sdram_array[ARRAY_SIZE];
 __attribute__((section(".sdram_section"))) volatile uint16_t sdram_byte;
@@ -192,6 +212,113 @@ void JumpToBootloader(void)
 	      /* Code should never reach this loop */
 	     }
 }
+
+
+volatile int BufSize = 5000;
+volatile int Overlap = 500;
+
+volatile int Buf[10000];
+
+volatile int WtrP;
+volatile float Rd_P;
+volatile float CrossFade;
+float a0, a1, a2, b1, b2, hp_in_z1, hp_in_z2, hp_out_z1, hp_out_z2;
+
+int Do_HighPass (int inSample) {
+	//	500hz high-pass, 48k
+		a0 = 0.9547676565107223;
+		a1 = -1.9095353130214445;
+		a2 = 0.9547676565107223;
+		b1 =-1.9074888914066748;
+		b2 =0.9115817346362142;
+////	3khz high-pass, 96k
+//	a0 = 0.9907853255903974;
+//	a1 = -1.981570651180795;
+//	a2 = 0.9907853255903974;
+//	b1 = -1.9814857645620922;
+//	b2 = 0.9816555377994975;
+//
+//	a0 = 0.3009556244638557;
+//	a1 = 0;
+//	a2 = -0.3009556244638557;
+//	b1 = -1.1091783806868014;
+//	b2 = 0.39808875107228864;
+
+	// 10khz LOWPASS
+//	a0 = 0.22018120452501466;
+//	a1 = 0.4403624090500293;
+//	a2 = 0.22018120452501466;
+//	b1 = -0.3075475090293954;
+//	b2 = 0.18827232712945405;
+
+
+	float inSampleF = (float)inSample;
+	float outSampleF =
+			a0 * inSampleF
+			+ a1 * hp_in_z1
+			+ a2 * hp_in_z2
+			- b1 * hp_out_z1
+			- b2 * hp_out_z2;
+	hp_in_z2 = hp_in_z1;
+	hp_in_z1 = inSampleF;
+	hp_out_z2 = hp_out_z1;
+	hp_out_z1 = outSampleF;
+
+	return (int) outSampleF;
+}
+float Shift = 1.5;//1.189207115002721;
+int Do_PitchShift(int sample) {
+
+	int sum = Do_HighPass(sample);
+//	 sum = sample;
+	//sum up and do high-pass
+
+
+	//write to ringbuffer
+	Buf[WtrP] = sum;
+
+	//read fractional readpointer and generate 0° and 180° read-pointer in integer
+	int RdPtr_Int = roundf(Rd_P);
+	int RdPtr_Int2 = 0;
+	if (RdPtr_Int >= BufSize/2) RdPtr_Int2 = RdPtr_Int - (BufSize/2);
+	else RdPtr_Int2 = RdPtr_Int + (BufSize/2);
+
+	//read the two samples...
+	float Rd0 = (float) Buf[RdPtr_Int];
+	float Rd1 = (float) Buf[RdPtr_Int2];
+
+	//Check if first readpointer starts overlap with write pointer?
+	// if yes -> do cross-fade to second read-pointer
+	if (Overlap >= (WtrP-RdPtr_Int) && (WtrP-RdPtr_Int) >= 0 && Shift!=1.0f) {
+		int rel = WtrP-RdPtr_Int;
+		CrossFade = ((float)rel)/(float)Overlap;
+	}
+	else if (WtrP-RdPtr_Int == 0) CrossFade = 0.0f;
+
+	//Check if second readpointer starts overlap with write pointer?
+	// if yes -> do cross-fade to first read-pointer
+	if (Overlap >= (WtrP-RdPtr_Int2) && (WtrP-RdPtr_Int2) >= 0 && Shift!=1.0f) {
+			int rel = WtrP-RdPtr_Int2;
+			CrossFade = 1.0f - ((float)rel)/(float)Overlap;
+		}
+	else if (WtrP-RdPtr_Int2 == 0) CrossFade = 1.0f;
+
+
+	//do cross-fading and sum up
+	sum = (Rd0*CrossFade + Rd1*(1.0f-CrossFade));
+
+	//increment fractional read-pointer and write-pointer
+	Rd_P += Shift;
+	WtrP++;
+	if (WtrP == BufSize) WtrP = 0;
+	if (roundf(Rd_P) >= BufSize) Rd_P = 0.0f;
+
+	return sum;
+}
+
+// Effect instances
+__attribute__((section(".sdram_section"))) delay_effects_tst delay_effect;
+octave_effects_tst octave_effects_st;
 /* USER CODE END 0 */
 
 /**
@@ -240,6 +367,9 @@ int main(void)
   // init CODEC
 	ad1939_init(&hspi1);
 
+	init_guitar_effect_delay(&delay_effect);
+
+	init_guitar_effect_octave(&octave_effects_st);
 
 
   /* USER CODE END 2 */
@@ -253,62 +383,21 @@ int main(void)
 		// FLASH TESTING END
   while (1)
   {
-	  uint32_t fmctestStart;
-	  uint32_t fmctestStop;
+	  // LOOP1
+	  effects_io_port.out1_i32 = octave_effects_st.callback(&octave_effects_st,effects_io_port.in1_i32);
+	  effects_io_port.out1_i32= Do_PitchShift(effects_io_port.in1_i32) + effects_io_port.out1_i32;
 
-	  fmctestStart = HAL_GetTick();
-	  uint32_t errorCounter =0;
-	  uint32_t usb_state=0;
-	  for(uint32_t i = 0; i<10000;i++){
+	  // LOOP2
+	  effects_io_port.out2_i32 = delay_effect.callback(&delay_effect,effects_io_port.in2_i32);
 
+	  // LOOP3
 
-		  //usb_state = CDC_Transmit_HS((uint8_t*)mymsg, strlen(mymsg));
-		  //HAL_Delay(100);
-
-		  for(uint32_t j=256*256-2; j<256*256+200;j++){
-			  fmctestStart = HAL_GetTick();
-			  uint8_t number_inc = 0;
-//			  for(uint32_t counter = 0; counter<SDRAM_SIZE; counter++){
-//				  *(__IO uint8_t*)(SDRAM_ADDRESS_START+6 + counter) = (uint8_t) number_inc;
-//				  number_inc++;
-//			  }
-//			  for(uint32_t counter = 1; counter<SDRAM_SIZE; counter=counter+2){
-//				  *(__IO uint8_t*)(SDRAM_ADDRESS_START + counter) = (uint8_t) number_inc;
-//				  number_inc++;
-//			  }
-
-			  for(uint32_t counter = 0; counter<ARRAY_SIZE; counter++){
-			 				  sdram_array[counter] = j;
-			 			  }
+	  // LOOP4
 
 
-//			  for(uint32_t counter = 0; counter<SDRAM_SIZE; counter++){
-//			  				  if(*(__IO uint8_t*)(SDRAM_ADDRESS_START + counter) != j){
-//			  					  errorCounter++;
-//			  				  }
-
-
-			  for(uint32_t counter = 0; counter<ARRAY_SIZE; counter++){
-				  if( sdram_array[counter] != j){
-					  errorCounter++;
-				  }
-			  }
-			  fmctestStop = (HAL_GetTick()-fmctestStart);
-		  }
-
-	  }
-
-	  if(errorCounter){
-		  while(1){
-
-		  }
-	  }
-
-	  uint8_t var = *(__IO uint8_t*)(SDRAM_ADDRESS_START);
-	  HAL_Delay(50);
 
     /* USER CODE END WHILE */
-
+	  
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
