@@ -249,7 +249,7 @@ int main(void)
 	// FLASH TESTING START
 
 //	AUDIO_Init();
-	JumpToBootloader();
+//	JumpToBootloader();
 		// FLASH TESTING END
   while (1)
   {
