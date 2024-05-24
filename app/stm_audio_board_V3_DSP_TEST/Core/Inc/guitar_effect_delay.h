@@ -9,10 +9,12 @@
 #define INC_GUITAR_EFFECT_DELAY_H_
 
 #include "main.h"
-
+#include "arm_math.h"
 
 // DEFINES
-#define DELAY_BUFFER_LENGTH  96000
+#define DELAY_BUFFER_LENGTH  24000
+
+
 
 typedef struct delay_parameters_st{
 	float 		time_f32; 					// in ms
@@ -29,7 +31,7 @@ typedef struct delay_parameters_st{
 typedef struct delay_effects_st{
 	int32_t 				input_i32;
 	int32_t 				output_i32;
-	int32_t 				buffer_ai32[DELAY_BUFFER_LENGTH];
+	int32_t*				buffer_ai32;
 
 	// pointers
 	uint32_t 				current_counter_u32;

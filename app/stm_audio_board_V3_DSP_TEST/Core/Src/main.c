@@ -95,7 +95,7 @@ volatile uint8_t 			DAC_HALF_COMPLETE_FLAG = 0;
 volatile uint32_t input_i2s_buffer_au32[16];
 volatile uint32_t output_i2s_buffer_au32[16];
 
-struct{
+volatile struct{
 	int32_t in1_i32;
 	int32_t in2_i32;
 	int32_t in3_i32;
@@ -169,8 +169,8 @@ void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai){
 
 #define ARRAY_SIZE 96000
 // Define a padding variable to offset the array by 2 bytes
-__attribute__((section(".sdram_section"))) volatile uint32_t sdram_array[ARRAY_SIZE];
-__attribute__((section(".sdram_section"))) volatile uint16_t sdram_byte;
+//__attribute__((section(".sdram_section"))) volatile uint32_t sdram_array[ARRAY_SIZE];
+//__attribute__((section(".sdram_section"))) volatile uint16_t sdram_byte;
 
 /*
  * This function puts the device into DFU (bootloader mode)
@@ -272,7 +272,7 @@ int Do_HighPass (int inSample) {
 
 	return (int) outSampleF;
 }
-float Shift = 1.5;//1.189207115002721;
+float Shift = 0.5;//1.189207115002721;
 int Do_PitchShift(int sample) {
 
 	int sum = Do_HighPass(sample);
@@ -323,7 +323,7 @@ int Do_PitchShift(int sample) {
 }
 
 // Effect instances
-//__attribute__((section(".sdram_section"))) delay_effects_tst delay_effect;
+delay_effects_tst delay_effect;
 octave_effects_tst octave_effects_st;
 /* USER CODE END 0 */
 
@@ -380,7 +380,7 @@ int main(void)
   // init CODEC
 	ad1939_init(&hspi1);
 
-//	init_guitar_effect_delay(&delay_effect);
+	init_guitar_effect_delay(&delay_effect);
 
 	init_guitar_effect_octave(&octave_effects_st);
 
@@ -401,19 +401,26 @@ int main(void)
 
 	  // LOOPBACK TESTING
 	  //	  effects_io_port.out1_i32 = effects_io_port.in1_i32;
-	  //	  effects_io_port.out2_i32 = effects_io_port.in2_i32;
-	  //	  effects_io_port.out3_i32 = effects_io_port.in3_i32;
-	  //	  effects_io_port.out4_i32 = effects_io_port.in4_i32;
+	  	  effects_io_port.out2_i32 = effects_io_port.in2_i32;
+	  	  effects_io_port.out3_i32 = effects_io_port.in3_i32;
+	  	  effects_io_port.out4_i32 = effects_io_port.in4_i32;
 
 	  // LOOP1
-	  effects_io_port.out1_i32 = octave_effects_st.callback(&octave_effects_st,effects_io_port.in1_i32/2);
+		  int32_t out;
 
+		  out = octave_effects_st.callback(&octave_effects_st,effects_io_port.in1_i32/2);
+
+		  effects_io_port.out1_i32  = Do_PitchShift(effects_io_port.in1_i32/2) + out/2;
+
+
+//	  effects_io_port.out1_i32 = octave_effects_st.callback(&octave_effects_st,effects_io_port.in1_i32/2);
+//
 //	  effects_io_port.out1_i32= Do_PitchShift(effects_io_port.in1_i32/2) + effects_io_port.out1_i32/2;
-
-
+//		  effects_io_port.out1_i32 = delay_effect.callback(&delay_effect,effects_io_port.out1_i32/2);
+//		  while(ADC_READY_FLAG){}
 
 	  // LOOP2
-//	  effects_io_port.out2_i32 = delay_effect.callback(&delay_effect,effects_io_port.in2_i32);
+//		  effects_io_port.out2_i32 = delay_effect.callback(&delay_effect,effects_io_port.in2_i32/2);
 
 	  // LOOP3
 
