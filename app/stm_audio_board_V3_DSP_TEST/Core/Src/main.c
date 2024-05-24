@@ -394,6 +394,27 @@ int main(void)
 //	AUDIO_Init();
 //	JumpToBootloader();
 		// FLASH TESTING END
+	/*
+	 * #define FSW_LED4_Pin GPIO_PIN_9
+#define FSW_LED4_GPIO_Port GPIOC
+#define FSW_LED3_Pin GPIO_PIN_8
+#define FSW_LED3_GPIO_Port GPIOA
+#define FSW_LED2_Pin GPIO_PIN_9
+#define FSW_LED2_GPIO_Port GPIOA
+#define FSW_LED1_Pin GPIO_PIN_10
+#define FSW_LED1_GPIO_Port GPIOA
+	 */
+
+	HAL_GPIO_WritePin(FSW_LED1_GPIO_Port, FSW_LED1_Pin, 0);
+	HAL_GPIO_WritePin(FSW_LED2_GPIO_Port, FSW_LED2_Pin, 0);
+	HAL_GPIO_WritePin(FSW_LED3_GPIO_Port, FSW_LED3_Pin, 0);
+	HAL_GPIO_WritePin(FSW_LED4_GPIO_Port, FSW_LED4_Pin, 0);
+
+
+	HAL_GPIO_WritePin(FSW_LED1_GPIO_Port, FSW_LED1_Pin, 1);
+	HAL_GPIO_WritePin(FSW_LED2_GPIO_Port, FSW_LED2_Pin, 1);
+	HAL_GPIO_WritePin(FSW_LED3_GPIO_Port, FSW_LED3_Pin, 1);
+	HAL_GPIO_WritePin(FSW_LED4_GPIO_Port, FSW_LED4_Pin, 1);
   while (1)
   {
 	  if(ADC_READY_FLAG){
@@ -408,9 +429,9 @@ int main(void)
 	  // LOOP1
 		  int32_t out;
 
-		  out = octave_effects_st.callback(&octave_effects_st,effects_io_port.in1_i32/2);
+		  effects_io_port.out1_i32 = octave_effects_st.callback(&octave_effects_st,effects_io_port.in1_i32/2);
 
-		  effects_io_port.out1_i32  = Do_PitchShift(effects_io_port.in1_i32/2) + out/2;
+//		  effects_io_port.out1_i32  = Do_PitchShift(effects_io_port.in1_i32/2) + effects_io_port.in1_i32/2;
 
 
 //	  effects_io_port.out1_i32 = octave_effects_st.callback(&octave_effects_st,effects_io_port.in1_i32/2);
