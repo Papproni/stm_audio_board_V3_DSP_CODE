@@ -232,11 +232,11 @@ float a0, a1, a2, b1, b2, hp_in_z1, hp_in_z2, hp_out_z1, hp_out_z2;
 
 int Do_HighPass (int inSample) {
 	//	500hz high-pass, 48k
-		a0 = 0.9547676565107223;
-		a1 = -1.9095353130214445;
-		a2 = 0.9547676565107223;
-		b1 =-1.9074888914066748;
-		b2 =0.9115817346362142;
+//		a0 = 0.9547676565107223;
+//		a1 = -1.9095353130214445;
+//		a2 = 0.9547676565107223;
+//		b1 =-1.9074888914066748;
+//		b2 =0.9115817346362142;
 ////	3khz high-pass, 96k
 //	a0 = 0.9907853255903974;
 //	a1 = -1.981570651180795;
@@ -244,11 +244,11 @@ int Do_HighPass (int inSample) {
 //	b1 = -1.9814857645620922;
 //	b2 = 0.9816555377994975;
 //
-//	a0 = 0.3009556244638557;
-//	a1 = 0;
-//	a2 = -0.3009556244638557;
-//	b1 = -1.1091783806868014;
-//	b2 = 0.39808875107228864;
+	a0 = 0.3009556244638557;
+	a1 = 0;
+	a2 = -0.3009556244638557;
+	b1 = -1.1091783806868014;
+	b2 = 0.39808875107228864;
 
 	// 10khz LOWPASS
 //	a0 = 0.22018120452501466;
@@ -325,6 +325,9 @@ int Do_PitchShift(int sample) {
 // Effect instances
 delay_effects_tst delay_effect;
 octave_effects_tst octave_effects_st;
+
+int32_t sdram_buffer_test_ai32[100]__attribute__((section(".sdram_section")));
+
 /* USER CODE END 0 */
 
 /**
@@ -415,6 +418,12 @@ int main(void)
 	HAL_GPIO_WritePin(FSW_LED2_GPIO_Port, FSW_LED2_Pin, 1);
 	HAL_GPIO_WritePin(FSW_LED3_GPIO_Port, FSW_LED3_Pin, 1);
 	HAL_GPIO_WritePin(FSW_LED4_GPIO_Port, FSW_LED4_Pin, 1);
+
+	for(int i = 0; i<100;i++){
+//		sdram_buffer_test_ai32[i]=i;
+		*(__IO uint32_t*) (0xC0000000 + 4*i) = 0x0A000B00;
+	}
+
   while (1)
   {
 	  if(ADC_READY_FLAG){
@@ -429,10 +438,10 @@ int main(void)
 	  // LOOP1
 		  int32_t out;
 
-		  effects_io_port.out1_i32 = octave_effects_st.callback(&octave_effects_st,effects_io_port.in1_i32/2);
-
-//		  effects_io_port.out1_i32  = Do_PitchShift(effects_io_port.in1_i32/2) + effects_io_port.in1_i32/2;
-
+//		  effects_io_port.out1_i32 = octave_effects_st.callback(&octave_effects_st,effects_io_port.in1_i32/2);
+//
+//		  effects_io_port.out1_i32  = Do_PitchShift(effects_io_port.in1_i32/2) + effects_io_port.out1_i32;
+		  effects_io_port.out1_i32 = delay_effect.callback(&delay_effect,effects_io_port.in1_i32/2);
 
 //	  effects_io_port.out1_i32 = octave_effects_st.callback(&octave_effects_st,effects_io_port.in1_i32/2);
 //

@@ -12,7 +12,7 @@
 #include "arm_math.h"
 
 // DEFINES
-#define DELAY_BUFFER_LENGTH  24000
+#define DELAY_BUFFER_LENGTH  48000
 
 
 
@@ -43,6 +43,7 @@ typedef struct delay_effects_st{
 	int32_t (*callback) (struct delay_effects_st* self,int32_t input_signal_i32);
 }delay_effects_tst;
 
+void init_guitar_effect_delay(struct delay_effects_st* self);
 
 //delay_effects_tst delay_effect;
 #endif /* INC_GUITAR_EFFECT_DELAY_H_ */

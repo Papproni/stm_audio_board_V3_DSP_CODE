@@ -5,7 +5,7 @@
 ../Core/Src/main.c:179:6:JumpToBootloader	1
 ../Core/Src/main.c:233:5:Do_HighPass	1
 ../Core/Src/main.c:276:5:Do_PitchShift	15
-../Core/Src/main.c:463:6:SystemClock_Config	4
-../Core/Src/main.c:522:6:PeriphCommonClock_Config	2
-../Core/Src/main.c:334:5:main	7
-../Core/Src/main.c:553:6:Error_Handler	1
+../Core/Src/main.c:472:6:SystemClock_Config	4
+../Core/Src/main.c:531:6:PeriphCommonClock_Config	2
+../Core/Src/main.c:337:5:main	8
+../Core/Src/main.c:562:6:Error_Handler	1
