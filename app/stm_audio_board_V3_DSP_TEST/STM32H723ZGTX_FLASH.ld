@@ -49,7 +49,7 @@ MEMORY
   RAM_D1  (xrw)    : ORIGIN = 0x24000000,   LENGTH = 320K
   RAM_D2  (xrw)    : ORIGIN = 0x30000000,   LENGTH = 32K
   RAM_D3  (xrw)    : ORIGIN = 0x38000000,   LENGTH = 16K
-  
+   SDRAM   (xrw)    : ORIGIN = 0xC0000000,   LENGTH = 2M
 }
 
 /* Define output sections */
@@ -63,7 +63,12 @@ SECTIONS
     . = ALIGN(4);
   } >FLASH
 	
+.sdram_section (NOLOAD) :
+    {
+        . = ORIGIN(SDRAM); /* Offset within SDRAM */
+        *(.sdram_section)
 
+    } >SDRAM
   /* The program code and other data goes into FLASH */
   .text :
   {

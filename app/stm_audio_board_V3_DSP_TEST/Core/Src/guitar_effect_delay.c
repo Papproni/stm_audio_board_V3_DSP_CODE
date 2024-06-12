@@ -7,7 +7,7 @@
 
 #include "guitar_effect_delay.h"
 
-volatile int32_t delay_sdram_buffer_ai32[DELAY_BUFFER_LENGTH];//__attribute__((section(".sdram_section")));
+__attribute__((section(".sdram_section"))) int32_t delay_sdram_buffer_ai32[DELAY_BUFFER_LENGTH];;
 
 static arm_biquad_cascade_df2T_instance_f32 lowpass_15k;
 static volatile float32_t lowpass_15k_coeff[5]={0.61684009,0.0,-0.61684009,-0.19833816,-0.23368018};
