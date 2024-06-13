@@ -105,7 +105,7 @@ volatile struct{
 	int32_t out2_i32;
 	int32_t out3_i32;
 	int32_t out4_i32;
-}effects_io_port;
+}effects_io_port,effects_io_port_half;
 
 void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai){
 	DAC_HALF_COMPLETE_FLAG = 0;
@@ -232,11 +232,17 @@ float a0, a1, a2, b1, b2, hp_in_z1, hp_in_z2, hp_out_z1, hp_out_z2;
 
 int Do_HighPass (int inSample) {
 	//	500hz high-pass, 48k
-//		a0 = 0.9547676565107223;
-//		a1 = -1.9095353130214445;
-//		a2 = 0.9547676565107223;
-//		b1 =-1.9074888914066748;
-//		b2 =0.9115817346362142;
+//	a0 = 0.9547676565107223;
+//				a1 = -1.9095353130214445;
+//				a2 = 0.9547676565107223;
+//				b1 =-1.9074888914066748;
+//				b2 =0.9115817346362142;
+		//	1khz high-pass, 48k
+				b1 = -1.81531792;
+				b2 = 0.83098222;
+				a0 = 0.91157503;
+				a1 = -1.82315007;
+				a2 = 0.91157503;
 ////	3khz high-pass, 96k
 //	a0 = 0.9907853255903974;
 //	a1 = -1.981570651180795;
@@ -244,11 +250,11 @@ int Do_HighPass (int inSample) {
 //	b1 = -1.9814857645620922;
 //	b2 = 0.9816555377994975;
 //
-	a0 = 0.3009556244638557;
-	a1 = 0;
-	a2 = -0.3009556244638557;
-	b1 = -1.1091783806868014;
-	b2 = 0.39808875107228864;
+//	a0 = 0.3009556244638557;
+//	a1 = 0;
+//	a2 = -0.3009556244638557;
+//	b1 = -1.1091783806868014;
+//	b2 = 0.39808875107228864;
 
 	// 10khz LOWPASS
 //	a0 = 0.22018120452501466;
@@ -281,7 +287,7 @@ int Do_PitchShift(int sample) {
 
 
 	//write to ringbuffer
-	Buf[WtrP] = sum;
+	Buf[WtrP] = sample;
 
 	//read fractional readpointer and generate 0° and 180° read-pointer in integer
 	int RdPtr_Int = roundf(Rd_P);
@@ -438,10 +444,19 @@ int main(void)
 	  // LOOP1
 		  int32_t out;
 
-//		  effects_io_port.out1_i32 = octave_effects_st.callback(&octave_effects_st,effects_io_port.in1_i32/2);
+		  out = octave_effects_st.callback(&octave_effects_st,effects_io_port.in1_i32/2);
+//effects_io_port.out1_i32 = octave_effects_st.callback(&octave_effects_st,effects_io_port.in1_i32/2);
+
+		  out  = Do_PitchShift(effects_io_port.in1_i32/2) + effects_io_port.in1_i32 + out;
+//		  if(!DAC_HALF_COMPLETE_FLAG){
+//			  effects_io_port_half.out1_i32  = Do_PitchShift(effects_io_port.in1_i32/2) + effects_io_port.in1_i32 + out;
+//		  }else{
 //
-//		  effects_io_port.out1_i32  = Do_PitchShift(effects_io_port.in1_i32/2) + effects_io_port.out1_i32;
-		  effects_io_port.out1_i32 = delay_effect.callback(&delay_effect,effects_io_port.in1_i32/2);
+//
+//		  }
+
+		  effects_io_port.out1_i32 = delay_effect.callback(&delay_effect,out);
+
 
 //	  effects_io_port.out1_i32 = octave_effects_st.callback(&octave_effects_st,effects_io_port.in1_i32/2);
 //

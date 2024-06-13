@@ -4,8 +4,8 @@
 ../Core/Src/main.c:150:6:HAL_SAI_RxHalfCpltCallback	2
 ../Core/Src/main.c:179:6:JumpToBootloader	1
 ../Core/Src/main.c:233:5:Do_HighPass	1
-../Core/Src/main.c:276:5:Do_PitchShift	15
-../Core/Src/main.c:472:6:SystemClock_Config	4
-../Core/Src/main.c:531:6:PeriphCommonClock_Config	2
-../Core/Src/main.c:337:5:main	8
-../Core/Src/main.c:562:6:Error_Handler	1
+../Core/Src/main.c:282:5:Do_PitchShift	15
+../Core/Src/main.c:487:6:SystemClock_Config	4
+../Core/Src/main.c:546:6:PeriphCommonClock_Config	2
+../Core/Src/main.c:343:5:main	9
+../Core/Src/main.c:577:6:Error_Handler	1

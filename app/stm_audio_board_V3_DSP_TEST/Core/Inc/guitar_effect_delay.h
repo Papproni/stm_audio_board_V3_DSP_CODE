@@ -12,7 +12,7 @@
 #include "arm_math.h"
 
 // DEFINES
-#define DELAY_BUFFER_LENGTH  192000
+#define DELAY_BUFFER_LENGTH  48000
 
 
 
