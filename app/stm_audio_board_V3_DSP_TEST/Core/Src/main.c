@@ -116,7 +116,7 @@ void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai){
 	output_i2s_buffer_au32[8+OUT2_DAC_NUM] = effects_io_port.out2_i32>>8;
 	output_i2s_buffer_au32[8+OUT3_DAC_NUM] = effects_io_port.out3_i32>>8;
 	output_i2s_buffer_au32[8+OUT4_DAC_NUM] = effects_io_port.out4_i32>>8;
-	SCB_CleanDCache_by_Addr(&output_i2s_buffer_au32[8], sizeof(output_i2s_buffer_au32)/2);
+//	SCB_CleanDCache_by_Addr(&output_i2s_buffer_au32[8], sizeof(output_i2s_buffer_au32)/2);
 }
 void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai){
 	DAC_HALF_COMPLETE_FLAG = 1;
@@ -127,7 +127,7 @@ void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai){
 	output_i2s_buffer_au32[OUT2_DAC_NUM] = effects_io_port.out2_i32>>8;
 	output_i2s_buffer_au32[OUT3_DAC_NUM] = effects_io_port.out3_i32>>8;
 	output_i2s_buffer_au32[OUT4_DAC_NUM] = effects_io_port.out4_i32>>8;
-	SCB_CleanDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32)/2);
+//	SCB_CleanDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32)/2);
 }
 
 volatile uint8_t 			ADC_READY_FLAG = 0;
@@ -138,7 +138,7 @@ void HAL_SAI_RxCpltCallback(SAI_HandleTypeDef *hsai){
 //	SCB_CleanDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32));
 //	SCB_InvalidateDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32));
 
-	SCB_InvalidateDCache_by_Addr(&input_i2s_buffer_au32[8], sizeof(input_i2s_buffer_au32)/2);
+//	SCB_InvalidateDCache_by_Addr(&input_i2s_buffer_au32[8], sizeof(input_i2s_buffer_au32)/2);
 	effects_io_port.in1_i32 = input_i2s_buffer_au32[8+IN1_ADC_NUM]<<8;
 	effects_io_port.in2_i32 = input_i2s_buffer_au32[8+IN2_ADC_NUM]<<8;
 	effects_io_port.in3_i32 = input_i2s_buffer_au32[8+IN3_ADC_NUM]<<8;
@@ -152,7 +152,7 @@ void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai){
 	ADC_READY_FLAG = 1;
 //	SCB_CleanDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32));
 //	SCB_InvalidateDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32));
-	SCB_InvalidateDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32)/2);
+//	SCB_InvalidateDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32)/2);
 	effects_io_port.in1_i32 = input_i2s_buffer_au32[IN1_ADC_NUM]<<8;
 	effects_io_port.in2_i32 = input_i2s_buffer_au32[IN2_ADC_NUM]<<8;
 	effects_io_port.in3_i32 = input_i2s_buffer_au32[IN3_ADC_NUM]<<8;
@@ -421,7 +421,7 @@ int main(void)
 
 
 	HAL_GPIO_WritePin(FSW_LED1_GPIO_Port, FSW_LED1_Pin, 1);
-	HAL_GPIO_WritePin(FSW_LED2_GPIO_Port, FSW_LED2_Pin, 1);
+	HAL_GPIO_WritePin(FSW_LED2_GPIO_Port, FSW_LED2_Pin, 0);
 	HAL_GPIO_WritePin(FSW_LED3_GPIO_Port, FSW_LED3_Pin, 1);
 	HAL_GPIO_WritePin(FSW_LED4_GPIO_Port, FSW_LED4_Pin, 1);
 
@@ -436,18 +436,18 @@ int main(void)
 		  ADC_READY_FLAG = 0;
 
 	  // LOOPBACK TESTING
-	  //	  effects_io_port.out1_i32 = effects_io_port.in1_i32;
+	  	  effects_io_port.out1_i32 = effects_io_port.in1_i32;
 	  	  effects_io_port.out2_i32 = effects_io_port.in2_i32;
 	  	  effects_io_port.out3_i32 = effects_io_port.in3_i32;
 	  	  effects_io_port.out4_i32 = effects_io_port.in4_i32;
 
 	  // LOOP1
-		  int32_t out;
-
-		  out = octave_effects_st.callback(&octave_effects_st,effects_io_port.in1_i32/2);
-//effects_io_port.out1_i32 = octave_effects_st.callback(&octave_effects_st,effects_io_port.in1_i32/2);
-
-		  out  = Do_PitchShift(effects_io_port.in1_i32/2) + effects_io_port.in1_i32 + out;
+//		  int32_t out;
+//
+//		  out = octave_effects_st.callback(&octave_effects_st,effects_io_port.in1_i32/2);
+////effects_io_port.out1_i32 = octave_effects_st.callback(&octave_effects_st,effects_io_port.in1_i32/2);
+//
+//		  out  = Do_PitchShift(effects_io_port.in1_i32/2) + effects_io_port.in1_i32 + out;
 //		  if(!DAC_HALF_COMPLETE_FLAG){
 //			  effects_io_port_half.out1_i32  = Do_PitchShift(effects_io_port.in1_i32/2) + effects_io_port.in1_i32 + out;
 //		  }else{
@@ -455,7 +455,7 @@ int main(void)
 //
 //		  }
 
-		  effects_io_port.out1_i32 = delay_effect.callback(&delay_effect,out);
+//		  effects_io_port.out1_i32 = delay_effect.callback(&delay_effect,out);
 
 
 //	  effects_io_port.out1_i32 = octave_effects_st.callback(&octave_effects_st,effects_io_port.in1_i32/2);

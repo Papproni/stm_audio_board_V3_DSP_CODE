@@ -1,0 +1,4 @@
+
+*.o
+*.o
+/app/stm_audio_board_V3_DSP_TEST/Debug
