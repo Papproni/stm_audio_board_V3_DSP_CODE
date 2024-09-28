@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "dma.h"
+#include "i2c.h"
 #include "octospi.h"
 #include "sai.h"
 #include "spi.h"
@@ -334,6 +335,42 @@ octave_effects_tst octave_effects_st;
 
 int32_t sdram_buffer_test_ai32[100]__attribute__((section(".sdram_section")));
 
+/*
+ * I2C INTERRUPT FUNCTIONS ----------------------------
+ */
+#define RX_LEN 6
+uint8_t TX_Buffer [6] = "ABCDEF" ; // DATA to send
+uint8_t RX_Buffer [RX_LEN] = "ABCDEF" ; // DATA to send
+extern void HAL_I2C_ListenCpltCallback (I2C_HandleTypeDef *hi2c)
+{
+	HAL_I2C_EnableListen_IT(hi2c);
+}
+void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c)
+{
+	HAL_I2C_EnableListen_IT(hi2c);
+}
+
+extern void HAL_I2C_AddrCallback(I2C_HandleTypeDef *hi2c, uint8_t TransferDirection, uint16_t AddrMatchCode)
+{
+	if(TransferDirection == I2C_DIRECTION_TRANSMIT)  // if the master wants to transmit the data
+	{
+		HAL_I2C_Slave_Sequential_Receive_IT(hi2c, RX_Buffer, RX_LEN, I2C_FIRST_AND_LAST_FRAME);
+	}
+	else  // master requesting the data is not supported yet
+	{
+		Error_Handler();
+	}
+}
+
+void HAL_I2C_SlaveRxCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+
+}
+
+/*
+ * ----------------------------
+ */
+
 /* USER CODE END 0 */
 
 /**
@@ -380,6 +417,7 @@ int main(void)
   MX_FMC_Init();
   MX_OCTOSPI1_Init();
   MX_USB_DEVICE_Init();
+  MX_I2C4_Init();
   /* USER CODE BEGIN 2 */
 
   // init SAI interface
@@ -430,8 +468,14 @@ int main(void)
 		*(__IO uint32_t*) (0xC0000000 + 4*i) = 0x0A000B00;
 	}
 
+
+	HAL_I2C_EnableListen_IT(&hi2c4);
   while (1)
   {
+//	  HAL_I2C_Master_Transmit(&hi2c4,0x1F,TX_Buffer,5,1000); //Sending in Blocking mode
+//	  HAL_I2C_Slave_Receive(&hi2c4, RX_Buffer, 6, 1000);
+//	HAL_Delay(100);
+
 	  if(ADC_READY_FLAG){
 		  ADC_READY_FLAG = 0;
 
@@ -577,6 +621,7 @@ void PeriphCommonClock_Config(void)
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
+	HAL_GPIO_WritePin(GPIOG, GPIO_PIN_5, GPIO_PIN_RESET);
   /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
   while (1)
