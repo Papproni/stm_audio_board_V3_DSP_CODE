@@ -117,7 +117,7 @@ void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai){
 	output_i2s_buffer_au32[8+OUT2_DAC_NUM] = effects_io_port.out2_i32>>8;
 	output_i2s_buffer_au32[8+OUT3_DAC_NUM] = effects_io_port.out3_i32>>8;
 	output_i2s_buffer_au32[8+OUT4_DAC_NUM] = effects_io_port.out4_i32>>8;
-//	SCB_CleanDCache_by_Addr(&output_i2s_buffer_au32[8], sizeof(output_i2s_buffer_au32)/2);
+	SCB_CleanDCache_by_Addr(&output_i2s_buffer_au32[8], sizeof(output_i2s_buffer_au32)/2);
 }
 void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai){
 	DAC_HALF_COMPLETE_FLAG = 1;
@@ -128,7 +128,7 @@ void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai){
 	output_i2s_buffer_au32[OUT2_DAC_NUM] = effects_io_port.out2_i32>>8;
 	output_i2s_buffer_au32[OUT3_DAC_NUM] = effects_io_port.out3_i32>>8;
 	output_i2s_buffer_au32[OUT4_DAC_NUM] = effects_io_port.out4_i32>>8;
-//	SCB_CleanDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32)/2);
+	SCB_CleanDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32)/2);
 }
 
 volatile uint8_t 			ADC_READY_FLAG = 0;
@@ -139,7 +139,7 @@ void HAL_SAI_RxCpltCallback(SAI_HandleTypeDef *hsai){
 //	SCB_CleanDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32));
 //	SCB_InvalidateDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32));
 
-//	SCB_InvalidateDCache_by_Addr(&input_i2s_buffer_au32[8], sizeof(input_i2s_buffer_au32)/2);
+	SCB_InvalidateDCache_by_Addr(&input_i2s_buffer_au32[8], sizeof(input_i2s_buffer_au32)/2);
 	effects_io_port.in1_i32 = input_i2s_buffer_au32[8+IN1_ADC_NUM]<<8;
 	effects_io_port.in2_i32 = input_i2s_buffer_au32[8+IN2_ADC_NUM]<<8;
 	effects_io_port.in3_i32 = input_i2s_buffer_au32[8+IN3_ADC_NUM]<<8;
@@ -153,7 +153,7 @@ void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai){
 	ADC_READY_FLAG = 1;
 //	SCB_CleanDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32));
 //	SCB_InvalidateDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32));
-//	SCB_InvalidateDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32)/2);
+	SCB_InvalidateDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32)/2);
 	effects_io_port.in1_i32 = input_i2s_buffer_au32[IN1_ADC_NUM]<<8;
 	effects_io_port.in2_i32 = input_i2s_buffer_au32[IN2_ADC_NUM]<<8;
 	effects_io_port.in3_i32 = input_i2s_buffer_au32[IN3_ADC_NUM]<<8;
