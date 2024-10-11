@@ -338,13 +338,14 @@ int32_t sdram_buffer_test_ai32[100]__attribute__((section(".sdram_section")));
 /*
  * I2C INTERRUPT FUNCTIONS ----------------------------
  */
-#define RX_LEN 6
+#define RX_LEN 255
 uint8_t TX_Buffer [6] = "ABCDEF" ; // DATA to send
 uint8_t RX_Buffer [RX_LEN] = "ABCDEF" ; // DATA to send
 extern void HAL_I2C_ListenCpltCallback (I2C_HandleTypeDef *hi2c)
 {
 	HAL_I2C_EnableListen_IT(hi2c);
 }
+
 void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c)
 {
 	HAL_I2C_EnableListen_IT(hi2c);
@@ -364,7 +365,11 @@ extern void HAL_I2C_AddrCallback(I2C_HandleTypeDef *hi2c, uint8_t TransferDirect
 
 void HAL_I2C_SlaveRxCpltCallback(I2C_HandleTypeDef *hi2c)
 {
+	 
+}
 
+void I2C_Slave_Listen(void) {
+	HAL_I2C_Slave_Receive_IT(&hi2c4, RX_LEN, sizeof(RX_LEN));
 }
 
 /*
