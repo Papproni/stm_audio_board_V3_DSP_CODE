@@ -40,10 +40,14 @@
 #include <math.h>
 #include "arm_math.h"
 
+// SAB specifics------START----
 // Effects libs
 #include "guitar_effect_delay.h"
 #include "guitar_effect_octave.h"
 
+// i2c comm
+#include "sab_intercom.h"
+// SAB specifics------END----
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -338,6 +342,9 @@ int32_t sdram_buffer_test_ai32[100]__attribute__((section(".sdram_section")));
 /*
  * I2C INTERRUPT FUNCTIONS ----------------------------
  */
+
+sab_intercom_tst intercom_st;
+
 #define RX_LEN 255
 uint8_t TX_Buffer [6] = "ABCDEF" ; // DATA to send
 uint8_t RX_Buffer [RX_LEN] = "ABCDEF" ; // DATA to send
@@ -355,17 +362,28 @@ extern void HAL_I2C_AddrCallback(I2C_HandleTypeDef *hi2c, uint8_t TransferDirect
 {
 	if(TransferDirection == I2C_DIRECTION_TRANSMIT)  // if the master wants to transmit the data
 	{
-		HAL_I2C_Slave_Sequential_Receive_IT(hi2c, RX_Buffer, RX_LEN, I2C_FIRST_AND_LAST_FRAME);
+		RX_Buffer[0] = 0;
+		HAL_I2C_Slave_Sequential_Receive_IT(hi2c, RX_Buffer, 1, I2C_FIRST_FRAME);
 	}
 	else  // master requesting the data is not supported yet
 	{
-		Error_Handler();
+		HAL_I2C_Slave_Seq_Transmit_IT(hi2c, RX_Buffer, 1, I2C_FIRST_FRAME);
+
 	}
 }
 
 void HAL_I2C_SlaveRxCpltCallback(I2C_HandleTypeDef *hi2c)
 {
-	 
+
+}
+
+void HAL_I2C_SlaveTxCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+	intercom_st.preset_data_un.preset_Major_u8 = 0;
+	intercom_st.preset_data_un.preset_Minor_u8 = 1;
+	intercom_st.preset_data_un.BTN3_state_en   = 2;
+	intercom_st.preset_data_un.BTN4_state_en   = 3;
+	HAL_I2C_Slave_Seq_Transmit_IT(hi2c, (uint8_t*)&(intercom_st.preset_data_un.all_u32), SAB_I2C_REG_PRESETNUM_LEN+1, I2C_FIRST_FRAME);
 }
 
 void I2C_Slave_Listen(void) {
@@ -436,6 +454,7 @@ int main(void)
 
 	init_guitar_effect_octave(&octave_effects_st);
 
+	init_intercom(&intercom_st, 0x10,&hi2c4);
 
   /* USER CODE END 2 */
 
