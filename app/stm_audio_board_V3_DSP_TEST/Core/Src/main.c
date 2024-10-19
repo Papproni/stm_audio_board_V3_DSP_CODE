@@ -542,7 +542,7 @@ int main(void)
 
 	  // LOOP1
 		  int32_t out;
-//
+		// TESTING 
 			float32_t vol_sub1 = log_scale(intercom_st.fx_param_un[0].value_u8);
 			float32_t vol_norm = log_scale(intercom_st.fx_param_un[1].value_u8);
 			float32_t vol_up1  = log_scale(intercom_st.fx_param_un[2].value_u8);
@@ -550,34 +550,6 @@ int main(void)
 		  octave_effects_st.volumes_st.up_1_f32 = vol_up1;
 		  octave_effects_st.volumes_st.up_2_f32 = vol_up1;
 		  effects_io_port.out1_i32 = octave_effects_st.callback(&octave_effects_st,effects_io_port.in1_i32/2) + Do_PitchShift(effects_io_port.in1_i32/2)*vol_sub1;
-
-//effects_io_port.out1_i32 = octave_effects_st.callback(&octave_effects_st,effects_io_port.in1_i32/2);
-//
-//		  out  = Do_PitchShift(effects_io_port.in1_i32/2) + effects_io_port.in1_i32 + out;
-//		  if(!DAC_HALF_COMPLETE_FLAG){
-//			  effects_io_port_half.out1_i32  = Do_PitchShift(effects_io_port.in1_i32/2) + effects_io_port.in1_i32 + out;
-//		  }else{
-//
-//
-//		  }
-
-//		  effects_io_port.out1_i32 = delay_effect.callback(&delay_effect,out);
-
-
-//	  effects_io_port.out1_i32 = octave_effects_st.callback(&octave_effects_st,effects_io_port.in1_i32/2);
-//
-//	  effects_io_port.out1_i32= Do_PitchShift(effects_io_port.in1_i32/2) + effects_io_port.out1_i32/2;
-//		  effects_io_port.out1_i32 = delay_effect.callback(&delay_effect,effects_io_port.out1_i32/2);
-//		  while(ADC_READY_FLAG){}
-
-	  // LOOP2
-//		  effects_io_port.out2_i32 = delay_effect.callback(&delay_effect,effects_io_port.in2_i32/2);
-
-	  // LOOP3
-
-	  // LOOP4
-
-
 	  }
     /* USER CODE END WHILE */
 
