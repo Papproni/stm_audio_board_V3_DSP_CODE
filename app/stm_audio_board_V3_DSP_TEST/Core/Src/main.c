@@ -225,8 +225,8 @@ void JumpToBootloader(void)
 }
 
 
-volatile int BufSize = 5000;
-volatile int Overlap = 500;
+volatile int BufSize = 4000;
+volatile int Overlap = 1000;
 
 volatile int Buf[10000];
 
@@ -409,9 +409,21 @@ void I2C_Slave_Listen(void) {
 	HAL_I2C_Slave_Receive_IT(&hi2c4, RX_Buffer, sizeof(RX_Buffer));
 }
 
+
 /*
  * ----------------------------
  */
+
+float32_t log_scale(uint8_t input_value) {
+    // Add 1 to avoid log(0) and calculate log(1 + input_value)
+    // float log_value = log10(1 + input_value);
+
+    // Scale to fit the 0-8 range
+    float32_t scaled_value = (input_value / 256.0) *4.0f;
+
+    return scaled_value;
+}
+
 
 /* USER CODE END 0 */
 
@@ -523,16 +535,23 @@ int main(void)
 		  ADC_READY_FLAG = 0;
 
 	  // LOOPBACK TESTING
-	  	  effects_io_port.out1_i32 = effects_io_port.in1_i32;
+//	  	  effects_io_port.out1_i32 = effects_io_port.in1_i32;
 	  	  effects_io_port.out2_i32 = effects_io_port.in2_i32;
 	  	  effects_io_port.out3_i32 = effects_io_port.in3_i32;
 	  	  effects_io_port.out4_i32 = effects_io_port.in4_i32;
 
 	  // LOOP1
-//		  int32_t out;
+		  int32_t out;
 //
-//		  out = octave_effects_st.callback(&octave_effects_st,effects_io_port.in1_i32/2);
-////effects_io_port.out1_i32 = octave_effects_st.callback(&octave_effects_st,effects_io_port.in1_i32/2);
+			float32_t vol_sub1 = log_scale(intercom_st.fx_param_un[0].value_u8);
+			float32_t vol_norm = log_scale(intercom_st.fx_param_un[1].value_u8);
+			float32_t vol_up1  = log_scale(intercom_st.fx_param_un[2].value_u8);
+		  octave_effects_st.volumes_st.clean_f32 = vol_norm;
+		  octave_effects_st.volumes_st.up_1_f32 = vol_up1;
+		  octave_effects_st.volumes_st.up_2_f32 = vol_up1;
+		  effects_io_port.out1_i32 = octave_effects_st.callback(&octave_effects_st,effects_io_port.in1_i32/2) + Do_PitchShift(effects_io_port.in1_i32/2)*vol_sub1;
+
+//effects_io_port.out1_i32 = octave_effects_st.callback(&octave_effects_st,effects_io_port.in1_i32/2);
 //
 //		  out  = Do_PitchShift(effects_io_port.in1_i32/2) + effects_io_port.in1_i32 + out;
 //		  if(!DAC_HALF_COMPLETE_FLAG){
