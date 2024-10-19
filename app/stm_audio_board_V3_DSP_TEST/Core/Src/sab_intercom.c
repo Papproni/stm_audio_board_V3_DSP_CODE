@@ -61,6 +61,89 @@ static void set_loopbypass (struct sab_intercom_st* self){
 				&self->loopbypass_un.all_u8, SAB_I2C_REG_LOOPBYPASSSTATE_LEN, 1000);
 }
 
+/// @brief Saves data received from master (display)
+/// @param self 
+/// @param buffer_pu8 
+/// @param size_u8 
+void sab_intercom_process_i2c_data(struct sab_intercom_st* self, uint8_t*buffer_pu8, uint8_t size_u8){
+	memcpy(self->get_reg_data_ptr(self),buffer_pu8,size_u8);
+}
+
+/// @brief This function returns the data pointer which is adressed by the "register_addr_u8"
+/// @param self 
+/// @return 
+uint32_t sab_intercom_get_reg_data_ptr(struct sab_intercom_st* self){
+	switch (self->register_addr_u8)
+	{
+		case SAB_I2C_REG_PRESETNUM:
+			return &self->preset_data_un;  // Returns pointer to the preset data union
+
+		case SAB_I2C_REG_LOOP1FX:
+			return &self->loop_data[0];    // Returns pointer to the first loop
+
+		case SAB_I2C_REG_LOOP2FX:
+			return &self->loop_data[1];    // Returns pointer to the second loop
+
+		case SAB_I2C_REG_LOOP3FX:
+			return &self->loop_data[2];    // Returns pointer to the third loop
+
+		case SAB_I2C_REG_LOOP4FX:
+			return &self->loop_data[3];    // Returns pointer to the fourth loop
+
+		case SAB_I2C_REG_FXPARAM1:
+			return &self->fx_param_un[0];  // Returns pointer to the first FX parameter
+
+		case SAB_I2C_REG_FXPARAM2:
+			return &self->fx_param_un[1];  // Returns pointer to the second FX parameter
+
+		case SAB_I2C_REG_FXPARAM3:
+			return &self->fx_param_un[2];  // Returns pointer to the third FX parameter
+
+		case SAB_I2C_REG_FXPARAM4:
+			return &self->fx_param_un[3];  // Returns pointer to the fourth FX parameter
+
+		case SAB_I2C_REG_FXPARAM5:
+			return &self->fx_param_un[4];  // Returns pointer to the fifth FX parameter
+
+		case SAB_I2C_REG_FXPARAM6:
+			return &self->fx_param_un[5];  // Returns pointer to the sixth FX parameter
+
+		case SAB_I2C_REG_FXPARAM7:
+			return &self->fx_param_un[6];  // Returns pointer to the seventh FX parameter
+
+		case SAB_I2C_REG_FXPARAM8:
+			return &self->fx_param_un[7];  // Returns pointer to the eighth FX parameter
+
+		case SAB_I2C_REG_FXPARAM9:
+			return &self->fx_param_un[8];  // Returns pointer to the ninth FX parameter
+
+		case SAB_I2C_REG_FXPARAM10:
+			return &self->fx_param_un[9];  // Returns pointer to the tenth FX parameter
+
+		case SAB_I2C_REG_FXPARAM11:
+			return &self->fx_param_un[10]; // Returns pointer to the eleventh FX parameter
+
+		case SAB_I2C_REG_FXPARAM12:
+			return &self->fx_param_un[11]; // Returns pointer to the twelfth FX parameter
+
+		case SAB_I2C_REG_INFO:
+			return &self->info_un;          // Returns pointer to the info union
+
+		case SAB_I2C_REG_SAVEPRESET:
+			return &self->save_un;          // Returns pointer to the save union
+
+		case SAB_I2C_REG_LOOPBYPASSSTATE:
+			return &self->loopbypass_un;    // Returns pointer to the loop bypass union
+
+		default:
+			return NULL;  // Return NULL if the register enum is out of bounds
+    }	
+}
+
+uint8_t sab_intercom_get_reg_data_size(struct sab_intercom_st* self){
+	return sizeof(self->get_reg_data_ptr(self));
+}
+
 // ----------------------------------INIT-------------------------------------------------
 void init_intercom(struct sab_intercom_st* self, uint8_t slave_address_u8,I2C_HandleTypeDef *i2c_h){
     self->slave_addr_u8 = slave_address_u8<<1;
@@ -75,6 +158,10 @@ void init_intercom(struct sab_intercom_st* self, uint8_t slave_address_u8,I2C_Ha
     // SETTER function pointers
     self->set_fx_param      = set_fx_param;
     self->set_loopbypass	= set_loopbypass;
+
+	self->process_rx_buffer = sab_intercom_process_i2c_data;
+	self->get_reg_data_ptr = sab_intercom_get_reg_data_ptr;
+	self->get_reg_data_len = sab_intercom_get_reg_data_size;
 }
 
 static test_fx_params_fill(struct sab_intercom_st* self){

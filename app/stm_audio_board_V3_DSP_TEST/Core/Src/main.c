@@ -97,8 +97,8 @@ void PeriphCommonClock_Config(void);
 
 volatile uint8_t 			ADC_HALF_COMPLETE_FLAG = 0;
 volatile uint8_t 			DAC_HALF_COMPLETE_FLAG = 0;
-volatile uint32_t input_i2s_buffer_au32[16];
-volatile uint32_t output_i2s_buffer_au32[16];
+uint32_t input_i2s_buffer_au32[16];
+uint32_t output_i2s_buffer_au32[16];
 
 volatile struct{
 	int32_t in1_i32;
@@ -346,8 +346,14 @@ int32_t sdram_buffer_test_ai32[100]__attribute__((section(".sdram_section")));
 sab_intercom_tst intercom_st;
 
 #define RX_LEN 255
-uint8_t TX_Buffer [6] = "ABCDEF" ; // DATA to send
+#define TX_LEN 255
+uint8_t TX_Buffer [TX_LEN] = "ABCDEF" ; // DATA to send
 uint8_t RX_Buffer [RX_LEN] = "ABCDEF" ; // DATA to send
+uint8_t tx_counter = 0;
+uint8_t rx_counter = 0;
+uint8_t commando = 0;
+volatile uint8_t rx_reg = 0;
+
 extern void HAL_I2C_ListenCpltCallback (I2C_HandleTypeDef *hi2c)
 {
 	HAL_I2C_EnableListen_IT(hi2c);
@@ -355,39 +361,52 @@ extern void HAL_I2C_ListenCpltCallback (I2C_HandleTypeDef *hi2c)
 
 void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c)
 {
+	if(rx_counter>0){
+		intercom_st.register_addr_u8 = rx_reg;
+		intercom_st.process_rx_buffer(&intercom_st, RX_Buffer, rx_counter-1);
+	}
 	HAL_I2C_EnableListen_IT(hi2c);
 }
 
+
 extern void HAL_I2C_AddrCallback(I2C_HandleTypeDef *hi2c, uint8_t TransferDirection, uint16_t AddrMatchCode)
 {
-	if(TransferDirection == I2C_DIRECTION_TRANSMIT)  // if the master wants to transmit the data
+	if(TransferDirection == I2C_DIRECTION_TRANSMIT)  
 	{
-		RX_Buffer[0] = 0;
-		HAL_I2C_Slave_Sequential_Receive_IT(hi2c, RX_Buffer, 1, I2C_FIRST_FRAME);
+		HAL_I2C_Slave_Sequential_Receive_IT(hi2c, &intercom_st.register_addr_buffer_u8, 1, I2C_FIRST_FRAME);
+		rx_counter = 0;
 	}
-	else  // master requesting the data is not supported yet
+	else
 	{
-		HAL_I2C_Slave_Seq_Transmit_IT(hi2c, RX_Buffer, 1, I2C_FIRST_FRAME);
-
+		intercom_st.register_addr_u8 = intercom_st.register_addr_buffer_u8;
+		// if the master wants to READ the data
+		HAL_I2C_Slave_Seq_Transmit_IT(hi2c, intercom_st.get_reg_data_ptr(&intercom_st), intercom_st.get_reg_data_len(&intercom_st), I2C_FIRST_FRAME);
 	}
 }
 
 void HAL_I2C_SlaveRxCpltCallback(I2C_HandleTypeDef *hi2c)
 {
-
+	if(0 == rx_counter){
+		rx_reg = intercom_st.register_addr_buffer_u8;
+	}
+	HAL_I2C_Slave_Sequential_Receive_IT(hi2c, RX_Buffer+rx_counter, 1, I2C_NEXT_FRAME);
+	rx_counter++;
 }
+
 
 void HAL_I2C_SlaveTxCpltCallback(I2C_HandleTypeDef *hi2c)
 {
-	intercom_st.preset_data_un.preset_Major_u8 = 0;
-	intercom_st.preset_data_un.preset_Minor_u8 = 1;
-	intercom_st.preset_data_un.BTN3_state_en   = 2;
-	intercom_st.preset_data_un.BTN4_state_en   = 3;
-	HAL_I2C_Slave_Seq_Transmit_IT(hi2c, (uint8_t*)&(intercom_st.preset_data_un.all_u32), SAB_I2C_REG_PRESETNUM_LEN+1, I2C_FIRST_FRAME);
+	// TODO: TX CALLBACK HANDLER
+//	intercom_st.preset_data_un.preset_Major_u8 = 0;
+//	intercom_st.preset_data_un.preset_Minor_u8 = 1;
+//	intercom_st.preset_data_un.BTN3_state_en   = 2;
+//	intercom_st.preset_data_un.BTN4_state_en   = 3;
+//	tx_counter++;
+//	HAL_I2C_Slave_Seq_Transmit_IT(hi2c, TX_Buffer+tx_counter, 1, I2C_NEXT_FRAME);
 }
 
 void I2C_Slave_Listen(void) {
-	HAL_I2C_Slave_Receive_IT(&hi2c4, RX_LEN, sizeof(RX_LEN));
+	HAL_I2C_Slave_Receive_IT(&hi2c4, RX_Buffer, sizeof(RX_Buffer));
 }
 
 /*

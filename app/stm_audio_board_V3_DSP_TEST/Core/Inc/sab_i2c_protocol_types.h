@@ -5,39 +5,60 @@
 
 // THis file contains the communication basics for the I2C protocoll
 // between the DSP and DISPLAY unit
-
-#define SAB_I2C_REG_PRESETNUM        1
+enum SAB_I2C_REGS{
+	SAB_I2C_REG_PRESETNUM,
+	SAB_I2C_REG_LOOP1FX,
+	SAB_I2C_REG_LOOP2FX,
+	SAB_I2C_REG_LOOP3FX,
+	SAB_I2C_REG_LOOP4FX,
+	SAB_I2C_REG_FXPARAM1 ,
+	SAB_I2C_REG_FXPARAM2 ,
+	SAB_I2C_REG_FXPARAM3 ,
+	SAB_I2C_REG_FXPARAM4 ,
+	SAB_I2C_REG_FXPARAM5 ,
+	SAB_I2C_REG_FXPARAM6 ,
+	SAB_I2C_REG_FXPARAM7 ,
+	SAB_I2C_REG_FXPARAM8 ,
+	SAB_I2C_REG_FXPARAM9 ,
+	SAB_I2C_REG_FXPARAM10,
+	SAB_I2C_REG_FXPARAM11,
+	SAB_I2C_REG_FXPARAM12,
+	SAB_I2C_REG_INFO,
+	SAB_I2C_REG_SAVEPRESET,
+	SAB_I2C_REG_LOOPBYPASSSTATE
+};
+// #define SAB_I2C_REG_PRESETNUM        1
 #define SAB_I2C_REG_PRESETNUM_LEN    	4
 // LoopNFX definitions
-#define SAB_I2C_REG_LOOP1FX          2
-#define SAB_I2C_REG_LOOP2FX          3
-#define SAB_I2C_REG_LOOP3FX          4
-#define SAB_I2C_REG_LOOP4FX          5
+// #define SAB_I2C_REG_LOOP1FX          2
+// #define SAB_I2C_REG_LOOP2FX          3
+// #define SAB_I2C_REG_LOOP3FX          4
+// #define SAB_I2C_REG_LOOP4FX          5
 #define SAB_I2C_REG_LOOPFX_LEN    		39
 
 // FxParams definitions (1 to 12)
-#define SAB_I2C_REG_FXPARAM1         6
-#define SAB_I2C_REG_FXPARAM2         7
-#define SAB_I2C_REG_FXPARAM3         8
-#define SAB_I2C_REG_FXPARAM4         9
-#define SAB_I2C_REG_FXPARAM5         10
-#define SAB_I2C_REG_FXPARAM6         11
-#define SAB_I2C_REG_FXPARAM7         12
-#define SAB_I2C_REG_FXPARAM8         13
-#define SAB_I2C_REG_FXPARAM9         14
-#define SAB_I2C_REG_FXPARAM10        15
-#define SAB_I2C_REG_FXPARAM11        16
-#define SAB_I2C_REG_FXPARAM12        17
+// #define SAB_I2C_REG_FXPARAM1         6
+// #define SAB_I2C_REG_FXPARAM2         7
+// #define SAB_I2C_REG_FXPARAM3         8
+// #define SAB_I2C_REG_FXPARAM4         9
+// #define SAB_I2C_REG_FXPARAM5         10
+// #define SAB_I2C_REG_FXPARAM6         11
+// #define SAB_I2C_REG_FXPARAM7         12
+// #define SAB_I2C_REG_FXPARAM8         13
+// #define SAB_I2C_REG_FXPARAM9         14
+// #define SAB_I2C_REG_FXPARAM10        15
+// #define SAB_I2C_REG_FXPARAM11        16
+// #define SAB_I2C_REG_FXPARAM12        17
 #define SAB_I2C_REG_FXPARAM_LEN      	7
 
 // Other definitions
-#define SAB_I2C_REG_INFO             18
+// #define SAB_I2C_REG_INFO             18
 #define SAB_I2C_REG_INFO_LEN             10
 
-#define SAB_I2C_REG_SAVEPRESET       19
+// #define SAB_I2C_REG_SAVEPRESET       19
 #define SAB_I2C_REG_SAVEPRESET_LEN       1
 
-#define SAB_I2C_REG_LOOPBYPASSSTATE  20
+// #define SAB_I2C_REG_LOOPBYPASSSTATE  20
 #define SAB_I2C_REG_LOOPBYPASSSTATE_LEN  3
 
 
