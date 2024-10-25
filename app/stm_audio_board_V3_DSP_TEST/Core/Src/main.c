@@ -340,6 +340,31 @@ octave_effects_tst octave_effects_st;
 int32_t sdram_buffer_test_ai32[100]__attribute__((section(".sdram_section")));
 
 /*
+ * HW BTN INTERRUPT FUNCTIONS ----------------------------
+ */
+// EXTI Line9 External Interrupt ISR Handler CallBackFun
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+    if(GPIO_Pin == FSW_BTN1_Pin) // If The INT Source Is EXTI Line9 (A9 Pin)
+    {
+    	HAL_GPIO_TogglePin(FSW_LED1_GPIO_Port, FSW_LED1_Pin); // Toggle The Output (LED) Pin
+    }
+    if(GPIO_Pin == FSW_BTN2_Pin) // If The INT Source Is EXTI Line9 (A9 Pin)
+	{
+		HAL_GPIO_TogglePin(FSW_LED2_GPIO_Port, FSW_LED2_Pin); // Toggle The Output (LED) Pin
+	}
+    if(GPIO_Pin == FSW_BTN3_Pin) // If The INT Source Is EXTI Line9 (A9 Pin)
+	{
+		HAL_GPIO_TogglePin(FSW_LED3_GPIO_Port, FSW_LED3_Pin); // Toggle The Output (LED) Pin
+	}
+    if(GPIO_Pin == FSW_BTN4_Pin) // If The INT Source Is EXTI Line9 (A9 Pin)
+	{
+		HAL_GPIO_TogglePin(FSW_LED4_GPIO_Port, FSW_LED4_Pin); // Toggle The Output (LED) Pin
+	}
+}
+
+
+/*
  * I2C INTERRUPT FUNCTIONS ----------------------------
  */
 
