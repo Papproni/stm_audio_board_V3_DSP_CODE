@@ -262,4 +262,40 @@ void testing_data(struct sab_intercom_st* self){
 	self->preset_data_un.preset_Major_u8 = 'A';
 	self->preset_data_un.preset_Minor_u8 = 1;
 	SCB_CleanDCache_by_Addr((uint32_t*)&(self->preset_data_un.all_u32), sizeof(self->preset_data_un.all_u32));
+
+	// LOOP 1 DATA
+	strcpy(self->loop_data[0].slot1.name,"Octaver");
+	self->loop_data[0].slot1.color[0] = 255; 	//R
+	self->loop_data[0].slot1.color[1] = 0;	//G
+	self->loop_data[0].slot1.color[2] = 0;	//B
+
+	strcpy(self->loop_data[0].slot2.name,"Chorus");
+	self->loop_data[0].slot2.color[0] = 0;	//R
+	self->loop_data[0].slot2.color[1] = 255;	//G
+	self->loop_data[0].slot2.color[2] = 0;	//B
+
+	strcpy(self->loop_data->slot3.name,"NONE");
+
+	// LOOP 2 DATA
+	strcpy(self->loop_data[1].slot1.name,"Delay");
+	self->loop_data[1].slot1.color[0] = 0; 	//R
+	self->loop_data[1].slot1.color[1] = 0;	//G
+	self->loop_data[1].slot1.color[2] = 255;	//B
+
+	strcpy(self->loop_data[0].slot2.name,"Reverb");
+	self->loop_data[1].slot2.color[0] = 0;	//R
+	self->loop_data[1].slot2.color[1] = 255;	//G
+	self->loop_data[1].slot2.color[2] = 255;	//B
+
+	strcpy(self->loop_data->slot3.name,"NONE");
+
+	self->info_un.dsp_info_st.dsp_fw_ver_major_u8 = 0;
+	self->info_un.dsp_info_st.dsp_fw_ver_minor_u8 = 1;
+	self->info_un.dsp_info_st.dsp_update_date_day_u8 	= 27;
+	self->info_un.dsp_info_st.dsp_update_date_month_u8 	= 10;
+	self->info_un.dsp_info_st.dsp_update_date_year_u8 	= 24;
+	
+	self->loopbypass_un.L12 = 1; // open
+	self->loopbypass_un.L23 = 0; // closed
+	self->loopbypass_un.L34 = 1; // open
 }
