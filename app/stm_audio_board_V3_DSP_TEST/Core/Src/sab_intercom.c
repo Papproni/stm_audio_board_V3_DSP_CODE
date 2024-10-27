@@ -73,22 +73,23 @@ void sab_intercom_process_i2c_data(struct sab_intercom_st* self, uint8_t*buffer_
 /// @param self 
 /// @return 
 uint32_t sab_intercom_get_reg_data_ptr(struct sab_intercom_st* self){
+
 	switch (self->register_addr_u8)
 	{
 		case SAB_I2C_REG_PRESETNUM:
 			return &self->preset_data_un;  // Returns pointer to the preset data union
 
 		case SAB_I2C_REG_LOOP1FX:
-			return &self->loop_data[0];    // Returns pointer to the first loop
+			return self->loop_data[0].all_pau8;    // Returns pointer to the first loop
 
 		case SAB_I2C_REG_LOOP2FX:
-			return &self->loop_data[1];    // Returns pointer to the second loop
+			return self->loop_data[1].all_pau8;    // Returns pointer to the second loop
 
 		case SAB_I2C_REG_LOOP3FX:
-			return &self->loop_data[2];    // Returns pointer to the third loop
+			return self->loop_data[2].all_pau8;    // Returns pointer to the third loop
 
 		case SAB_I2C_REG_LOOP4FX:
-			return &self->loop_data[3];    // Returns pointer to the fourth loop
+			return self->loop_data[3].all_pau8;    // Returns pointer to the fourth loop
 
 		case SAB_I2C_REG_FXPARAM1:
 			return &self->fx_param_un[0];  // Returns pointer to the first FX parameter
@@ -141,6 +142,14 @@ uint32_t sab_intercom_get_reg_data_ptr(struct sab_intercom_st* self){
 }
 
 uint8_t sab_intercom_get_reg_data_size(struct sab_intercom_st* self){
+	switch (self->register_addr_u8)
+		{
+			case SAB_I2C_REG_LOOP1FX:
+			case SAB_I2C_REG_LOOP2FX:
+			case SAB_I2C_REG_LOOP3FX:
+			case SAB_I2C_REG_LOOP4FX:
+				return 39;
+		}// Returns pointer to the first loop
 	return sizeof(self->get_reg_data_ptr(self));
 }
 
@@ -263,6 +272,8 @@ void testing_data(struct sab_intercom_st* self){
 	self->preset_data_un.preset_Minor_u8 = 1;
 	SCB_CleanDCache_by_Addr((uint32_t*)&(self->preset_data_un.all_u32), sizeof(self->preset_data_un.all_u32));
 
+
+	SCB_InvalidateDCache_by_Addr((uint32_t*)&(self->loop_data[0]), sizeof(self->loop_data));
 	// LOOP 1 DATA
 	strcpy(self->loop_data[0].slot1.name,"Octaver");
 	self->loop_data[0].slot1.color[0] = 255; 	//R
@@ -276,7 +287,10 @@ void testing_data(struct sab_intercom_st* self){
 
 	strcpy(self->loop_data->slot3.name,"NONE");
 
+	SCB_CleanDCache_by_Addr((uint32_t*)&(self->loop_data[0]), sizeof(self->loop_data));
+
 	// LOOP 2 DATA
+	SCB_InvalidateDCache_by_Addr((uint32_t*)&(self->loop_data[1]), sizeof(self->loop_data));
 	strcpy(self->loop_data[1].slot1.name,"Delay");
 	self->loop_data[1].slot1.color[0] = 0; 	//R
 	self->loop_data[1].slot1.color[1] = 0;	//G
@@ -288,12 +302,15 @@ void testing_data(struct sab_intercom_st* self){
 	self->loop_data[1].slot2.color[2] = 255;	//B
 
 	strcpy(self->loop_data->slot3.name,"NONE");
+	SCB_CleanDCache_by_Addr((uint32_t*)&(self->loop_data[1]), sizeof(self->loop_data));
 
+	SCB_InvalidateDCache_by_Addr((uint32_t*)&(self->info_un), sizeof(self->info_un));
 	self->info_un.dsp_info_st.dsp_fw_ver_major_u8 = 0;
 	self->info_un.dsp_info_st.dsp_fw_ver_minor_u8 = 1;
 	self->info_un.dsp_info_st.dsp_update_date_day_u8 	= 27;
 	self->info_un.dsp_info_st.dsp_update_date_month_u8 	= 10;
 	self->info_un.dsp_info_st.dsp_update_date_year_u8 	= 24;
+	SCB_CleanDCache_by_Addr((uint32_t*)&(self->info_un), sizeof(self->info_un));
 	
 	self->loopbypass_un.L12 = 1; // open
 	self->loopbypass_un.L23 = 0; // closed

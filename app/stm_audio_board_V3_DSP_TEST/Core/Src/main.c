@@ -219,38 +219,12 @@ volatile float CrossFade;
 float a0, a1, a2, b1, b2, hp_in_z1, hp_in_z2, hp_out_z1, hp_out_z2;
 
 int Do_HighPass (int inSample) {
-	//	500hz high-pass, 48k
-//	a0 = 0.9547676565107223;
-//				a1 = -1.9095353130214445;
-//				a2 = 0.9547676565107223;
-//				b1 =-1.9074888914066748;
-//				b2 =0.9115817346362142;
-		//	1khz high-pass, 48k
-				b1 = -1.81531792;
-				b2 = 0.83098222;
-				a0 = 0.91157503;
-				a1 = -1.82315007;
-				a2 = 0.91157503;
-////	3khz high-pass, 96k
-//	a0 = 0.9907853255903974;
-//	a1 = -1.981570651180795;
-//	a2 = 0.9907853255903974;
-//	b1 = -1.9814857645620922;
-//	b2 = 0.9816555377994975;
-//
-//	a0 = 0.3009556244638557;
-//	a1 = 0;
-//	a2 = -0.3009556244638557;
-//	b1 = -1.1091783806868014;
-//	b2 = 0.39808875107228864;
-
-	// 10khz LOWPASS
-//	a0 = 0.22018120452501466;
-//	a1 = 0.4403624090500293;
-//	a2 = 0.22018120452501466;
-//	b1 = -0.3075475090293954;
-//	b2 = 0.18827232712945405;
-
+	//	1khz high-pass, 48k
+	b1 = -1.81531792;
+	b2 = 0.83098222;
+	a0 = 0.91157503;
+	a1 = -1.82315007;
+	a2 = 0.91157503;
 
 	float inSampleF = (float)inSample;
 	float outSampleF =
@@ -399,7 +373,7 @@ extern void HAL_I2C_AddrCallback(I2C_HandleTypeDef *hi2c, uint8_t TransferDirect
 	{
 		intercom_st.register_addr_u8 = rx_reg;
 		// if the master wants to READ the data
-		HAL_I2C_Slave_Seq_Transmit_IT(hi2c, intercom_st.get_reg_data_ptr(&intercom_st), intercom_st.get_reg_data_len(&intercom_st), I2C_FIRST_FRAME);
+		HAL_I2C_Slave_Seq_Transmit_IT(hi2c, intercom_st.get_reg_data_ptr(&intercom_st), intercom_st.get_reg_data_len(&intercom_st), I2C_FIRST_AND_LAST_FRAME);
 	}
 }
 
@@ -415,13 +389,6 @@ void HAL_I2C_SlaveRxCpltCallback(I2C_HandleTypeDef *hi2c)
 
 void HAL_I2C_SlaveTxCpltCallback(I2C_HandleTypeDef *hi2c)
 {
-	// TODO: TX CALLBACK HANDLER
-//	intercom_st.preset_data_un.preset_Major_u8 = 0;
-//	intercom_st.preset_data_un.preset_Minor_u8 = 1;
-//	intercom_st.preset_data_un.BTN3_state_en   = 2;
-//	intercom_st.preset_data_un.BTN4_state_en   = 3;
-//	tx_counter++;
-//	HAL_I2C_Slave_Seq_Transmit_IT(hi2c, TX_Buffer+tx_counter, 1, I2C_NEXT_FRAME);
 }
 
 void I2C_Slave_Listen(void) {
