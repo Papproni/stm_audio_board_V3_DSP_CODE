@@ -1,5 +1,5 @@
-#ifndef INC_SAB_I2C_INTERCOM_H
-#define INC_SAB_I2C_INTERCOM_H
+#ifndef INC_SAB_INTERCOM_H
+#define INC_SAB_INTERCOM_H
 
 
 #include "sab_i2c_protocol_types.h"
@@ -35,6 +35,9 @@ typedef struct sab_intercom_st{
     void (*set_fx_param)     (struct sab_intercom_st* self, uint8_t param_slot_u8, uint8_t new_value_u8);
     void (*set_loopbypass)  (struct sab_intercom_st* self);
 
+    void (*next_preset)(struct sab_intercom_st* self);
+    void (*prev_preset)(struct sab_intercom_st* self);
+
     // I2C comm handlers
     void (*process_rx_buffer) (struct sab_intercom_st* self, uint8_t*buffer_pu8, uint8_t size_u8);
     uint32_t (*get_reg_data_ptr)  (struct sab_intercom_st* self);
@@ -42,8 +45,6 @@ typedef struct sab_intercom_st{
 }sab_intercom_tst;
 
 void init_intercom(struct sab_intercom_st* self,uint8_t slave_address_u8, I2C_HandleTypeDef *i2c_h);
-
 void testing_data(struct sab_intercom_st* self);
-
 void sab_intercom_rx_callback  (struct sab_intercom_st* self);
 #endif /* INC_SAB_I2C_INTERCOM_H_ */

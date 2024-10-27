@@ -114,9 +114,6 @@ volatile struct{
 
 void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai){
 	DAC_HALF_COMPLETE_FLAG = 0;
-//	SCB_CleanDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32));
-//	SCB_InvalidateDCache_by_Addr(&output_i2s_buffer_au32[8], sizeof(output_i2s_buffer_au32)/2);
-
 	output_i2s_buffer_au32[8+OUT1_DAC_NUM] = effects_io_port.out1_i32>>8;
 	output_i2s_buffer_au32[8+OUT2_DAC_NUM] = effects_io_port.out2_i32>>8;
 	output_i2s_buffer_au32[8+OUT3_DAC_NUM] = effects_io_port.out3_i32>>8;
@@ -125,9 +122,6 @@ void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai){
 }
 void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai){
 	DAC_HALF_COMPLETE_FLAG = 1;
-//	SCB_CleanDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32));
-//	SCB_InvalidateDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32)/2);
-
 	output_i2s_buffer_au32[OUT1_DAC_NUM] = effects_io_port.out1_i32>>8;
 	output_i2s_buffer_au32[OUT2_DAC_NUM] = effects_io_port.out2_i32>>8;
 	output_i2s_buffer_au32[OUT3_DAC_NUM] = effects_io_port.out3_i32>>8;
@@ -140,31 +134,20 @@ volatile uint8_t 			ADC_READY_FLAG = 0;
 void HAL_SAI_RxCpltCallback(SAI_HandleTypeDef *hsai){
 	ADC_HALF_COMPLETE_FLAG = 0;
 	ADC_READY_FLAG = 1;
-//	SCB_CleanDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32));
-//	SCB_InvalidateDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32));
-
 	SCB_InvalidateDCache_by_Addr(&input_i2s_buffer_au32[8], sizeof(input_i2s_buffer_au32)/2);
 	effects_io_port.in1_i32 = input_i2s_buffer_au32[8+IN1_ADC_NUM]<<8;
 	effects_io_port.in2_i32 = input_i2s_buffer_au32[8+IN2_ADC_NUM]<<8;
 	effects_io_port.in3_i32 = input_i2s_buffer_au32[8+IN3_ADC_NUM]<<8;
 	effects_io_port.in4_i32 = input_i2s_buffer_au32[8+IN4_ADC_NUM]<<8;
-
-//	SCB_CleanDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32));
-//	SCB_InvalidateDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32));
 }
 void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai){
 	ADC_HALF_COMPLETE_FLAG = 1;
 	ADC_READY_FLAG = 1;
-//	SCB_CleanDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32));
-//	SCB_InvalidateDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32));
 	SCB_InvalidateDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32)/2);
 	effects_io_port.in1_i32 = input_i2s_buffer_au32[IN1_ADC_NUM]<<8;
 	effects_io_port.in2_i32 = input_i2s_buffer_au32[IN2_ADC_NUM]<<8;
 	effects_io_port.in3_i32 = input_i2s_buffer_au32[IN3_ADC_NUM]<<8;
 	effects_io_port.in4_i32 = input_i2s_buffer_au32[IN4_ADC_NUM]<<8;
-
-//	SCB_CleanDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32));
-
 }
 
 
@@ -336,18 +319,27 @@ int Do_PitchShift(int sample) {
 // Effect instances
 delay_effects_tst delay_effect;
 octave_effects_tst octave_effects_st;
+sab_intercom_tst intercom_st;
 
 int32_t sdram_buffer_test_ai32[100]__attribute__((section(".sdram_section")));
 
 /*
  * HW BTN INTERRUPT FUNCTIONS ----------------------------
  */
+
+//volatile uint8_t enable_effect = 1;
+volatile uint8_t preset_up_pressed = 0;
+volatile uint8_t preset_down_pressed = 0;
+volatile uint8_t enable_effect = 0;
 // EXTI Line9 External Interrupt ISR Handler CallBackFun
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
     if(GPIO_Pin == FSW_BTN1_Pin) // If The INT Source Is EXTI Line9 (A9 Pin)
     {
     	HAL_GPIO_TogglePin(FSW_LED1_GPIO_Port, FSW_LED1_Pin); // Toggle The Output (LED) Pin
+    	SCB_InvalidateDCache_by_Addr((uint32_t*)&(enable_effect), sizeof(&enable_effect));
+    	enable_effect = ~enable_effect;
+    	SCB_CleanDCache_by_Addr((uint32_t*)&(enable_effect), sizeof(&enable_effect));
     }
     if(GPIO_Pin == FSW_BTN2_Pin) // If The INT Source Is EXTI Line9 (A9 Pin)
 	{
@@ -356,10 +348,12 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
     if(GPIO_Pin == FSW_BTN3_Pin) // If The INT Source Is EXTI Line9 (A9 Pin)
 	{
 		HAL_GPIO_TogglePin(FSW_LED3_GPIO_Port, FSW_LED3_Pin); // Toggle The Output (LED) Pin
+		preset_up_pressed = 1;
 	}
     if(GPIO_Pin == FSW_BTN4_Pin) // If The INT Source Is EXTI Line9 (A9 Pin)
 	{
 		HAL_GPIO_TogglePin(FSW_LED4_GPIO_Port, FSW_LED4_Pin); // Toggle The Output (LED) Pin
+		preset_down_pressed = 1;
 	}
 }
 
@@ -368,7 +362,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
  * I2C INTERRUPT FUNCTIONS ----------------------------
  */
 
-sab_intercom_tst intercom_st;
 
 #define RX_LEN 255
 #define TX_LEN 255
@@ -389,6 +382,7 @@ void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c)
 	if(rx_counter>0){
 		intercom_st.register_addr_u8 = rx_reg;
 		intercom_st.process_rx_buffer(&intercom_st, RX_Buffer, rx_counter-1);
+		rx_counter = 0;
 	}
 	HAL_I2C_EnableListen_IT(hi2c);
 }
@@ -403,7 +397,7 @@ extern void HAL_I2C_AddrCallback(I2C_HandleTypeDef *hi2c, uint8_t TransferDirect
 	}
 	else
 	{
-		intercom_st.register_addr_u8 = intercom_st.register_addr_buffer_u8;
+		intercom_st.register_addr_u8 = rx_reg;
 		// if the master wants to READ the data
 		HAL_I2C_Slave_Seq_Transmit_IT(hi2c, intercom_st.get_reg_data_ptr(&intercom_st), intercom_st.get_reg_data_len(&intercom_st), I2C_FIRST_FRAME);
 	}
@@ -543,12 +537,6 @@ int main(void)
 	HAL_GPIO_WritePin(FSW_LED3_GPIO_Port, FSW_LED3_Pin, 1);
 	HAL_GPIO_WritePin(FSW_LED4_GPIO_Port, FSW_LED4_Pin, 1);
 
-	for(int i = 0; i<100;i++){
-//		sdram_buffer_test_ai32[i]=i;
-		*(__IO uint32_t*) (0xC0000000 + 4*i) = 0x0A000B00;
-	}
-
-
 	HAL_I2C_EnableListen_IT(&hi2c4);
   while (1)
   {
@@ -558,23 +546,43 @@ int main(void)
 
 	  if(ADC_READY_FLAG){
 		  ADC_READY_FLAG = 0;
+		if(1 == preset_down_pressed){
+			preset_down_pressed = 0;
+			intercom_st.prev_preset(&intercom_st);
+		}
+		if(1 == preset_up_pressed){
+			preset_up_pressed = 0;
+			intercom_st.next_preset(&intercom_st);
+		}
+
+//		intercom_st.next_preset(&intercom_st);
 
 	  // LOOPBACK TESTING
 //	  	  effects_io_port.out1_i32 = effects_io_port.in1_i32;
-	  	  effects_io_port.out2_i32 = effects_io_port.in2_i32;
-	  	  effects_io_port.out3_i32 = effects_io_port.in3_i32;
-	  	  effects_io_port.out4_i32 = effects_io_port.in4_i32;
+	  	  effects_io_port.out2_i32 = effects_io_port.in2_i32/2;
+	  	  effects_io_port.out3_i32 = effects_io_port.in3_i32/2;
+	  	  effects_io_port.out4_i32 = effects_io_port.in4_i32/2;
 
 	  // LOOP1
 		  int32_t out;
-		// TESTING 
+		// TESTING
 			float32_t vol_sub1 = log_scale(intercom_st.fx_param_un[0].value_u8);
 			float32_t vol_norm = log_scale(intercom_st.fx_param_un[1].value_u8);
 			float32_t vol_up1  = log_scale(intercom_st.fx_param_un[2].value_u8);
 		  octave_effects_st.volumes_st.clean_f32 = vol_norm;
 		  octave_effects_st.volumes_st.up_1_f32 = vol_up1;
 		  octave_effects_st.volumes_st.up_2_f32 = vol_up1;
-		  effects_io_port.out1_i32 = octave_effects_st.callback(&octave_effects_st,effects_io_port.in1_i32/2) + Do_PitchShift(effects_io_port.in1_i32/2)*vol_sub1;
+		  if(enable_effect != 0){
+			  out = octave_effects_st.callback(&octave_effects_st,effects_io_port.in1_i32/2) + Do_PitchShift(effects_io_port.in1_i32/2)*vol_sub1;
+//			  out = delay_effect.callback(&delay_effect,effects_io_port.in1_i32/2);
+		  }else{
+			  out = effects_io_port.in1_i32/2;
+		  }
+
+		  effects_io_port.out1_i32 = out;
+//
+
+//		  effects_io_port.out1_i32 = delay_effect.callback(&delay_effect,effects_io_port.in1_i32/2);
 	  }
     /* USER CODE END WHILE */
 

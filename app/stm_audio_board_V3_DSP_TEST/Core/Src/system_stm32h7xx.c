@@ -209,7 +209,7 @@ void SystemInit (void)
 
 #if defined(D3_SRAM_BASE)
   /* Reset D1CFGR register */
-  RCC->D1CFGR = 0x00000000;
+   RCC->D1CFGR = 0x00000000;
 
   /* Reset D2CFGR register */
   RCC->D2CFGR = 0x00000000;

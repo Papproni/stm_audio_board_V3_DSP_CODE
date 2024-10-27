@@ -144,8 +144,42 @@ uint8_t sab_intercom_get_reg_data_size(struct sab_intercom_st* self){
 	return sizeof(self->get_reg_data_ptr(self));
 }
 
+void next_preset(struct sab_intercom_st* self){
+	SCB_InvalidateDCache_by_Addr((uint32_t*)&self->preset_data_un.all_u32, sizeof(self->preset_data_un.all_u32));
+	if(self->preset_data_un.preset_Minor_u8 == 9 && self->preset_data_un.preset_Major_u8 == 'Z'){
+		
+	}else{
+		self->preset_data_un.preset_Minor_u8++;
+		if(self->preset_data_un.preset_Minor_u8 > 9){
+			self->preset_data_un.preset_Minor_u8 = 1;
+			if(self->preset_data_un.preset_Major_u8<'Z'){
+				self->preset_data_un.preset_Major_u8++;
+			}
+		}
+	}
+	SCB_CleanDCache_by_Addr((uint32_t*)&self->preset_data_un.all_u32, sizeof(self->preset_data_un.all_u32));
+}
+
+void prev_preset(struct sab_intercom_st* self){
+	SCB_InvalidateDCache_by_Addr((uint32_t*)&self->preset_data_un.all_u32, sizeof(self->preset_data_un.all_u32));
+	if(self->preset_data_un.preset_Minor_u8 == 1 && self->preset_data_un.preset_Major_u8 == 'A'){
+	}else{
+		self->preset_data_un.preset_Minor_u8--;
+		if(self->preset_data_un.preset_Minor_u8 < 1){
+			if(self->preset_data_un.preset_Major_u8>'A'){
+				self->preset_data_un.preset_Minor_u8 = 9;
+				self->preset_data_un.preset_Major_u8--;
+			}
+		}
+	}
+	SCB_CleanDCache_by_Addr((uint32_t*)&self->preset_data_un.all_u32, sizeof(self->preset_data_un.all_u32));
+}
+
 // ----------------------------------INIT-------------------------------------------------
 void init_intercom(struct sab_intercom_st* self, uint8_t slave_address_u8,I2C_HandleTypeDef *i2c_h){
+
+	SCB_InvalidateDCache_by_Addr((uint32_t*)self, sizeof(self));
+
     self->slave_addr_u8 = slave_address_u8<<1;
     self->i2c_h = i2c_h;
     // GETTER function pointers
@@ -159,21 +193,29 @@ void init_intercom(struct sab_intercom_st* self, uint8_t slave_address_u8,I2C_Ha
     self->set_fx_param      = set_fx_param;
     self->set_loopbypass	= set_loopbypass;
 
+	self->next_preset		= next_preset;
+	self->prev_preset       = prev_preset;
+
 	self->process_rx_buffer = sab_intercom_process_i2c_data;
 	self->get_reg_data_ptr = sab_intercom_get_reg_data_ptr;
 	self->get_reg_data_len = sab_intercom_get_reg_data_size;
+	SCB_CleanDCache_by_Addr((uint32_t*)self, sizeof(self));
+
+	testing_data(self);
+
+
 }
 
 static test_fx_params_fill(struct sab_intercom_st* self){
-	strcpy(self->fx_param_un[0].name, "TIME");  // Delay time parameter
+	strcpy(self->fx_param_un[0].name, "SUB");  // Delay time parameter
 		self->fx_param_un[0].type_en = 5;  // Type: Delay
 		self->fx_param_un[0].value_u8 = 69;  // Value in ms
 
-		strcpy(self->fx_param_un[1].name, "RATE");  // Modulation rate
+		strcpy(self->fx_param_un[1].name, "VOL");  // Modulation rate
 		self->fx_param_un[1].type_en = 2;  // Type: Modulation
 		self->fx_param_un[1].value_u8 = 120;  // Value in Hz
 
-		strcpy(self->fx_param_un[2].name, "DEPTH");  // Effect depth
+		strcpy(self->fx_param_un[2].name, "UP");  // Effect depth
 		self->fx_param_un[2].type_en = 3;  // Type: Modulation Depth
 		self->fx_param_un[2].value_u8 = 85;  // Percentage
 
@@ -216,5 +258,8 @@ static test_fx_params_fill(struct sab_intercom_st* self){
 void testing_data(struct sab_intercom_st* self){
 	test_fx_params_fill(self);
 
-
+	SCB_InvalidateDCache_by_Addr((uint32_t*)&(self->preset_data_un.all_u32), sizeof(self->preset_data_un.all_u32));
+	self->preset_data_un.preset_Major_u8 = 'A';
+	self->preset_data_un.preset_Minor_u8 = 1;
+	SCB_CleanDCache_by_Addr((uint32_t*)&(self->preset_data_un.all_u32), sizeof(self->preset_data_un.all_u32));
 }

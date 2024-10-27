@@ -6,7 +6,7 @@
 // THis file contains the communication basics for the I2C protocoll
 // between the DSP and DISPLAY unit
 enum SAB_I2C_REGS{
-	SAB_I2C_REG_PRESETNUM,
+	SAB_I2C_REG_PRESETNUM = 1,
 	SAB_I2C_REG_LOOP1FX,
 	SAB_I2C_REG_LOOP2FX,
 	SAB_I2C_REG_LOOP3FX,
