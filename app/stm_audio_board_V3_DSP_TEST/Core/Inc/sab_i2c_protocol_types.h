@@ -25,7 +25,9 @@ enum SAB_I2C_REGS{
 	SAB_I2C_REG_FXPARAM12,
 	SAB_I2C_REG_INFO,
 	SAB_I2C_REG_SAVEPRESET,
-	SAB_I2C_REG_LOOPBYPASSSTATE
+	SAB_I2C_REG_LOOPBYPASSSTATE,
+	SAB_I2C_REG_NUM_OF_IMPLEMENTED_EFFECTS,
+	SAB_I2C_REG_IMPLEMENTED_EFFECTS
 };
 // #define SAB_I2C_REG_PRESETNUM        1
 #define SAB_I2C_REG_PRESETNUM_LEN    	4
@@ -85,14 +87,14 @@ typedef union{
 typedef struct{
 	char name[10];
 	uint8_t color[3];
-}slot_in_loop_tst;
+}fx_data_tst;
 
 typedef union{
 	uint8_t all_pau8[SAB_I2C_REG_LOOPFX_LEN];
 	struct{
-		slot_in_loop_tst slot1;
-		slot_in_loop_tst slot2;
-		slot_in_loop_tst slot3;
+		fx_data_tst slot1;
+		fx_data_tst slot2;
+		fx_data_tst slot3;
 	};
 }sab_loop_num_tun;
 

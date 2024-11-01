@@ -7,6 +7,7 @@
 #include "stm32h7xx_hal_i2c.h"
 #include "string.h"
 #include "stdint.h"
+#include <stdlib.h>
 // THis file contains the communication basics for the I2C protocoll
 // between the DSP and DISPLAY unit
 #define NUM_OF_LOOPS 4
@@ -23,6 +24,9 @@ typedef struct sab_intercom_st{
     sab_info_tun        info_un;
     sab_save_tun        save_un;
     sab_loopbypass_tun  loopbypass_un;
+    
+    fx_data_tst*    implemented_fx_data_ptr;
+    uint8_t         num_of_implemented_effects;
 
     // GETTER (read)
     void (*get_preset_data) (struct sab_intercom_st* self);
@@ -30,10 +34,12 @@ typedef struct sab_intercom_st{
     void (*get_fx_param)    (struct sab_intercom_st* self, uint8_t param_slot_u8);
     void (*get_info)        (struct sab_intercom_st* self);
     void (*get_loopbypass)  (struct sab_intercom_st* self);
+    void (*get_implemented_effects)  (struct sab_intercom_st* self);
 
     // SETTER (write)
     void (*set_fx_param)     (struct sab_intercom_st* self, uint8_t param_slot_u8, uint8_t new_value_u8);
     void (*set_loopbypass)  (struct sab_intercom_st* self);
+    void (*set_loop_data)  (struct sab_intercom_st* self,sab_loop_num_tun* loop_data_pun, uint8_t loop_num);
 
     void (*next_preset)(struct sab_intercom_st* self);
     void (*prev_preset)(struct sab_intercom_st* self);
