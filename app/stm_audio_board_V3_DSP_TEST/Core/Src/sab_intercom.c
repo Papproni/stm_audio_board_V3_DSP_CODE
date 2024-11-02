@@ -310,6 +310,7 @@ void init_intercom(struct sab_intercom_st *self, uint8_t slave_address_u8, I2C_H
 
 static test_fx_params_fill(struct sab_intercom_st *self)
 {
+	SCB_InvalidateDCache_by_Addr((uint32_t *)(self->fx_param_un->all_au8), sizeof(sab_fx_param_tun)*12);
 	strcpy(self->fx_param_un[0].name, "SUB"); // Delay time parameter
 	self->fx_param_un[0].type_en = 5;		  // Type: Delay
 	self->fx_param_un[0].value_u8 = 69;		  // Value in ms
@@ -357,6 +358,8 @@ static test_fx_params_fill(struct sab_intercom_st *self)
 	strcpy(self->fx_param_un[11].name, "SPD"); // Tremolo speed
 	self->fx_param_un[11].type_en = 2;		   // Type: Tremolo
 	self->fx_param_un[11].value_u8 = 90;	   // Speed in Hz
+
+	SCB_CleanDCache_by_Addr((uint32_t *)(self->fx_param_un->all_au8), sizeof(sab_fx_param_tun)*12);
 }
 void testing_data(struct sab_intercom_st *self)
 {
