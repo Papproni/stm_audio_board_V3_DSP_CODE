@@ -312,51 +312,51 @@ static test_fx_params_fill(struct sab_intercom_st *self)
 {
 	SCB_InvalidateDCache_by_Addr((uint32_t *)(self->fx_param_un->all_au8), sizeof(sab_fx_param_tun)*12);
 	strcpy(self->fx_param_un[0].name, "SUB"); // Delay time parameter
-	self->fx_param_un[0].type_en = 5;		  // Type: Delay
+	self->fx_param_un[0].type_en = PARAM_TYPE_POT;		  // Type: Delay
 	self->fx_param_un[0].value_u8 = 69;		  // Value in ms
 
 	strcpy(self->fx_param_un[1].name, "VOL"); // Modulation rate
-	self->fx_param_un[1].type_en = 2;		  // Type: Modulation
+	self->fx_param_un[1].type_en = PARAM_TYPE_POT;		  // Type: Modulation
 	self->fx_param_un[1].value_u8 = 120;	  // Value in Hz
 
 	strcpy(self->fx_param_un[2].name, "UP"); // Effect depth
-	self->fx_param_un[2].type_en = 3;		 // Type: Modulation Depth
+	self->fx_param_un[2].type_en = PARAM_TYPE_POT;		 // Type: Modulation Depth
 	self->fx_param_un[2].value_u8 = 85;		 // Percentage
 
 	strcpy(self->fx_param_un[3].name, "GAIN"); // Amplification gain
-	self->fx_param_un[3].type_en = 1;		   // Type: Amplification
+	self->fx_param_un[3].type_en = PARAM_TYPE_UNUSED;		   // Type: Amplification
 	self->fx_param_un[3].value_u8 = 100;	   // Value in dB
 
 	strcpy(self->fx_param_un[4].name, "MIX"); // Dry/Wet mix
-	self->fx_param_un[4].type_en = 4;		  // Type: Mix
+	self->fx_param_un[4].type_en = PARAM_TYPE_UNUSED;		  // Type: Mix
 	self->fx_param_un[4].value_u8 = 50;		  // 50% mix
 
 	strcpy(self->fx_param_un[5].name, "DECAY"); // Reverb decay
-	self->fx_param_un[5].type_en = 6;			// Type: Reverb
+	self->fx_param_un[5].type_en = PARAM_TYPE_UNUSED;			// Type: Reverb
 	self->fx_param_un[5].value_u8 = 72;			// Value in percentage
 
 	strcpy(self->fx_param_un[6].name, "FREQ"); // Filter cutoff frequency
-	self->fx_param_un[6].type_en = 7;		   // Type: Filter
+	self->fx_param_un[6].type_en = PARAM_TYPE_UNUSED;		   // Type: Filter
 	self->fx_param_un[6].value_u8 = 200;	   // Frequency in Hz
 
 	strcpy(self->fx_param_un[7].name, "RES"); // Filter resonance
-	self->fx_param_un[7].type_en = 7;		  // Type: Filter
+	self->fx_param_un[7].type_en = PARAM_TYPE_UNUSED;		  // Type: Filter
 	self->fx_param_un[7].value_u8 = 60;		  // Resonance value
 
 	strcpy(self->fx_param_un[8].name, "LEVEL"); // Output level
-	self->fx_param_un[8].type_en = 1;			// Type: Amplification
+	self->fx_param_un[8].type_en = PARAM_TYPE_UNUSED;			// Type: Amplification
 	self->fx_param_un[8].value_u8 = 95;			// Value in dB
 
 	strcpy(self->fx_param_un[9].name, "FEED"); // Feedback amount
-	self->fx_param_un[9].type_en = 5;		   // Type: Delay/Feedback
+	self->fx_param_un[9].type_en = PARAM_TYPE_UNUSED;		   // Type: Delay/Feedback
 	self->fx_param_un[9].value_u8 = 40;		   // Percentage
 
 	strcpy(self->fx_param_un[10].name, "THRSH"); // Compression threshold
-	self->fx_param_un[10].type_en = 8;			 // Type: Compression
+	self->fx_param_un[10].type_en = PARAM_TYPE_UNUSED;			 // Type: Compression
 	self->fx_param_un[10].value_u8 = 128;		 // Threshold level
 
 	strcpy(self->fx_param_un[11].name, "SPD"); // Tremolo speed
-	self->fx_param_un[11].type_en = 2;		   // Type: Tremolo
+	self->fx_param_un[11].type_en = PARAM_TYPE_UNUSED;		   // Type: Tremolo
 	self->fx_param_un[11].value_u8 = 90;	   // Speed in Hz
 
 	SCB_CleanDCache_by_Addr((uint32_t *)(self->fx_param_un->all_au8), sizeof(sab_fx_param_tun)*12);

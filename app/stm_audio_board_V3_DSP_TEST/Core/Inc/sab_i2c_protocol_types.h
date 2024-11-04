@@ -100,8 +100,9 @@ typedef union{
 
 // FX params ----------------------------------------------
 typedef enum{
-	POT,
-	BTN
+	PARAM_TYPE_UNUSED,
+	PARAM_TYPE_POT,
+	PARAM_TYPE_BTN
 }param_type_ten;
 
 typedef union{
