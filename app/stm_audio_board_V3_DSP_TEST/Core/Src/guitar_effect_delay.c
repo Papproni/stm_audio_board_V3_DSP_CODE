@@ -98,6 +98,19 @@ static int32_t callback(struct delay_effects_st* self,int32_t input_signal_i32){
  */
 void init_guitar_effect_delay(struct delay_effects_st* self){
 
+	strcpy(self->intercom_fx_data.name, "Delay");
+	self->intercom_fx_data.color[0] = 0; 	// R
+	self->intercom_fx_data.color[1] = 0;	// G
+	self->intercom_fx_data.color[2] = 255;	// B
+	self->intercom_fx_data.fx_state_en = FX_STATE_OFF;
+
+	// PARAMS:
+	add_parameter(&self->intercom_parameters_aun[0],"MIX",	PARAM_TYPE_POT,	69);
+	add_parameter(&self->intercom_parameters_aun[1],"TIME",	PARAM_TYPE_POT,	120);
+	add_parameter(&self->intercom_parameters_aun[2],"FBK",	PARAM_TYPE_POT,	85);
+	add_parameter(&self->intercom_parameters_aun[3],"MOD",	PARAM_TYPE_BTN,	0);
+	add_parameter(&self->intercom_parameters_aun[4],"BASE",	PARAM_TYPE_POT,	10);
+	add_parameter(&self->intercom_parameters_aun[5],"AMP",	PARAM_TYPE_POT,	10);
 
 	arm_biquad_cascade_df2T_init_f32(&lowpass_15k, 1, &lowpass_15k_coeff, &lowpass_15k_state);
 

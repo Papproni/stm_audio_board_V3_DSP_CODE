@@ -413,9 +413,21 @@ static int32_t callback_octave_effect(struct octave_effects_st* self,int32_t inp
 
 
 void init_guitar_effect_octave(octave_effects_tst* self){
+	// SETUP DATA FOR GUI START------------------------------
+	strcpy(self->intercom_fx_data.name, "Octave");
+	self->intercom_fx_data.color[0] = 255; 	// R
+	self->intercom_fx_data.color[1] = 0;	// G
+	self->intercom_fx_data.color[2] = 0;	// B
+	self->intercom_fx_data.fx_state_en = FX_STATE_OFF;
 
-	  arm_biquad_cascade_df2T_init_f32(&highpass_iir_50hz, 1, &highpass_coeff, &highpass_state);
-	  arm_biquad_cascade_df2T_init_f32(&highpass_iir_50hz_octave2, 1, &highpass_coeff, &highpass_state);
+	// PARAMS:
+	add_parameter(&self->intercom_parameters_aun[0],"SUB",PARAM_TYPE_POT,69);
+	add_parameter(&self->intercom_parameters_aun[1],"VOL",PARAM_TYPE_POT,120);
+	add_parameter(&self->intercom_parameters_aun[2],"UP",PARAM_TYPE_POT,85);
+	// SETUP DATA FOR GUI END ------------------------------
+
+	arm_biquad_cascade_df2T_init_f32(&highpass_iir_50hz, 1, &highpass_coeff, &highpass_state);
+	arm_biquad_cascade_df2T_init_f32(&highpass_iir_50hz_octave2, 1, &highpass_coeff, &highpass_state);
 	// assign function pointers
 	self->set_volumes			= set_volumes;
 	self->calc_octave_1_up 		= algorithm_octave_1_down;

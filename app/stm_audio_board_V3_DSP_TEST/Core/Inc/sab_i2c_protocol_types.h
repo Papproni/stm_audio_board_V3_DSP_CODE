@@ -27,7 +27,8 @@ enum SAB_I2C_REGS{
 	SAB_I2C_REG_SAVEPRESET,
 	SAB_I2C_REG_LOOPBYPASSSTATE,
 	SAB_I2C_REG_NUM_OF_IMPLEMENTED_EFFECTS,
-	SAB_I2C_REG_IMPLEMENTED_EFFECTS
+	SAB_I2C_REG_IMPLEMENTED_EFFECTS,
+	SAB_I2c_REG_CURRENT_FX
 };
 // #define SAB_I2C_REG_PRESETNUM        1
 #define SAB_I2C_REG_PRESETNUM_LEN    	4
@@ -84,7 +85,13 @@ typedef union{
 }sab_preset_num_tun;
 
 // LOOPS ----------------------------------------------
+typedef enum{
+	FX_STATE_ON,
+	FX_STATE_OFF
+}fx_state_ten;
+
 typedef struct{
+	fx_state_ten fx_state_en;
 	char name[10];
 	uint8_t color[3];
 }fx_data_tst;

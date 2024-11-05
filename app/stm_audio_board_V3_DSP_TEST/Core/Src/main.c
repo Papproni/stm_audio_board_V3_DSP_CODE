@@ -499,12 +499,19 @@ int main(void)
 	HAL_GPIO_WritePin(FSW_LED4_GPIO_Port, FSW_LED4_Pin, 0);
 
 
-	HAL_GPIO_WritePin(FSW_LED1_GPIO_Port, FSW_LED1_Pin, 1);
+	HAL_GPIO_WritePin(FSW_LED1_GPIO_Port, FSW_LED1_Pin, 0);
 	HAL_GPIO_WritePin(FSW_LED2_GPIO_Port, FSW_LED2_Pin, 0);
 	HAL_GPIO_WritePin(FSW_LED3_GPIO_Port, FSW_LED3_Pin, 1);
 	HAL_GPIO_WritePin(FSW_LED4_GPIO_Port, FSW_LED4_Pin, 1);
 
 	HAL_I2C_EnableListen_IT(&hi2c4);
+
+	memcpy(&intercom_st.loop_data[0].slot1,&octave_effects_st.intercom_fx_data,sizeof(fx_data_tst));
+	memcpy(&intercom_st.loop_data[0].slot2,&delay_effect.intercom_fx_data,sizeof(fx_data_tst));
+	
+	intercom_st.fx_param_pun[0] = octave_effects_st.intercom_parameters_aun;
+	intercom_st.fx_param_pun[1] = delay_effect.intercom_parameters_aun;
+
   while (1)
   {
 //	  HAL_I2C_Master_Transmit(&hi2c4,0x1F,TX_Buffer,5,1000); //Sending in Blocking mode
@@ -533,12 +540,14 @@ int main(void)
 	  // LOOP1
 		  int32_t out;
 		// TESTING
-			float32_t vol_sub1 = log_scale(intercom_st.fx_param_un[0].value_u8);
-			float32_t vol_norm = log_scale(intercom_st.fx_param_un[1].value_u8);
-			float32_t vol_up1  = log_scale(intercom_st.fx_param_un[2].value_u8);
+			float32_t vol_sub1 = log_scale(intercom_st.fx_param_pun[0][0].value_u8);
+			float32_t vol_norm = log_scale(intercom_st.fx_param_pun[0][1].value_u8);
+			float32_t vol_up1  = log_scale(intercom_st.fx_param_pun[0][2].value_u8);
 		  octave_effects_st.volumes_st.clean_f32 = vol_norm;
 		  octave_effects_st.volumes_st.up_1_f32 = vol_up1;
 		  octave_effects_st.volumes_st.up_2_f32 = vol_up1;
+
+
 		  if(enable_effect != 0){
 			  out = octave_effects_st.callback(&octave_effects_st,effects_io_port.in1_i32/2) + Do_PitchShift(effects_io_port.in1_i32/2)*vol_sub1;
 //			  out = delay_effect.callback(&delay_effect,effects_io_port.in1_i32/2);

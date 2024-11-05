@@ -10,6 +10,7 @@
 
 #include "main.h"
 #include "arm_math.h"
+#include "sab_intercom.h"
 
 // DEFINES
 #define DELAY_BUFFER_LENGTH  48000
@@ -29,9 +30,14 @@ typedef struct delay_parameters_st{
 }delay_parameters_tst;
 
 typedef struct delay_effects_st{
+
+	fx_data_tst			intercom_fx_data;
+	sab_fx_param_tun 	intercom_parameters_aun[12];
+
 	int32_t 				input_i32;
 	int32_t 				output_i32;
 	int32_t*				buffer_ai32;
+	
 
 	// pointers
 	uint32_t 				current_counter_u32;

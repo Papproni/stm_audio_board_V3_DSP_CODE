@@ -17,7 +17,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "arm_math.h"
-
+#include "sab_intercom.h"
 #define numberofsubbands 55
 // FILTER DEFINITIONS START
 
@@ -36,6 +36,10 @@ typedef struct{
 }octave_volume_tst;
 
 typedef struct octave_effects_st{
+
+	fx_data_tst			intercom_fx_data;
+	sab_fx_param_tun 	intercom_parameters_aun[12];
+
 	// Volumes
 	octave_volume_tst 	volumes_st;
 
