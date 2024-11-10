@@ -17,6 +17,7 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
+#include <guitar_effect_octave.h>
 #include "main.h"
 #include "dma.h"
 #include "i2c.h"
@@ -43,9 +44,6 @@
 // SAB specifics------START----
 // Effects libs
 #include "guitar_effect_delay.h"
-#include "guitar_effect_octave.h"
-
-// i2c comm
 #include "sab_intercom.h"
 
 #include "FLASH_SECTOR_H7.h"
