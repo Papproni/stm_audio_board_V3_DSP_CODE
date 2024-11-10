@@ -47,6 +47,9 @@
 
 // i2c comm
 #include "sab_intercom.h"
+
+#include "FLASH_SECTOR_H7.h"
+
 // SAB specifics------END----
 /* USER CODE END Includes */
 
@@ -410,7 +413,42 @@ float32_t log_scale(uint8_t input_value) {
     return scaled_value;
 }
 
+typedef struct preset_saves_st{
+	sab_loop_num_tun 	loop_data[NUM_OF_LOOPS];
+	sab_fx_param_tun 	fx_params_tun[NUM_OF_FX_SLOTS_IN_LOOP*NUM_OF_LOOPS][NUM_OF_MAX_PARAMS];
+	sab_loopbypass_tun	loopbypass_un;
+}preset_saves_tst; 
 
+
+
+ __attribute__((section(".user_data"))) preset_saves_tst presets_flash_st[26*9];
+
+#define USER_FLASH_ADDRESS 0x08080000  // Base address of USER_FLASH section
+void save_preset_to_flash(sab_intercom_tst* self){
+	preset_saves_tst preset_flash_st;
+	// 1. Calculate data addr
+	uint32_t preset_save_size_in_byte_u32 = 	sizeof(preset_saves_tst);
+	uint32_t preset_save_size_in_word_u32 = 	preset_save_size_in_byte_u32 / 4;
+
+	uint32_t preset_num_u32 = (self->preset_data_un.preset_Major_u8-'A')*9+self->preset_data_un.preset_Minor_u8-1;
+	uint32_t save_location_addr_u32 = preset_save_size_in_byte_u32*preset_num_u32+USER_FLASH_ADDRESS;
+	// COPY:
+	// 2.1. loop data
+	memcpy(preset_flash_st.loop_data,self->loop_data,sizeof(sab_loop_num_tun)*NUM_OF_LOOPS);
+	// 2.2. fx params
+	for(int i = 0; i<(NUM_OF_FX_SLOTS_IN_LOOP*NUM_OF_LOOPS);i++){
+		if(NULL != self->fx_param_pun[i]){
+			memcpy(preset_flash_st.fx_params_tun[i],self->fx_param_pun[i],sizeof(sab_fx_param_tun)*NUM_OF_MAX_PARAMS);
+		}
+	}
+	// 2.3. loopbypass
+	memcpy(preset_flash_st.loopbypass_un.all_u8,self->loopbypass_un.all_u8,sizeof(sab_loopbypass_tun));
+
+
+	// 3. save to flash
+	Flash_Write_Data(save_location_addr_u32,&preset_flash_st,preset_save_size_in_word_u32);
+  
+}
 /* USER CODE END 0 */
 
 /**
@@ -482,16 +520,6 @@ int main(void)
 //	AUDIO_Init();
 //	JumpToBootloader();
 		// FLASH TESTING END
-	/*
-	 * #define FSW_LED4_Pin GPIO_PIN_9
-#define FSW_LED4_GPIO_Port GPIOC
-#define FSW_LED3_Pin GPIO_PIN_8
-#define FSW_LED3_GPIO_Port GPIOA
-#define FSW_LED2_Pin GPIO_PIN_9
-#define FSW_LED2_GPIO_Port GPIOA
-#define FSW_LED1_Pin GPIO_PIN_10
-#define FSW_LED1_GPIO_Port GPIOA
-	 */
 
 	HAL_GPIO_WritePin(FSW_LED1_GPIO_Port, FSW_LED1_Pin, 0);
 	HAL_GPIO_WritePin(FSW_LED2_GPIO_Port, FSW_LED2_Pin, 0);
@@ -506,17 +534,31 @@ int main(void)
 
 	HAL_I2C_EnableListen_IT(&hi2c4);
 
+	SCB_InvalidateDCache_by_Addr((uint32_t *)&(intercom_st.loop_data[0]), sizeof(sab_loop_num_tun));
 	memcpy(&intercom_st.loop_data[0].slot1,&octave_effects_st.intercom_fx_data,sizeof(fx_data_tst));
 	memcpy(&intercom_st.loop_data[0].slot2,&delay_effect.intercom_fx_data,sizeof(fx_data_tst));
-	
+	SCB_CleanDCache_by_Addr((uint32_t *)&(intercom_st.loop_data[0]), sizeof(sab_preset_num_tun));
+
 	intercom_st.fx_param_pun[0] = octave_effects_st.intercom_parameters_aun;
 	intercom_st.fx_param_pun[1] = delay_effect.intercom_parameters_aun;
+
+//	intercom_st.loop_data;
+//	intercom_st.loopbypass_un
+//	intercom_st.
+	uint32_t rx_data[10];
+	//  Flash_Write_Data(USER_FLASH_ADDRESS , (uint32_t *)data2, 2);
+
+//	 Flash_Read_Data(USER_FLASH_ADDRESS , rx_data, 10);
+
 
   while (1)
   {
 //	  HAL_I2C_Master_Transmit(&hi2c4,0x1F,TX_Buffer,5,1000); //Sending in Blocking mode
 //	  HAL_I2C_Slave_Receive(&hi2c4, RX_Buffer, 6, 1000);
 //	HAL_Delay(100);
+	if(intercom_st.save_un.save_command>0){
+		save_preset_to_flash(&intercom_st);
+	}
 
 	  if(ADC_READY_FLAG){
 		  ADC_READY_FLAG = 0;

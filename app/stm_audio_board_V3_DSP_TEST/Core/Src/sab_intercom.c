@@ -49,12 +49,13 @@ static void get_loopbypass(struct sab_intercom_st *self)
 					 1000);
 }
 
-static void get_num_of_implemented_effects  (struct sab_intercom_st* self){
+static void get_num_of_implemented_effects(struct sab_intercom_st *self)
+{
 	HAL_I2C_Mem_Read(self->i2c_h, self->slave_addr_u8,
-						SAB_I2C_REG_NUM_OF_IMPLEMENTED_EFFECTS,
-						I2C_MEMADD_SIZE_8BIT,
-						&self->num_of_implemented_effects, 1,
-						1000);
+					 SAB_I2C_REG_NUM_OF_IMPLEMENTED_EFFECTS,
+					 I2C_MEMADD_SIZE_8BIT,
+					 &self->num_of_implemented_effects, 1,
+					 1000);
 }
 
 static void get_implemented_effects(struct sab_intercom_st *self)
@@ -97,12 +98,13 @@ static void set_loopbypass(struct sab_intercom_st *self)
 					  &self->loopbypass_un.all_u8, SAB_I2C_REG_LOOPBYPASSSTATE_LEN, 1000);
 }
 
-static void set_current_fx_in_edit (struct sab_intercom_st* self,uint8_t fx_slot_u8){
+static void set_current_fx_in_edit(struct sab_intercom_st *self, uint8_t fx_slot_u8)
+{
 	self->current_fx_in_edit = fx_slot_u8;
-	HAL_I2C_Mem_Write(self->i2c_h,self->slave_addr_u8,
-				SAB_I2c_REG_CURRENT_FX,
-				I2C_MEMADD_SIZE_8BIT,
-				&self->current_fx_in_edit, sizeof(uint8_t), 1000);
+	HAL_I2C_Mem_Write(self->i2c_h, self->slave_addr_u8,
+					  SAB_I2c_REG_CURRENT_FX,
+					  I2C_MEMADD_SIZE_8BIT,
+					  &self->current_fx_in_edit, sizeof(uint8_t), 1000);
 }
 
 /// @brief Saves data received from master (display)
@@ -288,9 +290,10 @@ void prev_preset(struct sab_intercom_st *self)
 	SCB_CleanDCache_by_Addr((uint32_t *)&self->preset_data_un.all_u32, sizeof(self->preset_data_un.all_u32));
 }
 
-void add_parameter(sab_fx_param_tun* param_ptr, char* name, param_type_ten type, uint8_t value){
+void add_parameter(sab_fx_param_tun *param_ptr, char *name, param_type_ten type, uint8_t value)
+{
 	strcpy(param_ptr->name, name);
-	param_ptr->type_en = type;	
+	param_ptr->type_en = type;
 	param_ptr->value_u8 = value;
 }
 
@@ -313,6 +316,7 @@ void init_intercom(struct sab_intercom_st *self, uint8_t slave_address_u8, I2C_H
 	self->num_of_implemented_effects = 0;
 	self->implemented_fx_data_ptr = NULL;
 	self->current_fx_in_edit = 0;
+	self->save_un.save_command = 0;
 	// SETTER function pointers
 	self->set_fx_param = set_fx_param;
 	self->set_loopbypass = set_loopbypass;
@@ -385,41 +389,19 @@ void testing_data(struct sab_intercom_st *self)
 {
 	test_fx_params_fill(self);
 
-	SCB_InvalidateDCache_by_Addr((uint32_t *)&(self->preset_data_un.all_u32), sizeof(self->preset_data_un.all_u32));
+	SCB_InvalidateDCache_by_Addr((uint32_t *)&(self->preset_data_un.all_u32), sizeof(sab_preset_num_tun));
 	self->preset_data_un.preset_Major_u8 = 'A';
 	self->preset_data_un.preset_Minor_u8 = 1;
-	SCB_CleanDCache_by_Addr((uint32_t *)&(self->preset_data_un.all_u32), sizeof(self->preset_data_un.all_u32));
+	SCB_CleanDCache_by_Addr((uint32_t *)&(self->preset_data_un.all_u32), sizeof(sab_preset_num_tun));
 
-	SCB_InvalidateDCache_by_Addr((uint32_t *)&(self->loop_data[0]), sizeof(self->loop_data));
-	// LOOP 1 DATA
-	// strcpy(self->loop_data[0].slot1.name, "Octaver");
-	// self->loop_data[0].slot1.color[0] = 255; // R
-	// self->loop_data[0].slot1.color[1] = 0;	 // G
-	// self->loop_data[0].slot1.color[2] = 0;	 // B
-
-	// strcpy(self->loop_data[0].slot2.name, "Chorus");
-	// self->loop_data[0].slot2.color[0] = 0;	 // R
-	// self->loop_data[0].slot2.color[1] = 255; // G
-	// self->loop_data[0].slot2.color[2] = 0;	 // B
-
-	// strcpy(self->loop_data->slot3.name, "NONE");
-
-	SCB_CleanDCache_by_Addr((uint32_t *)&(self->loop_data[0]), sizeof(self->loop_data));
-
-	// LOOP 2 DATA
-	SCB_InvalidateDCache_by_Addr((uint32_t *)&(self->loop_data[1]), sizeof(self->loop_data));
-	// strcpy(self->loop_data[1].slot1.name, "Delay");
-	// self->loop_data[1].slot1.color[0] = 0;	 // R
-	// self->loop_data[1].slot1.color[1] = 0;	 // G
-	// self->loop_data[1].slot1.color[2] = 255; // B
-
-	// strcpy(self->loop_data[0].slot2.name, "Reverb");
-	// self->loop_data[1].slot2.color[0] = 0;	 // R
-	// self->loop_data[1].slot2.color[1] = 255; // G
-	// self->loop_data[1].slot2.color[2] = 255; // B
-
-	// strcpy(self->loop_data->slot3.name, "NONE");
-	// SCB_CleanDCache_by_Addr((uint32_t *)&(self->loop_data[1]), sizeof(self->loop_data));
+	for (int i = 0; i < (NUM_OF_LOOPS); i++)
+	{
+		SCB_InvalidateDCache_by_Addr((uint32_t *)&(self->loop_data[i]), sizeof(sab_loop_num_tun));
+		strcpy(self->loop_data[i].slot1.name,"NONE");
+		strcpy(self->loop_data[i].slot2.name,"NONE");
+		strcpy(self->loop_data[i].slot3.name,"NONE");
+		SCB_CleanDCache_by_Addr((uint32_t *)&(self->loop_data[i]), sizeof(sab_loop_num_tun));
+	}
 
 	SCB_InvalidateDCache_by_Addr((uint32_t *)&(self->info_un), sizeof(self->info_un));
 	self->info_un.dsp_info_st.dsp_fw_ver_major_u8 = 0;
@@ -435,7 +417,7 @@ void testing_data(struct sab_intercom_st *self)
 
 	self->num_of_implemented_effects = 5;
 	self->implemented_fx_data_ptr = (fx_data_tst *)malloc(sizeof(fx_data_tst) * self->num_of_implemented_effects);
-	
+
 	strcpy(self->implemented_fx_data_ptr[0].name, "BOOST");
 	self->implemented_fx_data_ptr[0].color[0] = 0;
 	self->implemented_fx_data_ptr[0].color[1] = 200;

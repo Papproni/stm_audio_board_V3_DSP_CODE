@@ -11,7 +11,8 @@
 // THis file contains the communication basics for the I2C protocoll
 // between the DSP and DISPLAY unit
 #define NUM_OF_LOOPS 4
-
+#define NUM_OF_FX_SLOTS_IN_LOOP 3
+#define NUM_OF_MAX_PARAMS 12
 typedef struct sab_intercom_st{
     uint8_t slave_addr_u8;
     uint8_t register_addr_u8;
