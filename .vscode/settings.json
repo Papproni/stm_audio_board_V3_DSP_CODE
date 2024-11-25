@@ -60,6 +60,8 @@
     "*.c": "c",
     "sab_intercom.h": "c",
     "stm32h7xx_hal.h": "c",
-    "flash_sector_h7.h": "c"
+    "flash_sector_h7.h": "c",
+    "guitar_effect_octave.h": "c",
+    "arm_math.h": "c"
   }
 }

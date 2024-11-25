@@ -2,11 +2,11 @@
 CAD.formats=
 CAD.pinconfig=
 CAD.provider=
-CORTEX_M7.CPU_DCache=Enabled
+CORTEX_M7.CPU_DCache=Disabled
 CORTEX_M7.CPU_ICache=Enabled
 CORTEX_M7.IPParameters=CPU_ICache,CPU_DCache,default_mode_Activation,MPU_Control
 CORTEX_M7.MPU_Control=__NULL
-CORTEX_M7.default_mode_Activation=1
+CORTEX_M7.default_mode_Activation=0
 Dma.Request0=SAI1_A
 Dma.Request1=SAI1_B
 Dma.RequestsNb=2

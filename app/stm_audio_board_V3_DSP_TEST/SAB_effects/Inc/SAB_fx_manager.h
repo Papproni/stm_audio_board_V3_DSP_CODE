@@ -54,7 +54,7 @@ typedef struct {
     int (*process)(void*);         // Function pointer to process the effect
 } GuitarEffect;
 
-void init_effect_chain(GuitarEffect** chain, EffectType* fx_chain, int chain_length) {
+void init_effect_chain(GuitarEffect** chain, EffectType* fx_chain, int chain_length,sab_intercom_tst &intercom_pst) {
     for (int i = 0; i < chain_length; ++i) {
         switch (fx_chain[i]) {
         case DELAY:

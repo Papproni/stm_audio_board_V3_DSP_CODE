@@ -17,7 +17,7 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-#include <guitar_effect_octave.h>
+
 #include "main.h"
 #include "dma.h"
 #include "i2c.h"
@@ -40,6 +40,7 @@
 #include "string.h"
 #include <math.h>
 #include "arm_math.h"
+#include <guitar_effect_octave.h>
 
 // SAB specifics------START----
 // Effects libs
@@ -47,6 +48,7 @@
 #include "sab_intercom.h"
 
 #include "FLASH_SECTOR_H7.h"
+#include "SAB_custom_fx.h"
 
 // SAB specifics------END----
 /* USER CODE END Includes */
@@ -294,6 +296,8 @@ int Do_PitchShift(int sample) {
 // Effect instances
 delay_effects_tst delay_effect;
 octave_effects_tst octave_effects_st;
+SAB_custom_fx_tst custom_fx_st;
+
 sab_intercom_tst intercom_st;
 
 int32_t sdram_buffer_test_ai32[100]__attribute__((section(".sdram_section")));
@@ -361,7 +365,6 @@ void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c)
 	}
 	HAL_I2C_EnableListen_IT(hi2c);
 }
-
 
 extern void HAL_I2C_AddrCallback(I2C_HandleTypeDef *hi2c, uint8_t TransferDirection, uint16_t AddrMatchCode)
 {
@@ -507,6 +510,8 @@ int main(void)
 
 	init_guitar_effect_octave(&octave_effects_st);
 
+	SAB_custom_fx_init(&custom_fx_st);
+
 	init_intercom(&intercom_st, 0x10,&hi2c4);
 
   /* USER CODE END 2 */
@@ -535,10 +540,13 @@ int main(void)
 	SCB_InvalidateDCache_by_Addr((uint32_t *)&(intercom_st.loop_data[0]), sizeof(sab_loop_num_tun));
 	memcpy(&intercom_st.loop_data[0].slot1,&octave_effects_st.intercom_fx_data,sizeof(fx_data_tst));
 	memcpy(&intercom_st.loop_data[0].slot2,&delay_effect.intercom_fx_data,sizeof(fx_data_tst));
+	memcpy(&intercom_st.loop_data[0].slot3,&custom_fx_st.intercom_fx_data,sizeof(fx_data_tst));
 	SCB_CleanDCache_by_Addr((uint32_t *)&(intercom_st.loop_data[0]), sizeof(sab_preset_num_tun));
 
 	intercom_st.fx_param_pun[0] = octave_effects_st.intercom_parameters_aun;
 	intercom_st.fx_param_pun[1] = delay_effect.intercom_parameters_aun;
+	intercom_st.fx_param_pun[2] = custom_fx_st.intercom_parameters_aun;
+
 
 //	intercom_st.loop_data;
 //	intercom_st.loopbypass_un
@@ -589,7 +597,8 @@ int main(void)
 
 
 		  if(enable_effect != 0){
-			  out = octave_effects_st.callback(&octave_effects_st,effects_io_port.in1_i32/2) + Do_PitchShift(effects_io_port.in1_i32/2)*vol_sub1;
+			//   out = octave_effects_st.callback(&octave_effects_st,effects_io_port.in1_i32/2) + Do_PitchShift(effects_io_port.in1_i32/2)*vol_sub1;
+			out = SAB_custom_fx_process(&custom_fx_st,effects_io_port.in1_i32/2,0);
 //			  out = delay_effect.callback(&delay_effect,effects_io_port.in1_i32/2);
 		  }else{
 			  out = effects_io_port.in1_i32/2;
