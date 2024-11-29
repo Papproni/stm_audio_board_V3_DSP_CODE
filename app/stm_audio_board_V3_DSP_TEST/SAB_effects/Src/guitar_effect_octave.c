@@ -411,8 +411,18 @@ static int32_t callback_octave_effect(struct octave_effects_st* self,int32_t inp
 	return self->output_f32;
 }
 
+// Process Function for SAB_pitchshift_tst
+float32_t SAB_octave_process( octave_effects_tst* self, float input_f32){
 
-void init_guitar_effect_octave(octave_effects_tst* self){
+}
+
+// Process Function for SAB_pitchshift_tst
+void SAB_octave_delete( octave_effects_tst* self){
+	
+}
+
+
+void SAB_octave_init(octave_effects_tst* self){
 	// SETUP DATA FOR GUI START------------------------------
 	strcpy(self->intercom_fx_data.name, "Octave");
 	self->intercom_fx_data.color[0] = 255; 	// R
@@ -453,6 +463,4 @@ void init_guitar_effect_octave(octave_effects_tst* self){
 	}
 
 	// zero out the IIR filter states
-
-
 }

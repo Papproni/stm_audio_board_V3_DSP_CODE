@@ -1,14 +1,14 @@
 /*THIS FILE IS GENERATED! DO NOT MODIFY!
 Generated on: 2024.11.28. */
 
-#ifndef SAB_BOOST_H
-#define SAB_BOOST_H
+#ifndef SAB_CUSTOM_H
+#define SAB_CUSTOM_H
 
 #include "sab_intercom.h"
 #include "stdint.h"
 #define float32_t float
 
-// Effect: boost
+// Effect: CUSTOM
 typedef struct {
     void (*init)(void*);           // Function pointer to initialize the effect
     int (*process)(void*);
@@ -29,18 +29,18 @@ typedef struct {
     float32_t param_10_value;
     float32_t param_11_value;
     float32_t param_12_value;
-        float32_t boost_f32;
-} SAB_boost_tst;
+        float32_t vol_f32;
+} SAB_CUSTOM_tst;
 
 
-// Process Function for SAB_boost_tst
-void SAB_boost_init( SAB_boost_tst* self);
+// Process Function for SAB_CUSTOM_tst
+void SAB_CUSTOM_init( SAB_CUSTOM_tst* self);
 
-// Process Function for SAB_boost_tst
-float32_t SAB_boost_process( SAB_boost_tst* self, float input_f32);
+// Process Function for SAB_CUSTOM_tst
+float32_t SAB_CUSTOM_process( SAB_CUSTOM_tst* self, float input_f32);
 
-// Process Function for SAB_boost_tst
-void SAB_boost_delete( SAB_boost_tst* self);
+// Process Function for SAB_CUSTOM_tst
+void SAB_CUSTOM_delete( SAB_CUSTOM_tst* self);
 
 
 #endif

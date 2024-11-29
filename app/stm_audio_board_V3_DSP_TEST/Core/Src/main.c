@@ -49,6 +49,7 @@
 
 #include "FLASH_SECTOR_H7.h"
 #include "SAB_custom_fx.h"
+#include "SAB_fx_manager.h"
 
 // SAB specifics------END----
 /* USER CODE END Includes */
@@ -421,8 +422,8 @@ typedef struct preset_saves_st{
 }preset_saves_tst; 
 
 
-
- __attribute__((section(".user_data"))) preset_saves_tst presets_flash_st[26*9];
+// FLASH MEMORY
+//  __attribute__((section(".user_data"))) preset_saves_tst presets_flash_st[26*9];
 
 #define USER_FLASH_ADDRESS 0x08080000  // Base address of USER_FLASH section
 void save_preset_to_flash(sab_intercom_tst* self){
@@ -508,7 +509,7 @@ int main(void)
 
 	init_guitar_effect_delay(&delay_effect);
 
-	init_guitar_effect_octave(&octave_effects_st);
+	SAB_octave_init(&octave_effects_st);
 
 	SAB_custom_fx_init(&custom_fx_st);
 
@@ -547,23 +548,18 @@ int main(void)
 	intercom_st.fx_param_pun[1] = delay_effect.intercom_parameters_aun;
 	intercom_st.fx_param_pun[2] = custom_fx_st.intercom_parameters_aun;
 
+	// Load data from flash to intercom!
 
-//	intercom_st.loop_data;
-//	intercom_st.loopbypass_un
-//	intercom_st.
-	uint32_t rx_data[10];
-	//  Flash_Write_Data(USER_FLASH_ADDRESS , (uint32_t *)data2, 2);
-
-//	 Flash_Read_Data(USER_FLASH_ADDRESS , rx_data, 10);
+	// init fx
+	SAB_fx_manager_tst SAB_fx_manager_st;
+	SAB_fx_manager_init(&SAB_fx_manager_st, &intercom_st);
 
 
   while (1)
   {
-//	  HAL_I2C_Master_Transmit(&hi2c4,0x1F,TX_Buffer,5,1000); //Sending in Blocking mode
-//	  HAL_I2C_Slave_Receive(&hi2c4, RX_Buffer, 6, 1000);
-//	HAL_Delay(100);
 	if(intercom_st.save_un.save_command>0){
 		save_preset_to_flash(&intercom_st);
+		intercom_st.save_un.save_command = 0;
 	}
 
 	  if(ADC_READY_FLAG){
@@ -581,9 +577,9 @@ int main(void)
 
 	  // LOOPBACK TESTING
 //	  	  effects_io_port.out1_i32 = effects_io_port.in1_i32;
-	  	  effects_io_port.out2_i32 = effects_io_port.in2_i32/2;
-	  	  effects_io_port.out3_i32 = effects_io_port.in3_i32/2;
-	  	  effects_io_port.out4_i32 = effects_io_port.in4_i32/2;
+	  	  effects_io_port.out2_i32 = effects_io_port.in2_i32;
+	  	  effects_io_port.out3_i32 = effects_io_port.in3_i32;
+	  	  effects_io_port.out4_i32 = effects_io_port.in4_i32;
 
 	  // LOOP1
 		  int32_t out;
@@ -598,10 +594,10 @@ int main(void)
 
 		  if(enable_effect != 0){
 			//   out = octave_effects_st.callback(&octave_effects_st,effects_io_port.in1_i32/2) + Do_PitchShift(effects_io_port.in1_i32/2)*vol_sub1;
-			out = SAB_custom_fx_process(&custom_fx_st,effects_io_port.in1_i32/2,0);
+			out = SAB_custom_fx_process(&custom_fx_st,effects_io_port.in1_i32,0);
 //			  out = delay_effect.callback(&delay_effect,effects_io_port.in1_i32/2);
 		  }else{
-			  out = effects_io_port.in1_i32/2;
+			  out = effects_io_port.in1_i32*1.122;
 		  }
 
 		  effects_io_port.out1_i32 = out;

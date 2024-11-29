@@ -58,10 +58,9 @@
   "C_Cpp_Runner.msvcSecureNoWarnings": false,
   "files.associations": {
     "*.c": "c",
-    "sab_intercom.h": "c",
-    "stm32h7xx_hal.h": "c",
-    "flash_sector_h7.h": "c",
-    "guitar_effect_octave.h": "c",
-    "arm_math.h": "c"
+    "stdint.h": "c",
+    "math.h": "c",
+    "sab_custom_fx.h": "c",
+    "sab_intercom.h": "c"
   }
 }

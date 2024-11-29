@@ -7,6 +7,7 @@
 
 #include "sab_intercom.h"
 
+
 // ----------------------------------GETTERS-------------------------------------------------
 static void get_preset_data(struct sab_intercom_st *self)
 {
@@ -114,6 +115,11 @@ static void set_current_fx_in_edit(struct sab_intercom_st *self, uint8_t fx_slot
 void sab_intercom_process_i2c_data(struct sab_intercom_st *self, uint8_t *buffer_pu8, uint8_t size_u8)
 {
 	memcpy(self->get_reg_data_ptr(self), buffer_pu8, size_u8);
+	if(self->register_addr_u8>=SAB_I2C_REG_LOOP1FX && self->register_addr_u8<=SAB_I2C_REG_LOOP4FX){
+		// Call FX manager to update the loop
+		// fx_manager_delete
+		// fx_manager_init
+	}
 }
 
 /// @brief This function returns the data pointer which is adressed by the "register_addr_u8"
@@ -288,6 +294,11 @@ void prev_preset(struct sab_intercom_st *self)
 		}
 	}
 	SCB_CleanDCache_by_Addr((uint32_t *)&self->preset_data_un.all_u32, sizeof(self->preset_data_un.all_u32));
+}
+
+float32_t conv_raw_to_param_value(uint8_t value, float32_t low, float32_t high) {
+	float32_t v_f32 = value;
+    return low + (v_f32 / 255.0f) * (high - low);
 }
 
 void add_parameter(sab_fx_param_tun *param_ptr, char *name, param_type_ten type, uint8_t value)

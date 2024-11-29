@@ -37,6 +37,10 @@ typedef struct{
 
 typedef struct octave_effects_st{
 
+	void (*init)(void*);           // Function pointer to initialize the effect
+    int (*process)(void*);
+    void (*delete)(void*);
+     
 	fx_data_tst			intercom_fx_data;
 	sab_fx_param_tun 	intercom_parameters_aun[12];
 
@@ -101,7 +105,13 @@ typedef struct octave_effects_st{
 }octave_effects_tst;
 
 // creates the initialisation for the effect
-void init_guitar_effect_octave(octave_effects_tst* self);
+void SAB_octave_init(octave_effects_tst* self);
 //volatile octave_effects_tst octave_effect_st;
+
+// Process Function for SAB_pitchshift_tst
+float32_t SAB_octave_process( octave_effects_tst* self, float input_f32);
+
+// Process Function for SAB_pitchshift_tst
+void SAB_octave_delete( octave_effects_tst* self);
 
 #endif

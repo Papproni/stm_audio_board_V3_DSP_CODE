@@ -1,5 +1,5 @@
 /*THIS FILE IS GENERATED! DO NOT MODIFY!
-Generated on: 2024.11.10. */
+Generated on: 2024.11.28. */
 
 #ifndef SAB_EQUALIZER_H
 #define SAB_EQUALIZER_H
@@ -12,28 +12,34 @@ Generated on: 2024.11.10. */
 typedef struct {
     void (*init)(void*);           // Function pointer to initialize the effect
     int (*process)(void*);
-        float32_t vol_f32;
-        float32_t gain_f32;
-        float32_t 20hz_f32;
-        float32_t 40hz_f32;
-        float32_t 80hz_f32;
-        float32_t 160hz_f32;
-        float32_t 315hz_f32;
-        float32_t 630hz_f32;
-        float32_t 1.25khz_f32;
-        float32_t 2.5khz_f32;
-        float32_t 5khz_f32;
-        float32_t 10khz_f32;
-        float32_t 20khz_f32;
+    void (*delete)(void*);
+     
+    fx_data_tst			intercom_fx_data;
+	sab_fx_param_tun 	intercom_parameters_aun[NUM_OF_MAX_PARAMS];
+
+    float32_t param_1_value;
+    float32_t param_2_value;
+    float32_t param_3_value;
+    float32_t param_4_value;
+    float32_t param_5_value;
+    float32_t param_6_value;
+    float32_t param_7_value;
+    float32_t param_8_value;
+    float32_t param_9_value;
+    float32_t param_10_value;
+    float32_t param_11_value;
+    float32_t param_12_value;
 } SAB_equalizer_tst;
 
 
 // Process Function for SAB_equalizer_tst
-void SAB_equalizer_init( SAB_equalizer_tst* self, float input_f32, float output_f32){};
+void SAB_equalizer_init( SAB_equalizer_tst* self);
 
 // Process Function for SAB_equalizer_tst
-int SAB_equalizer_process( SAB_equalizer_tst* self, float input_f32, float output_f32){};
+float32_t SAB_equalizer_process( SAB_equalizer_tst* self, float input_f32);
 
+// Process Function for SAB_equalizer_tst
+void SAB_equalizer_delete( SAB_equalizer_tst* self);
 
 
 #endif

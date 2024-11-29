@@ -8,8 +8,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": true,
-      "cwd": "c:/Projects/SDRAM_STUFF/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Core/Src",
-      "program": "c:/Projects/SDRAM_STUFF/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/Core/Src/build/Debug/outDebug",
+      "cwd": "c:/Projects/SDRAM_STUFF/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/SAB_effects/Src",
+      "program": "c:/Projects/SDRAM_STUFF/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/SAB_effects/Src/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [

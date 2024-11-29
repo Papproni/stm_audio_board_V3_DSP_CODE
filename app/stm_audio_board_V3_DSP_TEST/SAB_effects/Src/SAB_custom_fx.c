@@ -75,9 +75,8 @@ void calculate_biquad_coeffs(float32_t* coeffs_af32,FilterType type, float freq,
     coeffs_af32[4]=-coeffs.a2;
 }
 
-static float32_t conv_raw_to_param_value(uint8_t value, float32_t low, float32_t high) {
-	float32_t v_f32 = value;
-    return low + (v_f32 / 255.0f) * (high - low);
+void SAB_custom_fx_delete( SAB_custom_fx_tst* self){
+    // TODO
 }
 
 // Process Function for SAB_custom_fx_tst
@@ -91,9 +90,9 @@ void SAB_custom_fx_init( SAB_custom_fx_tst* self){
 
 	// PARAMS:
     
-    add_parameter(&self->intercom_parameters_aun[0],"FREQ",PARAM_TYPE_POT,69);
-    add_parameter(&self->intercom_parameters_aun[1],"Q",PARAM_TYPE_POT,69);
-    add_parameter(&self->intercom_parameters_aun[2],"GAIN",PARAM_TYPE_POT,69);
+    add_parameter(&self->intercom_parameters_aun[0],"LPF",PARAM_TYPE_POT,69);
+    add_parameter(&self->intercom_parameters_aun[1],"GAIN",PARAM_TYPE_POT,69);
+    add_parameter(&self->intercom_parameters_aun[2],"NONE",PARAM_TYPE_POT,69);
     add_parameter(&self->intercom_parameters_aun[3],"NONE",PARAM_TYPE_POT,69);
     add_parameter(&self->intercom_parameters_aun[4],"NONE",PARAM_TYPE_POT,69);
     add_parameter(&self->intercom_parameters_aun[5],"NONE",PARAM_TYPE_POT,69);
@@ -107,38 +106,34 @@ void SAB_custom_fx_init( SAB_custom_fx_tst* self){
     // Generated outputs from other Jinja templates
     /*
 // Biquad filter init
-Type: BANDPASS
+Type: LPF
 Freq: param_1
-Q:    param_2
+Q:    0.707
 */
 
-arm_biquad_cascade_df2T_init_f32(&self->BIQUAD_FILTER_block5, 1, &self->BIQUAD_FILTER_block5_coeffs_af32, &self->BIQUAD_FILTER_block5_states_af32);
-self->BIQUAD_FILTER_block5_output_f32  = 0;
+arm_biquad_cascade_df2T_init_f32(&self->biquad_filter_block_block2, 1, &self->biquad_filter_block_block2_coeffs_af32, &self->biquad_filter_block_block2_states_af32);
+self->biquad_filter_block_block2_output_f32  = 0;
 
 };
 
 // Process Function for SAB_custom_fx_tst
 float32_t SAB_custom_fx_process( SAB_custom_fx_tst* self, float32_t input_f32, float32_t output_f32){
-    // Freq
-    self->param_1_value = conv_raw_to_param_value(self->intercom_parameters_aun[0].value_u8,20, 10000);
-    // Q
-    self->param_2_value = conv_raw_to_param_value(self->intercom_parameters_aun[1].value_u8,0.1, 10);
+    // lpf
+    self->param_1_value = conv_raw_to_param_value(self->intercom_parameters_aun[0].value_u8,300, 5000);
     // Gain
-    self->param_3_value = conv_raw_to_param_value(self->intercom_parameters_aun[2].value_u8,0, 10);
+    self->param_2_value = conv_raw_to_param_value(self->intercom_parameters_aun[1].value_u8,0, 4);
 
     // Generated outputs from other Jinja templates
     
-    self->INPUT_BLOCK_block1_output_f32 = input_f32;
+    self->input_block_block0_output_f32 = input_f32;
     
     // Biquad filter process function
-calculate_biquad_coeffs(self->BIQUAD_FILTER_block5_coeffs_af32,BANDPASS, self->param_1_value, self->param_2_value, 48000);
-arm_biquad_cascade_df2T_f32(&self->BIQUAD_FILTER_block5, &self->INPUT_BLOCK_block1_output_f32, &self->BIQUAD_FILTER_block5_output_f32, 1);
-self->BIQUAD_FILTER_block5_output_f32 *= self->param_3_value;
-
-    self->ADD_BLOCK_block6_output_f32 = self->INPUT_BLOCK_block1_output_f32 + self->BIQUAD_FILTER_block5_output_f32;
+calculate_biquad_coeffs(self->biquad_filter_block_block2_coeffs_af32,LPF, self->param_1_value, 0.707, 48000);
+arm_biquad_cascade_df2T_f32(&self->biquad_filter_block_block2, &self->input_block_block0_output_f32, &self->biquad_filter_block_block2_output_f32, 1);
+self->biquad_filter_block_block2_output_f32 *= self->param_2_value;
     
-    self->OUTPUT_BLOCK_block3_input_f32 = self->ADD_BLOCK_block6_output_f32;
-output_f32 = self->OUTPUT_BLOCK_block3_input_f32;
+    self->output_block_block1_input_f32 = self->biquad_filter_block_block2_output_f32;
+output_f32 = self->output_block_block1_input_f32;
     
 
     return output_f32;

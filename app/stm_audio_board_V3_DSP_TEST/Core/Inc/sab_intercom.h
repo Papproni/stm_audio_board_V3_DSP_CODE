@@ -8,6 +8,7 @@
 #include "string.h"
 #include "stdint.h"
 #include <stdlib.h>
+#include "arm_math.h"
 // THis file contains the communication basics for the I2C protocoll
 // between the DSP and DISPLAY unit
 #define NUM_OF_LOOPS 4
@@ -58,5 +59,6 @@ void init_intercom(struct sab_intercom_st* self,uint8_t slave_address_u8, I2C_Ha
 void testing_data(struct sab_intercom_st* self);
 void sab_intercom_rx_callback  (struct sab_intercom_st* self);
 
+float32_t conv_raw_to_param_value(uint8_t value, float32_t low, float32_t high);
 void add_parameter(sab_fx_param_tun* param_ptr, char* name, param_type_ten type, uint8_t value);
 #endif /* INC_SAB_I2C_INTERCOM_H_ */
