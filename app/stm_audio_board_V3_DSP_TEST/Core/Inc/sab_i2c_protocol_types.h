@@ -97,7 +97,7 @@ typedef struct{
 }fx_data_tst;
 
 typedef union{
-	uint8_t all_pau8[SAB_I2C_REG_LOOPFX_LEN];
+	uint8_t all_pau8[1];
 	struct{
 		fx_data_tst slot1;
 		fx_data_tst slot2;

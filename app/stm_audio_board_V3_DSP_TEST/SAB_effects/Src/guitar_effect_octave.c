@@ -418,7 +418,7 @@ float32_t SAB_octave_process( octave_effects_tst* self, float input_f32){
 
 // Process Function for SAB_pitchshift_tst
 void SAB_octave_delete( octave_effects_tst* self){
-	
+
 }
 
 
@@ -428,7 +428,7 @@ void SAB_octave_init(octave_effects_tst* self){
 	self->intercom_fx_data.color[0] = 255; 	// R
 	self->intercom_fx_data.color[1] = 0;	// G
 	self->intercom_fx_data.color[2] = 0;	// B
-	self->intercom_fx_data.fx_state_en = FX_STATE_OFF;
+	self->intercom_fx_data.fx_state_en = FX_STATE_ON;
 
 	// PARAMS:
 	add_parameter(&self->intercom_parameters_aun[0],"SUB",PARAM_TYPE_POT,69);

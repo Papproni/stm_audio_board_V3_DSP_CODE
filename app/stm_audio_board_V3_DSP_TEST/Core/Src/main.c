@@ -346,7 +346,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 #define RX_LEN 255
 #define TX_LEN 255
 uint8_t TX_Buffer [TX_LEN] = "ABCDEF" ; // DATA to send
-uint8_t RX_Buffer [RX_LEN] = "ABCDEF" ; // DATA to send
+volatile uint8_t RX_Buffer [RX_LEN] = "ABCDEF" ; // DATA to send
 uint8_t tx_counter = 0;
 uint8_t rx_counter = 0;
 uint8_t commando = 0;
@@ -468,7 +468,7 @@ int main(void)
   SCB_EnableICache();
 
   /* Enable D-Cache---------------------------------------------------------*/
-  SCB_EnableDCache();
+//  SCB_EnableDCache();
 
   /* MCU Configuration--------------------------------------------------------*/
 
@@ -539,20 +539,20 @@ int main(void)
 	HAL_I2C_EnableListen_IT(&hi2c4);
 
 	SCB_InvalidateDCache_by_Addr((uint32_t *)&(intercom_st.loop_data[0]), sizeof(sab_loop_num_tun));
-	memcpy(&intercom_st.loop_data[0].slot1,&octave_effects_st.intercom_fx_data,sizeof(fx_data_tst));
-	memcpy(&intercom_st.loop_data[0].slot2,&delay_effect.intercom_fx_data,sizeof(fx_data_tst));
+	memcpy(&intercom_st.loop_data[0].slot2,&octave_effects_st.intercom_fx_data,sizeof(fx_data_tst));
+	memcpy(&intercom_st.loop_data[0].slot1,&delay_effect.intercom_fx_data,sizeof(fx_data_tst));
 	memcpy(&intercom_st.loop_data[0].slot3,&custom_fx_st.intercom_fx_data,sizeof(fx_data_tst));
 	SCB_CleanDCache_by_Addr((uint32_t *)&(intercom_st.loop_data[0]), sizeof(sab_preset_num_tun));
 
-	intercom_st.fx_param_pun[0] = octave_effects_st.intercom_parameters_aun;
-	intercom_st.fx_param_pun[1] = delay_effect.intercom_parameters_aun;
+	intercom_st.fx_param_pun[1] = octave_effects_st.intercom_parameters_aun;
+	intercom_st.fx_param_pun[0] = delay_effect.intercom_parameters_aun;
 	intercom_st.fx_param_pun[2] = custom_fx_st.intercom_parameters_aun;
 
 	// Load data from flash to intercom!
 
 	// init fx
 	SAB_fx_manager_tst SAB_fx_manager_st;
-	SAB_fx_manager_init(&SAB_fx_manager_st, &intercom_st);
+//	SAB_fx_manager_init(&SAB_fx_manager_st, &intercom_st);
 
 
   while (1)

@@ -114,11 +114,14 @@ static void set_current_fx_in_edit(struct sab_intercom_st *self, uint8_t fx_slot
 /// @param size_u8
 void sab_intercom_process_i2c_data(struct sab_intercom_st *self, uint8_t *buffer_pu8, uint8_t size_u8)
 {
+//	SCB_InvalidateDCache_by_Addr((uint32_t *)self->get_reg_data_ptr(self), self->get_reg_data_len(self));
 	memcpy(self->get_reg_data_ptr(self), buffer_pu8, size_u8);
-	if(self->register_addr_u8>=SAB_I2C_REG_LOOP1FX && self->register_addr_u8<=SAB_I2C_REG_LOOP4FX){
+//	SCB_CleanDCache_by_Addr((uint32_t *)self->get_reg_data_ptr(self), self->get_reg_data_len(self));
+	if(self->register_addr_u8>=SAB_I2C_REG_LOOP1FX){
 		// Call FX manager to update the loop
 		// fx_manager_delete
 		// fx_manager_init
+		self->loop_data[0].slot1.fx_state_en = buffer_pu8[0];
 	}
 }
 
@@ -134,16 +137,16 @@ uint32_t sab_intercom_get_reg_data_ptr(struct sab_intercom_st *self)
 		return &self->preset_data_un; // Returns pointer to the preset data union
 
 	case SAB_I2C_REG_LOOP1FX:
-		return self->loop_data[0].all_pau8; // Returns pointer to the first loop
+		return &self->loop_data[0]; // Returns pointer to the first loop
 
 	case SAB_I2C_REG_LOOP2FX:
-		return self->loop_data[1].all_pau8; // Returns pointer to the second loop
+		return &self->loop_data[1]; // Returns pointer to the second loop
 
 	case SAB_I2C_REG_LOOP3FX:
-		return self->loop_data[2].all_pau8; // Returns pointer to the third loop
+		return &self->loop_data[2]; // Returns pointer to the third loop
 
 	case SAB_I2C_REG_LOOP4FX:
-		return self->loop_data[3].all_pau8; // Returns pointer to the fourth loop
+		return &self->loop_data[3]; // Returns pointer to the fourth loop
 
 	case SAB_I2C_REG_FXPARAM1:
 		return &self->fx_param_pun[self->current_fx_in_edit][0]; // Returns pointer to the first FX parameter
