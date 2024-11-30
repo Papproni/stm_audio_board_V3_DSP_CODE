@@ -547,6 +547,10 @@ int main(void)
 	intercom_st.fx_param_pun[1] = octave_effects_st.intercom_parameters_aun;
 	intercom_st.fx_param_pun[0] = delay_effect.intercom_parameters_aun;
 	intercom_st.fx_param_pun[2] = custom_fx_st.intercom_parameters_aun;
+	sab_fx_param_tun 	dummy_params_aun[12];
+	for(int i= 3; i<12;i++){
+		intercom_st.fx_param_pun[i] = dummy_params_aun;
+	}
 
 	// Load data from flash to intercom!
 

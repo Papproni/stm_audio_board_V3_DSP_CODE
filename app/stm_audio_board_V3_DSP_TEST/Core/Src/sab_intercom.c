@@ -411,9 +411,9 @@ void testing_data(struct sab_intercom_st *self)
 	for (int i = 0; i < (NUM_OF_LOOPS); i++)
 	{
 		SCB_InvalidateDCache_by_Addr((uint32_t *)&(self->loop_data[i]), sizeof(sab_loop_num_tun));
-		strcpy(self->loop_data[i].slot1.name,"NONE");
-		strcpy(self->loop_data[i].slot2.name,"NONE");
-		strcpy(self->loop_data[i].slot3.name,"NONE");
+		strcpy(self->loop_data[i].slot1.name,"NONE\0");
+		strcpy(self->loop_data[i].slot2.name,"NONE\0");
+		strcpy(self->loop_data[i].slot3.name,"NONE\0");
 		SCB_CleanDCache_by_Addr((uint32_t *)&(self->loop_data[i]), sizeof(sab_loop_num_tun));
 	}
 
