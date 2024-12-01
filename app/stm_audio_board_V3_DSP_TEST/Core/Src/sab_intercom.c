@@ -376,18 +376,19 @@ static test_fx_params_fill(struct sab_intercom_st *self)
 
 // Use the macro to define your FX data
 DEFINE_FX_DATA(
-    { .fx_state_en = FX_STATE_OFF, 	.name = "Boost",     	.color = { 0, 200, 100 } },
+	{ .fx_state_en = FX_STATE_OFF, 	.name = "Octave",     	.color = { 0, 150, 255 } },
+	{ .fx_state_en = FX_STATE_OFF, 	.name = "CUSTOM_FX",    .color = { 0, 150, 255 } },
+    { .fx_state_en = FX_STATE_OFF,  .name = "Delay", 		.color = { 255, 100, 50 } },
+	{ .fx_state_en = FX_STATE_OFF, 	.name = "Boost",     	.color = { 0, 200, 100 } },
     { .fx_state_en = FX_STATE_OFF,  .name = "Chorus", 		.color = { 255, 100, 50 } },
     { .fx_state_en = FX_STATE_OFF, 	.name = "Custom_fx",    .color = { 0, 150, 255 } },
 	{ .fx_state_en = FX_STATE_OFF, 	.name = "Dist",   		.color = { 0, 200, 100 } },
-    { .fx_state_en = FX_STATE_OFF,  .name = "Overdrv", 	.color = { 255, 100, 50 } },
-    { .fx_state_en = FX_STATE_OFF, 	.name = "EQ",    .color = { 0, 150, 255 } },
+    { .fx_state_en = FX_STATE_OFF,  .name = "Overdrv", 		.color = { 255, 100, 50 } },
+    { .fx_state_en = FX_STATE_OFF, 	.name = "EQ",    		.color = { 0, 150, 255 } },
 	{ .fx_state_en = FX_STATE_OFF, 	.name = "Flanger",     	.color = { 0, 200, 100 } },
-    { .fx_state_en = FX_STATE_OFF,  .name = "Delay", 		.color = { 255, 100, 50 } },
     { .fx_state_en = FX_STATE_OFF, 	.name = "Fuzz",     	.color = { 0, 150, 255 } },
 	{ .fx_state_en = FX_STATE_OFF, 	.name = "Tremolo",     	.color = { 0, 150, 255 } },
-	{ .fx_state_en = FX_STATE_OFF, 	.name = "Octave",     	.color = { 0, 150, 255 } },
-	{ .fx_state_en = FX_STATE_OFF, 	.name = "Pitchshft",     	.color = { 0, 150, 255 } }
+	{ .fx_state_en = FX_STATE_OFF, 	.name = "Pitchshft",    .color = { 0, 150, 255 } }
 );
 
 void testing_data(struct sab_intercom_st *self)

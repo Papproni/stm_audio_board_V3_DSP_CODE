@@ -521,6 +521,9 @@ int main(void)
 
 	  if(ADC_READY_FLAG){
 		  ADC_READY_FLAG = 0;
+
+		SAB_fx_manager_process(&SAB_fx_manager_st);
+		
 		if(1 == preset_down_pressed){
 			preset_down_pressed = 0;
 			SAB_preset_down_pressed(&SAB_fx_manager_st);

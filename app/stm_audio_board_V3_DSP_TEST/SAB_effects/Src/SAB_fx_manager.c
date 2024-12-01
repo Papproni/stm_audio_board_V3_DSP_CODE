@@ -144,34 +144,85 @@ void SAB_process_effect_chain(GuitarEffect** chain, int chain_length) {
 }
 
 // if relevant data came on I2C handle it (fx change, add delete etc)
-static void SAB_handle_intercom_change(SAB_fx_manager_tst* self){
+static uint8_t SAB_handle_intercom_change(SAB_fx_manager_tst* self){
     uint8_t register_u8 = self->intercom_pst->change_occured_flg;
+    self->intercom_pst->change_occured_flg = 0;
+    fx_active_modes_ten current_mode = self->preset_mode_st.preset_mode_en;
+    uint8_t reinit_needed_flg = 0;
+
+    fx_data_tst *slot_ptr;
+    preset_fx_bypasses_tst* current_bypass = &self->current_preset_config_st.bypass_states_st[current_mode];
+
     switch (register_u8)
     {
         case SAB_I2C_REG_LOOP1FX:
-            self->current_preset_config_st.
+            // Check if name changed
+            slot_ptr= &self->intercom_pst->loop_data[0].slot1;
+            for(int i=0;i<3;i++){
+                if(0 != strcmp(slot_ptr[i].name, self->fx_instances[i]->intercom_fx_data.name)){
+                    reinit_needed_flg|=1;
+                    strcpy(self->current_preset_config_st.fx_names[i],slot_ptr[i].name);
+                }else{
+                     // update fx_state
+                	if( self->fx_instances[i]->init){
+                        self->fx_instances[i]->intercom_fx_data.fx_state_en = slot_ptr[i].fx_state_en;
+                        current_bypass->fx_states_aen[i] = slot_ptr[i].fx_state_en;
+                	}
+                }
+            }
             break;
         case SAB_I2C_REG_LOOP2FX:
-            /* code */
+            slot_ptr= &self->intercom_pst->loop_data[1].slot1;
+            for(int i=3;i<6;i++){
+                if(0 != strcmp(slot_ptr->name, self->fx_instances[i]->intercom_fx_data.name)){
+                    reinit_needed_flg|=1;
+                    strcpy(self->current_preset_config_st.fx_names[i],slot_ptr->name);
+                }else{
+                     // update fx_state
+                    self->fx_instances[i]->intercom_fx_data.fx_state_en = slot_ptr->fx_state_en;
+                    current_bypass->fx_states_aen[i] = slot_ptr->fx_state_en;
+                }
+                slot_ptr = slot_ptr+i-3;
+            }
             break;
         case SAB_I2C_REG_LOOP3FX:
-            /* code */
+            slot_ptr= &self->intercom_pst->loop_data[2].slot1;
+            for(int i=6;i<9;i++){
+                if(0 != strcmp(slot_ptr->name, self->fx_instances[i]->intercom_fx_data.name)){
+                    reinit_needed_flg|=1;
+                    strcpy(self->current_preset_config_st.fx_names[i],slot_ptr->name);
+                }else{
+                     // update fx_state
+                    self->fx_instances[i]->intercom_fx_data.fx_state_en = slot_ptr->fx_state_en;
+                    current_bypass->fx_states_aen[i] = slot_ptr->fx_state_en;
+                }
+                slot_ptr = slot_ptr+i-6;
+            }
             break;
         case SAB_I2C_REG_LOOP4FX:
-            /* code */
+            slot_ptr= &self->intercom_pst->loop_data[3].slot1;
+            for(int i=10;i<12;i++){
+                if(0 != strcmp(slot_ptr->name, self->fx_instances[i]->intercom_fx_data.name)){
+                    reinit_needed_flg|=1;
+                    strcpy(self->current_preset_config_st.fx_names[i],slot_ptr->name);
+                }else{
+                     // update fx_state
+                    self->fx_instances[i]->intercom_fx_data.fx_state_en = slot_ptr->fx_state_en;
+                    current_bypass->fx_states_aen[i] = slot_ptr->fx_state_en;
+                }
+                slot_ptr = slot_ptr+i-10;
+            }
             break;
-        
+        case SAB_I2C_REG_LOOPBYPASSSTATE:
+            memcpy(&current_bypass->loop_bypass_un,&self->intercom_pst->loopbypass_un, sizeof(sab_loopbypass_tun));
+            break;
         default:
             break;
     }
-
+    return reinit_needed_flg;
 }
 
-void SAB_fx_manager_process( SAB_fx_manager_tst* self){
-    if(self->intercom_pst->change_occured_flg != 0){
-        SAB_handle_intercom_change(self);
-    }
-}
+
 
 // Cleanup the effects in the chain
 static void SAB_cleanup_effect_chain(GuitarEffect** chain, int chain_length) {
@@ -229,10 +280,11 @@ void SAB_load_preset_from_flash(SAB_fx_manager_tst* self){
     Flash_Read_Data(save_location_addr_u32, &self->current_preset_config_st, preset_save_size_in_word_u32);
 }
 
-static void SAB_load_current_config(SAB_fx_manager_tst* self){
+
+static void SAB_load_current_config(SAB_fx_manager_tst* self ){
     for(int i=0; i<12;i++){
         // MUST ADD THIS VARIABLE FIRST FROM FLASH!!!!
-        self->fx_types_chain[i] = get_fx_type(self->current_preset_config_st.fx_names[i]);
+            self->fx_types_chain[i] = get_fx_type(self->current_preset_config_st.fx_names[i]);
     }
 
     init_effect_chain(&self->fx_instances,self->fx_types_chain,12);
@@ -259,10 +311,10 @@ static void SAB_load_current_config(SAB_fx_manager_tst* self){
 
 // THis init i used the first time
 void SAB_fx_manager_init( SAB_fx_manager_tst* self, sab_intercom_tst* intercom_pst, SAB_IO_HADRWARE_BUFFERS* hardware_IO_port_ptr, uint8_t* fsw1_ptr, uint8_t* fsw2_ptr){
-    self->intercom_pst      = intercom_pst;
-    self->hardware_IO_port  = hardware_IO_port_ptr;
-    self->preset_mode_st.fsw1_ptr = fsw1_ptr;
-    self->preset_mode_st.fsw2_ptr = fsw2_ptr;
+    self->intercom_pst      		= intercom_pst;
+    self->hardware_IO_port  		= hardware_IO_port_ptr;
+    self->preset_mode_st.fsw1_ptr 	= fsw1_ptr;
+    self->preset_mode_st.fsw2_ptr 	= fsw2_ptr;
 
     // LOAD DATA FROM FLASH
     SAB_load_preset_from_flash(self);
@@ -271,11 +323,12 @@ void SAB_fx_manager_init( SAB_fx_manager_tst* self, sab_intercom_tst* intercom_p
 }
 
 
+
 void SAB_fsw_pressed_callback(SAB_fx_manager_tst* self){
     uint8_t fsw1 = *(self->preset_mode_st.fsw1_ptr); // USED FOR MODE A
     uint8_t fsw2 = *(self->preset_mode_st.fsw2_ptr); // USED FOR MODE B
 
-    save_current_mode(self);
+//    save_current_mode(self);
     switch (self->preset_mode_st.preset_mode_en)
     {
     case PRESET_MODE_NORMAL:
@@ -295,6 +348,13 @@ void SAB_fsw_pressed_callback(SAB_fx_manager_tst* self){
         self->preset_mode_st.preset_mode_en = PRESET_MODE_NORMAL;
         break;
     }
+
+    uint8_t current_mode = self->preset_mode_st.preset_mode_en;
+    // update fx states
+    for(int i=0; i<12;i++){
+        self->fx_instances[i]->intercom_fx_data.fx_state_en = self->current_preset_config_st.bypass_states_st[current_mode].fx_states_aen[i];
+    }
+
 }
 
 void SAB_preset_up_pressed(SAB_fx_manager_tst* self){
@@ -345,3 +405,12 @@ void SAB_preset_down_pressed(SAB_fx_manager_tst* self){
 	}
 }
 
+void SAB_fx_manager_process( SAB_fx_manager_tst* self){
+    if(self->intercom_pst->change_occured_flg != 0){
+        if(SAB_handle_intercom_change(self)){
+            SAB_cleanup_effect_chain(self->fx_instances,12);
+            SAB_load_current_config(self);
+        }
+    }
+    SAB_process_effect_chain(self->fx_instances,12);
+}
