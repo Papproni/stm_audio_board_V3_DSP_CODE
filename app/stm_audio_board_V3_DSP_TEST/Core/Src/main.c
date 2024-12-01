@@ -289,7 +289,8 @@ delay_effects_tst delay_effect;
 octave_effects_tst octave_effects_st;
 SAB_custom_fx_tst custom_fx_st;
 
-sab_intercom_tst intercom_st;
+sab_intercom_tst 	intercom_st;
+SAB_fx_manager_tst SAB_fx_manager_st;
 
 int32_t sdram_buffer_test_ai32[100]__attribute__((section(".sdram_section")));
 
@@ -506,7 +507,7 @@ int main(void)
 	// Load data from flash to intercom!
 
 	// init fx
-	SAB_fx_manager_tst SAB_fx_manager_st;
+
 	SAB_fx_manager_init(&SAB_fx_manager_st, &intercom_st, &effects_io_port, &fsw_btn_1_pressed, &fsw_btn_2_pressed);
 	
 

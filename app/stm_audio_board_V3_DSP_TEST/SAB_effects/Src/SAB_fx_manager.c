@@ -135,17 +135,52 @@ EffectType get_fx_type(char* fx_name_char) {
 
 
 // Function to process all effects in the chain
-void process_effect_chain(GuitarEffect** chain, int chain_length) {
+void SAB_process_effect_chain(GuitarEffect** chain, int chain_length) {
     for (int i = 0; i < chain_length; ++i) {
-        chain[i]->process(chain[i]);
+        if(chain[i]->process != NULL){
+            chain[i]->process(chain[i]);
+        }
+    }
+}
+
+// if relevant data came on I2C handle it (fx change, add delete etc)
+static void SAB_handle_intercom_change(SAB_fx_manager_tst* self){
+    uint8_t register_u8 = self->intercom_pst->change_occured_flg;
+    switch (register_u8)
+    {
+        case SAB_I2C_REG_LOOP1FX:
+            self->current_preset_config_st.
+            break;
+        case SAB_I2C_REG_LOOP2FX:
+            /* code */
+            break;
+        case SAB_I2C_REG_LOOP3FX:
+            /* code */
+            break;
+        case SAB_I2C_REG_LOOP4FX:
+            /* code */
+            break;
+        
+        default:
+            break;
+    }
+
+}
+
+void SAB_fx_manager_process( SAB_fx_manager_tst* self){
+    if(self->intercom_pst->change_occured_flg != 0){
+        SAB_handle_intercom_change(self);
     }
 }
 
 // Cleanup the effects in the chain
-void cleanup_effect_chain(GuitarEffect** chain, int chain_length) {
+static void SAB_cleanup_effect_chain(GuitarEffect** chain, int chain_length) {
     for (int i = 0; i < chain_length; ++i) {
-        chain[i]->delete(chain[i]);  // Free the allocated memory for each effect
-        free(chain[i]);
+        if(chain[i]->init != NULL){
+            chain[i]->delete(chain[i]);  // Free the allocated memory for each effect
+            free(chain[i]);
+            chain[i] = &DEFAULT_EMPTY_SLOT_FOR_FX_CHAIN;
+        }
     }
 }
 
@@ -194,51 +229,45 @@ void SAB_load_preset_from_flash(SAB_fx_manager_tst* self){
     Flash_Read_Data(save_location_addr_u32, &self->current_preset_config_st, preset_save_size_in_word_u32);
 }
 
-void SAB_fx_manager_init( SAB_fx_manager_tst* self, sab_intercom_tst* intercom_pst, SAB_IO_HADRWARE_BUFFERS* hardware_IO_port_ptr, uint8_t* fsw1_ptr, uint8_t* fsw2_ptr){
-    // Load data from saved files
-    // for(int i=0; i<4; i++){
-    //     self->fx_chain_names[i*3+0] = intercom_pst->loop_data[i].slot1.name;
-    //     self->fx_chain_names[i*3+1] = intercom_pst->loop_data[i].slot2.name;
-    //     self->fx_chain_names[i*3+2] = intercom_pst->loop_data[i].slot3.name;
-    // }
-
-    self->intercom_pst      = intercom_pst;
-    self->hardware_IO_port  = hardware_IO_port_ptr;
-    self->preset_mode_st.fsw1_ptr = fsw1_ptr;
-    self->preset_mode_st.fsw2_ptr = fsw2_ptr;
-
-    // LOAD DATA FROM FLASH
-
-    strcpy(self->fx_chain_names[0],"Octave");
-    strcpy(self->fx_chain_names[1], "Delay");
-    strcpy(self->fx_chain_names[2], "CUSTOM_FX");
-    strcpy(self->fx_chain_names[3],"Flanger");
-    strcpy(self->fx_chain_names[4], "Chorus");
-    strcpy(self->fx_chain_names[5], "Overdrive");
-    strcpy(self->fx_chain_names[6], "Distortion");
+static void SAB_load_current_config(SAB_fx_manager_tst* self){
     for(int i=0; i<12;i++){
         // MUST ADD THIS VARIABLE FIRST FROM FLASH!!!!
-        self->fx_types_chain[i] = get_fx_type(self->fx_chain_names[i]);
+        self->fx_types_chain[i] = get_fx_type(self->current_preset_config_st.fx_names[i]);
     }
 
     init_effect_chain(&self->fx_instances,self->fx_types_chain,12);
 
     // LOOP DATA
     
-   // Display data assign
-    for(int i=0; i<4;i++){
-        memcpy(&intercom_pst->loop_data[i].slot1, &self->fx_instances[i*3+0]->intercom_fx_data,sizeof(fx_data_tst));
-        memcpy(&intercom_pst->loop_data[i].slot2, &self->fx_instances[i*3+1]->intercom_fx_data,sizeof(fx_data_tst));
-        memcpy(&intercom_pst->loop_data[i].slot3, &self->fx_instances[i*3+2]->intercom_fx_data,sizeof(fx_data_tst));
+    // PARAMS ASSIGN / BYPASS SWITCHES SET
+    self->preset_mode_st.preset_mode_en = PRESET_MODE_NORMAL;
+    for(int i=0; i<12;i++){
+        if(self->fx_instances[i]->init != NULL){
+            self->intercom_pst->fx_param_pun[i] = self->fx_instances[i]->intercom_parameters_aun;
+            fx_state_ten state = self->current_preset_config_st.bypass_states_st[self->preset_mode_st.preset_mode_en].fx_states_aen[i];
+            self->fx_instances[i]->intercom_fx_data.fx_state_en = state;
+        }
     }
 
-    
-    // PARAMS ASSIGN
-    for(int i=0; i<12;i++){
-        intercom_pst->fx_param_pun[i] = self->fx_instances[i]->intercom_parameters_aun;
+// Display data assign
+    for(int i=0; i<4;i++){
+        memcpy(&self->intercom_pst->loop_data[i].slot1, &self->fx_instances[i*3+0]->intercom_fx_data,sizeof(fx_data_tst));
+        memcpy(&self->intercom_pst->loop_data[i].slot2, &self->fx_instances[i*3+1]->intercom_fx_data,sizeof(fx_data_tst));
+        memcpy(&self->intercom_pst->loop_data[i].slot3, &self->fx_instances[i*3+2]->intercom_fx_data,sizeof(fx_data_tst));
     }
-    // Switch mode set to normal
-    self->preset_mode_st.preset_mode_en = PRESET_MODE_NORMAL;
+}   
+
+// THis init i used the first time
+void SAB_fx_manager_init( SAB_fx_manager_tst* self, sab_intercom_tst* intercom_pst, SAB_IO_HADRWARE_BUFFERS* hardware_IO_port_ptr, uint8_t* fsw1_ptr, uint8_t* fsw2_ptr){
+    self->intercom_pst      = intercom_pst;
+    self->hardware_IO_port  = hardware_IO_port_ptr;
+    self->preset_mode_st.fsw1_ptr = fsw1_ptr;
+    self->preset_mode_st.fsw2_ptr = fsw2_ptr;
+
+    // LOAD DATA FROM FLASH
+    SAB_load_preset_from_flash(self);
+    SAB_load_current_config(self);
+    
 }
 
 
@@ -287,8 +316,9 @@ void SAB_preset_up_pressed(SAB_fx_manager_tst* self){
         // LOAD PRESET DATA FROM FLASH
         SAB_load_preset_from_flash(self);
         // DELETE CURRENT PRESET
-        
+        SAB_cleanup_effect_chain(self,12);
         // INIT NEW PRESET
+        SAB_load_current_config(self);
 	}
 }
 void SAB_preset_down_pressed(SAB_fx_manager_tst* self){
@@ -309,8 +339,9 @@ void SAB_preset_down_pressed(SAB_fx_manager_tst* self){
         // LOAD PRESET DATA FROM FLASH
         SAB_load_preset_from_flash(self);
         // DELETE CURRENT PRESET
-
+        SAB_cleanup_effect_chain(self,12);
         // INIT NEW PRESET
+        SAB_load_current_config(self);
 	}
 }
 

@@ -122,7 +122,7 @@ void SAB_fx_manager_init( SAB_fx_manager_tst* self, sab_intercom_tst* intercom_p
 void SAB_fx_manager_deinit( SAB_fx_manager_tst* self);
 
 // Process Function for SAB_fx_manager_tst
-int SAB_fx_manager_process( SAB_fx_manager_tst* self,  float input_f32, float output_f32);
+void SAB_fx_manager_process( SAB_fx_manager_tst* self);
 
 void init_effect_chain(GuitarEffect** chain, EffectType* fx_chain, int chain_length);
 

@@ -114,15 +114,9 @@ static void set_current_fx_in_edit(struct sab_intercom_st *self, uint8_t fx_slot
 /// @param size_u8
 void sab_intercom_process_i2c_data(struct sab_intercom_st *self, uint8_t *buffer_pu8, uint8_t size_u8)
 {
-//	SCB_InvalidateDCache_by_Addr((uint32_t *)self->get_reg_data_ptr(self), self->get_reg_data_len(self));
 	memcpy(self->get_reg_data_ptr(self), buffer_pu8, size_u8);
-//	SCB_CleanDCache_by_Addr((uint32_t *)self->get_reg_data_ptr(self), self->get_reg_data_len(self));
-	if(self->register_addr_u8>=SAB_I2C_REG_LOOP1FX){
-		// Call FX manager to update the loop
-		// fx_manager_delete
-		// fx_manager_init
-		self->loop_data[0].slot1.fx_state_en = buffer_pu8[0];
-	}
+	self->change_occured_flg = self->register_addr_u8;
+
 }
 
 /// @brief This function returns the data pointer which is adressed by the "register_addr_u8"
@@ -308,13 +302,16 @@ void init_intercom(struct sab_intercom_st *self, uint8_t slave_address_u8, I2C_H
 	self->set_current_fx_in_edit = set_current_fx_in_edit;
 	self->next_preset = next_preset;
 	self->prev_preset = prev_preset;
+	
 
 	self->process_rx_buffer = sab_intercom_process_i2c_data;
 	self->get_reg_data_ptr = sab_intercom_get_reg_data_ptr;
 	self->get_reg_data_len = sab_intercom_get_reg_data_size;
+	self->change_occured_flg = 0;
 	SCB_CleanDCache_by_Addr((uint32_t *)self, sizeof(self));
 
 	testing_data(self);
+	
 }
 
 static test_fx_params_fill(struct sab_intercom_st *self)

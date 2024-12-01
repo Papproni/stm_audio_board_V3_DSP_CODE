@@ -28,6 +28,7 @@ typedef struct sab_intercom_st{
     sab_loopbypass_tun  loopbypass_un;
     
     uint8_t current_fx_in_edit;
+    uint8_t change_occured_flg; //contains the register where the change happened
 
     fx_data_tst*    implemented_fx_data_ptr;
     uint8_t         num_of_implemented_effects;
