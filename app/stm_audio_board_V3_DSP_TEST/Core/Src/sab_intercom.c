@@ -260,42 +260,13 @@ uint8_t sab_intercom_get_reg_data_size(struct sab_intercom_st *self)
 void next_preset(struct sab_intercom_st *self)
 {
 	SCB_InvalidateDCache_by_Addr((uint32_t *)&self->preset_data_un.all_u32, sizeof(self->preset_data_un.all_u32));
-	if (self->preset_data_un.preset_Minor_u8 == 9 && self->preset_data_un.preset_Major_u8 == 'Z')
-	{
-	}
-	else
-	{
-		self->preset_data_un.preset_Minor_u8++;
-		if (self->preset_data_un.preset_Minor_u8 > 9)
-		{
-			self->preset_data_un.preset_Minor_u8 = 1;
-			if (self->preset_data_un.preset_Major_u8 < 'Z')
-			{
-				self->preset_data_un.preset_Major_u8++;
-			}
-		}
-	}
+
 	SCB_CleanDCache_by_Addr((uint32_t *)&self->preset_data_un.all_u32, sizeof(self->preset_data_un.all_u32));
 }
 
 void prev_preset(struct sab_intercom_st *self)
 {
 	SCB_InvalidateDCache_by_Addr((uint32_t *)&self->preset_data_un.all_u32, sizeof(self->preset_data_un.all_u32));
-	if (self->preset_data_un.preset_Minor_u8 == 1 && self->preset_data_un.preset_Major_u8 == 'A')
-	{
-	}
-	else
-	{
-		self->preset_data_un.preset_Minor_u8--;
-		if (self->preset_data_un.preset_Minor_u8 < 1)
-		{
-			if (self->preset_data_un.preset_Major_u8 > 'A')
-			{
-				self->preset_data_un.preset_Minor_u8 = 9;
-				self->preset_data_un.preset_Major_u8--;
-			}
-		}
-	}
 	SCB_CleanDCache_by_Addr((uint32_t *)&self->preset_data_un.all_u32, sizeof(self->preset_data_un.all_u32));
 }
 
@@ -408,9 +379,18 @@ static test_fx_params_fill(struct sab_intercom_st *self)
 
 // Use the macro to define your FX data
 DEFINE_FX_DATA(
-    { .fx_state_en = FX_STATE_OFF, .name = "BOOST",     .color = { 0, 200, 100 } },
-    { .fx_state_en = FX_STATE_ON,  .name = "OVERDRIVE", .color = { 255, 100, 50 } },
-    { .fx_state_en = FX_STATE_OFF, .name = "DELAY",     .color = { 0, 150, 255 } }
+    { .fx_state_en = FX_STATE_OFF, 	.name = "Boost",     	.color = { 0, 200, 100 } },
+    { .fx_state_en = FX_STATE_OFF,  .name = "Chorus", 		.color = { 255, 100, 50 } },
+    { .fx_state_en = FX_STATE_OFF, 	.name = "Custom_fx",    .color = { 0, 150, 255 } },
+	{ .fx_state_en = FX_STATE_OFF, 	.name = "Dist",   		.color = { 0, 200, 100 } },
+    { .fx_state_en = FX_STATE_OFF,  .name = "Overdrv", 	.color = { 255, 100, 50 } },
+    { .fx_state_en = FX_STATE_OFF, 	.name = "EQ",    .color = { 0, 150, 255 } },
+	{ .fx_state_en = FX_STATE_OFF, 	.name = "Flanger",     	.color = { 0, 200, 100 } },
+    { .fx_state_en = FX_STATE_OFF,  .name = "Delay", 		.color = { 255, 100, 50 } },
+    { .fx_state_en = FX_STATE_OFF, 	.name = "Fuzz",     	.color = { 0, 150, 255 } },
+	{ .fx_state_en = FX_STATE_OFF, 	.name = "Tremolo",     	.color = { 0, 150, 255 } },
+	{ .fx_state_en = FX_STATE_OFF, 	.name = "Octave",     	.color = { 0, 150, 255 } },
+	{ .fx_state_en = FX_STATE_OFF, 	.name = "Pitchshft",     	.color = { 0, 150, 255 } }
 );
 
 void testing_data(struct sab_intercom_st *self)
@@ -445,33 +425,4 @@ void testing_data(struct sab_intercom_st *self)
 
 	self->num_of_implemented_effects = IMPLEMENTED_FX_DATA_COUNT;
 	self->implemented_fx_data_ptr = IMPLEMENTED_FX_DATA;
-
-
-	// self->num_of_implemented_effects = 5;
-	// self->implemented_fx_data_ptr = (fx_data_tst *)malloc(sizeof(fx_data_tst) * self->num_of_implemented_effects);
-
-	// strcpy(self->implemented_fx_data_ptr[0].name, "BOOST");
-	// self->implemented_fx_data_ptr[0].color[0] = 0;
-	// self->implemented_fx_data_ptr[0].color[1] = 200;
-	// self->implemented_fx_data_ptr[0].color[2] = 100;
-
-	// strcpy(self->implemented_fx_data_ptr[1].name, "OVERDRIVE");
-	// self->implemented_fx_data_ptr[1].color[0] = 255;
-	// self->implemented_fx_data_ptr[1].color[1] = 100;
-	// self->implemented_fx_data_ptr[1].color[2] = 50;
-
-	// strcpy(self->implemented_fx_data_ptr[2].name, "DELAY");
-	// self->implemented_fx_data_ptr[2].color[0] = 0;
-	// self->implemented_fx_data_ptr[2].color[1] = 150;
-	// self->implemented_fx_data_ptr[2].color[2] = 255;
-
-	// strcpy(self->implemented_fx_data_ptr[3].name, "REVERB");
-	// self->implemented_fx_data_ptr[3].color[0] = 100;
-	// self->implemented_fx_data_ptr[3].color[1] = 100;
-	// self->implemented_fx_data_ptr[3].color[2] = 255;
-
-	// strcpy(self->implemented_fx_data_ptr[4].name, "CHORUS");
-	// self->implemented_fx_data_ptr[4].color[0] = 50;
-	// self->implemented_fx_data_ptr[4].color[1] = 255;
-	// self->implemented_fx_data_ptr[4].color[2] = 150;
 }

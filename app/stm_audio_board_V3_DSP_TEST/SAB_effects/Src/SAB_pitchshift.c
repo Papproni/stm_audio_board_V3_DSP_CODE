@@ -10,7 +10,7 @@ void SAB_pitchshift_delete( SAB_pitchshift_tst* self){
 
 // Process Function for SAB_pitchshift_tst
 void SAB_pitchshift_init( SAB_pitchshift_tst* self){
-    strcpy(self->intercom_fx_data.name, "pitchshift");
+    strcpy(self->intercom_fx_data.name, "Pitcshft");
 	self->intercom_fx_data.color[0] = 255; 	// R
 	self->intercom_fx_data.color[1] = 0;	// G
 	self->intercom_fx_data.color[2] = 0;	// B

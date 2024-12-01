@@ -10,7 +10,7 @@ void SAB_equalizer_delete( SAB_equalizer_tst* self){
 
 // Process Function for SAB_equalizer_tst
 void SAB_equalizer_init( SAB_equalizer_tst* self){
-    strcpy(self->intercom_fx_data.name, "equalizer");
+    strcpy(self->intercom_fx_data.name, "EQ");
 	self->intercom_fx_data.color[0] = 255; 	// R
 	self->intercom_fx_data.color[1] = 0;	// G
 	self->intercom_fx_data.color[2] = 0;	// B

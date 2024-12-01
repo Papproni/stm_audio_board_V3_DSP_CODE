@@ -10,7 +10,7 @@ void SAB_chorus_delete( SAB_chorus_tst* self){
 
 // Process Function for SAB_chorus_tst
 void SAB_chorus_init( SAB_chorus_tst* self){
-    strcpy(self->intercom_fx_data.name, "chorus");
+    strcpy(self->intercom_fx_data.name, "Chorus");
 	self->intercom_fx_data.color[0] = 255; 	// R
 	self->intercom_fx_data.color[1] = 0;	// G
 	self->intercom_fx_data.color[2] = 0;	// B

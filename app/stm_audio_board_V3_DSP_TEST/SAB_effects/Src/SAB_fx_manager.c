@@ -162,36 +162,39 @@ void SAB_fx_manager_deinit( SAB_fx_manager_tst* self){
 #define USER_FLASH_ADDRESS 0x08080000  // Base address of USER_FLASH section
 
 void SAB_save_preset_to_flash(SAB_fx_manager_tst* self){
-	preset_saves_tst preset_flash_st;
+	// preset_saves_tst preset_flash_st;
 	// 1. Calculate data addr
 	uint32_t preset_save_size_in_byte_u32 = 	sizeof(preset_saves_tst);
 	uint32_t preset_save_size_in_word_u32 = 	preset_save_size_in_byte_u32 / 4;
 	uint32_t preset_num_u32 = (self->intercom_pst->preset_data_un.preset_Major_u8-'A')*9+self->intercom_pst->preset_data_un.preset_Minor_u8-1;
 	uint32_t save_location_addr_u32 = preset_save_size_in_byte_u32*preset_num_u32+USER_FLASH_ADDRESS;
-	// COPY:
-	// 2.1. loop data
-    for(int i=0;i<NUM_OF_LOOPS;i++){
-        memcpy(&preset_flash_st.loop_data[i].slot1,&self->fx_instances[i*NUM_OF_FX_SLOTS_IN_LOOP+i]->intercom_fx_data,sizeof(fx_data_tst));
-        memcpy(&preset_flash_st.loop_data[i].slot1,&self->fx_instances[i*NUM_OF_FX_SLOTS_IN_LOOP+i+1]->intercom_fx_data,sizeof(fx_data_tst));
-        memcpy(&preset_flash_st.loop_data[i].slot1,&self->fx_instances[i*NUM_OF_FX_SLOTS_IN_LOOP+i+2]->intercom_fx_data,sizeof(fx_data_tst));
+    // 2.1. fx names [NEW]
+    for(int i=0;i<12;i++){
+        memcpy(&self->current_preset_config_st.fx_names[i],&self->fx_instances[i]->intercom_fx_data.name,sizeof(char[10]));
     }
-	// 2.2. fx params
-	for(int i = 0; i<(NUM_OF_FX_SLOTS_IN_LOOP*NUM_OF_LOOPS);i++){
-			memcpy(preset_flash_st.fx_params_tun[i],self->fx_instances[i]->intercom_parameters_aun,sizeof(sab_fx_param_tun)*NUM_OF_MAX_PARAMS);
+	// 2.2. fx params values
+	// choose fx
+    for(int i = 0; i<12;i++){
+        // choose params
+        for(int j=0;j<12;j++){
+            self->current_preset_config_st.fx_params_value[i][j] = self->fx_instances[i]->intercom_parameters_aun[j].value_u8;
+        }
+       
 	}
-	// 2.3. loopbypass
-	// memcpy(preset_flash_st.loopbypass_un.all_u8,self->loopbypass_un.all_u8,sizeof(sab_loopbypass_tun));
-
-
 	// 3. save to flash
-	Flash_Write_Data(save_location_addr_u32,&preset_flash_st,preset_save_size_in_word_u32);
+	Flash_Write_Data(save_location_addr_u32,&self->current_preset_config_st,preset_save_size_in_word_u32);
 }
 
 void SAB_load_preset_from_flash(SAB_fx_manager_tst* self){
+    uint32_t preset_save_size_in_byte_u32 = 	sizeof(preset_saves_tst);
+	uint32_t preset_save_size_in_word_u32 = 	preset_save_size_in_byte_u32 / 4;
+	uint32_t preset_num_u32 = (self->intercom_pst->preset_data_un.preset_Major_u8-'A')*9+self->intercom_pst->preset_data_un.preset_Minor_u8-1;
+	uint32_t save_location_addr_u32 = preset_save_size_in_byte_u32*preset_num_u32+USER_FLASH_ADDRESS;
 
+    Flash_Read_Data(save_location_addr_u32, &self->current_preset_config_st, preset_save_size_in_word_u32);
 }
 
-void SAB_fx_manager_init( SAB_fx_manager_tst* self, sab_intercom_tst* intercom_pst){
+void SAB_fx_manager_init( SAB_fx_manager_tst* self, sab_intercom_tst* intercom_pst, SAB_IO_HADRWARE_BUFFERS* hardware_IO_port_ptr, uint8_t* fsw1_ptr, uint8_t* fsw2_ptr){
     // Load data from saved files
     // for(int i=0; i<4; i++){
     //     self->fx_chain_names[i*3+0] = intercom_pst->loop_data[i].slot1.name;
@@ -199,8 +202,12 @@ void SAB_fx_manager_init( SAB_fx_manager_tst* self, sab_intercom_tst* intercom_p
     //     self->fx_chain_names[i*3+2] = intercom_pst->loop_data[i].slot3.name;
     // }
 
-    self->intercom_pst = intercom_pst;
+    self->intercom_pst      = intercom_pst;
+    self->hardware_IO_port  = hardware_IO_port_ptr;
+    self->preset_mode_st.fsw1_ptr = fsw1_ptr;
+    self->preset_mode_st.fsw2_ptr = fsw2_ptr;
 
+    // LOAD DATA FROM FLASH
 
     strcpy(self->fx_chain_names[0],"Octave");
     strcpy(self->fx_chain_names[1], "Delay");
@@ -226,13 +233,84 @@ void SAB_fx_manager_init( SAB_fx_manager_tst* self, sab_intercom_tst* intercom_p
     }
 
     
- // PARAMS ASSIGN
+    // PARAMS ASSIGN
     for(int i=0; i<12;i++){
         intercom_pst->fx_param_pun[i] = self->fx_instances[i]->intercom_parameters_aun;
     }
     // Switch mode set to normal
-
-
+    self->preset_mode_st.preset_mode_en = PRESET_MODE_NORMAL;
 }
 
+
+void SAB_fsw_pressed_callback(SAB_fx_manager_tst* self){
+    uint8_t fsw1 = *(self->preset_mode_st.fsw1_ptr); // USED FOR MODE A
+    uint8_t fsw2 = *(self->preset_mode_st.fsw2_ptr); // USED FOR MODE B
+
+    save_current_mode(self);
+    switch (self->preset_mode_st.preset_mode_en)
+    {
+    case PRESET_MODE_NORMAL:
+        if(fsw1) self->preset_mode_st.preset_mode_en = PRESET_MODE_A_ACTIVE;
+        if(fsw2) self->preset_mode_st.preset_mode_en = PRESET_MODE_B_ACTIVE;
+        /* code */
+        break;
+    case PRESET_MODE_A_ACTIVE:
+        if(fsw1) self->preset_mode_st.preset_mode_en = PRESET_MODE_NORMAL;
+        if(fsw2) self->preset_mode_st.preset_mode_en = PRESET_MODE_B_ACTIVE;
+        break;
+    case PRESET_MODE_B_ACTIVE:
+        if(fsw1) self->preset_mode_st.preset_mode_en = PRESET_MODE_A_ACTIVE;
+        if(fsw2) self->preset_mode_st.preset_mode_en = PRESET_MODE_NORMAL;
+        break;
+    default:
+        self->preset_mode_st.preset_mode_en = PRESET_MODE_NORMAL;
+        break;
+    }
+}
+
+void SAB_preset_up_pressed(SAB_fx_manager_tst* self){
+    
+    if (self->intercom_pst->preset_data_un.preset_Minor_u8 == 9 && self->intercom_pst->preset_data_un.preset_Major_u8 == 'Z')
+	{
+	}
+	else
+	{
+		self->intercom_pst->preset_data_un.preset_Minor_u8++;
+		if (self->intercom_pst->preset_data_un.preset_Minor_u8 > 9)
+		{
+			self->intercom_pst->preset_data_un.preset_Minor_u8 = 1;
+			if (self->intercom_pst->preset_data_un.preset_Major_u8 < 'Z')
+			{
+				self->intercom_pst->preset_data_un.preset_Major_u8++;
+			}
+		}
+        // LOAD PRESET DATA FROM FLASH
+        SAB_load_preset_from_flash(self);
+        // DELETE CURRENT PRESET
+        
+        // INIT NEW PRESET
+	}
+}
+void SAB_preset_down_pressed(SAB_fx_manager_tst* self){
+    if (self->intercom_pst->preset_data_un.preset_Minor_u8 == 1 && self->intercom_pst->preset_data_un.preset_Major_u8 == 'A')
+	{
+	}
+	else
+	{
+		self->intercom_pst->preset_data_un.preset_Minor_u8--;
+		if (self->intercom_pst->preset_data_un.preset_Minor_u8 < 1)
+		{
+			if (self->intercom_pst->preset_data_un.preset_Major_u8 > 'A')
+			{
+				self->intercom_pst->preset_data_un.preset_Minor_u8 = 9;
+				self->intercom_pst->preset_data_un.preset_Major_u8--;
+			}
+		}
+        // LOAD PRESET DATA FROM FLASH
+        SAB_load_preset_from_flash(self);
+        // DELETE CURRENT PRESET
+
+        // INIT NEW PRESET
+	}
+}
 

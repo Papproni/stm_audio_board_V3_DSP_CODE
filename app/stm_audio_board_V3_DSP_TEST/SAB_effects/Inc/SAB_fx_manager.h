@@ -29,6 +29,9 @@ Generated on: 2024.11.28. */
 #include "arm_math.h"
 
 
+#include "FLASH_SECTOR_H7.h"
+
+
 // Enum representing different effect types
 typedef enum {
     DELAY,
@@ -46,28 +49,36 @@ typedef enum {
     CUSTOM_FX
 } EffectType;
 
+volatile typedef struct{
+	int32_t in1_i32;
+	int32_t in2_i32;
+	int32_t in3_i32;
+	int32_t in4_i32;
+
+	int32_t out1_i32;
+	int32_t out2_i32;
+	int32_t out3_i32;
+	int32_t out4_i32;
+}SAB_IO_HADRWARE_BUFFERS;
 
 typedef struct preset_bypasses_st{
 	sab_loopbypass_tun 	loop_bypass_un;
-	uint32_t 			fx_bypasses_u32;
-}preset_bypasses_tst;
+	fx_state_ten 	    fx_states_aen[NUM_OF_FX_SLOTS_IN_LOOP*NUM_OF_LOOPS];
+}preset_fx_bypasses_tst;
 
 #define NUM_OF_PRESET_MODES 3
-enum fx_active_modes{
-	PRESET_MDOE_NORMAL,
+typedef enum {
+	PRESET_MODE_NORMAL,
 	PRESET_MODE_A_ACTIVE,
 	PRESET_MODE_B_ACTIVE
-};
-
-typedef struct activations_st{
-	preset_bypasses_tst	bypass_states_st[NUM_OF_PRESET_MODES];
-}activations_tst; 
+}fx_active_modes_ten;
 
 typedef struct preset_saves_st{
-	sab_loop_num_tun 	loop_data[NUM_OF_LOOPS];
-	sab_fx_param_tun 	fx_params_tun[NUM_OF_FX_SLOTS_IN_LOOP*NUM_OF_LOOPS][NUM_OF_MAX_PARAMS];
-	sab_loopbypass_tun	loopbypass_un;
-	preset_bypasses_tst activation_u32;
+    // Store FX names used in preset
+	char 	                fx_names[NUM_OF_FX_SLOTS_IN_LOOP*NUM_OF_LOOPS][10];
+    // Store their parameters setting
+	uint8_t 	            fx_params_value[NUM_OF_FX_SLOTS_IN_LOOP*NUM_OF_LOOPS][NUM_OF_MAX_PARAMS];
+    preset_fx_bypasses_tst	bypass_states_st[NUM_OF_PRESET_MODES];
 }preset_saves_tst; 
 
 
@@ -80,29 +91,38 @@ typedef struct {
 	sab_fx_param_tun 	intercom_parameters_aun[NUM_OF_MAX_PARAMS];
 } GuitarEffect;
 
+typedef struct{
+    uint8_t *fsw1_ptr;
+    uint8_t *fsw2_ptr;
+    fx_active_modes_ten preset_mode_en;
+}SAB_fsw_mode_tst;
 
 
-// Manager structure: fx_manager
+// Manager structure: fx_manager 
 typedef struct {
 	GuitarEffect*   fx_instances[12];
     EffectType      fx_types_chain[12];
     char          fx_chain_names[12][10];
 
+    SAB_fsw_mode_tst        preset_mode_st;
+    SAB_IO_HADRWARE_BUFFERS* hardware_IO_port;
+
     sab_intercom_tst *intercom_pst;
     
+    preset_saves_tst current_preset_config_st;
 } SAB_fx_manager_tst;
 
 
 
 
 // INIT for SAB_fx_manager_tst
-void SAB_fx_manager_init( SAB_fx_manager_tst* self, sab_intercom_tst* intercom_pst);
+void SAB_fx_manager_init( SAB_fx_manager_tst* self, sab_intercom_tst* intercom_pst, SAB_IO_HADRWARE_BUFFERS* hardware_IO_port_ptr, uint8_t* fsw1_ptr, uint8_t* fsw2_ptr);
 
 // INIT for SAB_fx_manager_tst
 void SAB_fx_manager_deinit( SAB_fx_manager_tst* self);
 
 // Process Function for SAB_fx_manager_tst
-int SAB_fx_manager_process( SAB_fx_manager_tst* self, float input_f32, float output_f32);
+int SAB_fx_manager_process( SAB_fx_manager_tst* self,  float input_f32, float output_f32);
 
 void init_effect_chain(GuitarEffect** chain, EffectType* fx_chain, int chain_length);
 
@@ -113,4 +133,7 @@ void cleanup_effect_chain(GuitarEffect** chain, int chain_length);
 void SAB_save_preset_to_flash(SAB_fx_manager_tst* self);
 void SAB_load_preset_from_flash(SAB_fx_manager_tst* self);
 
+void SAB_fsw_pressed_callback(SAB_fx_manager_tst* self);
+void SAB_preset_up_pressed(SAB_fx_manager_tst* self);
+void SAB_preset_down_pressed(SAB_fx_manager_tst* self);
 #endif

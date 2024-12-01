@@ -10,7 +10,7 @@ void SAB_distortion_delete( SAB_distortion_tst* self){
 
 // Process Function for SAB_distortion_tst
 void SAB_distortion_init( SAB_distortion_tst* self){
-    strcpy(self->intercom_fx_data.name, "distortion");
+    strcpy(self->intercom_fx_data.name, "Dist");
 	self->intercom_fx_data.color[0] = 255; 	// R
 	self->intercom_fx_data.color[1] = 0;	// G
 	self->intercom_fx_data.color[2] = 0;	// B

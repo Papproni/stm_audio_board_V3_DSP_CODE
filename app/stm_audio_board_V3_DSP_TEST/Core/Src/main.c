@@ -104,17 +104,7 @@ volatile uint8_t 			DAC_HALF_COMPLETE_FLAG = 0;
 uint32_t input_i2s_buffer_au32[16];
 uint32_t output_i2s_buffer_au32[16];
 
-volatile struct{
-	int32_t in1_i32;
-	int32_t in2_i32;
-	int32_t in3_i32;
-	int32_t in4_i32;
-
-	int32_t out1_i32;
-	int32_t out2_i32;
-	int32_t out3_i32;
-	int32_t out4_i32;
-}effects_io_port,effects_io_port_half;
+SAB_IO_HADRWARE_BUFFERS effects_io_port;
 
 void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai){
 	DAC_HALF_COMPLETE_FLAG = 0;
@@ -310,20 +300,18 @@ int32_t sdram_buffer_test_ai32[100]__attribute__((section(".sdram_section")));
 //volatile uint8_t enable_effect = 1;
 volatile uint8_t preset_up_pressed = 0;
 volatile uint8_t preset_down_pressed = 0;
-volatile uint8_t enable_effect = 0;
+volatile uint8_t fsw_btn_1_pressed = 0;
+volatile uint8_t fsw_btn_2_pressed = 0;
 // EXTI Line9 External Interrupt ISR Handler CallBackFun
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
     if(GPIO_Pin == FSW_BTN1_Pin) // If The INT Source Is EXTI Line9 (A9 Pin)
     {
-    	HAL_GPIO_TogglePin(FSW_LED1_GPIO_Port, FSW_LED1_Pin); // Toggle The Output (LED) Pin
-    	SCB_InvalidateDCache_by_Addr((uint32_t*)&(enable_effect), sizeof(&enable_effect));
-    	enable_effect = ~enable_effect;
-    	SCB_CleanDCache_by_Addr((uint32_t*)&(enable_effect), sizeof(&enable_effect));
+    	fsw_btn_1_pressed = ~fsw_btn_1_pressed;
     }
     if(GPIO_Pin == FSW_BTN2_Pin) // If The INT Source Is EXTI Line9 (A9 Pin)
 	{
-		HAL_GPIO_TogglePin(FSW_LED2_GPIO_Port, FSW_LED2_Pin); // Toggle The Output (LED) Pin
+		fsw_btn_2_pressed = ~fsw_btn_2_pressed;
 	}
     if(GPIO_Pin == FSW_BTN3_Pin) // If The INT Source Is EXTI Line9 (A9 Pin)
 	{
@@ -496,8 +484,6 @@ int main(void)
 	HAL_GPIO_WritePin(FSW_LED4_GPIO_Port, FSW_LED4_Pin, 0);
 
 
-	HAL_GPIO_WritePin(FSW_LED1_GPIO_Port, FSW_LED1_Pin, 0);
-	HAL_GPIO_WritePin(FSW_LED2_GPIO_Port, FSW_LED2_Pin, 0);
 	HAL_GPIO_WritePin(FSW_LED3_GPIO_Port, FSW_LED3_Pin, 1);
 	HAL_GPIO_WritePin(FSW_LED4_GPIO_Port, FSW_LED4_Pin, 1);
 
@@ -521,8 +507,7 @@ int main(void)
 
 	// init fx
 	SAB_fx_manager_tst SAB_fx_manager_st;
-	SAB_fx_manager_init(&SAB_fx_manager_st, &intercom_st);
-
+	SAB_fx_manager_init(&SAB_fx_manager_st, &intercom_st, &effects_io_port, &fsw_btn_1_pressed, &fsw_btn_2_pressed);
 	
 
 
@@ -537,44 +522,54 @@ int main(void)
 		  ADC_READY_FLAG = 0;
 		if(1 == preset_down_pressed){
 			preset_down_pressed = 0;
-			intercom_st.prev_preset(&intercom_st);
+			SAB_preset_down_pressed(&SAB_fx_manager_st);
 		}
 		if(1 == preset_up_pressed){
 			preset_up_pressed = 0;
 			intercom_st.next_preset(&intercom_st);
+			SAB_preset_up_pressed(&SAB_fx_manager_st);
 		}
 
 //		intercom_st.next_preset(&intercom_st);
 
 	  // LOOPBACK TESTING
-//	  	  effects_io_port.out1_i32 = effects_io_port.in1_i32;
+	  	  effects_io_port.out1_i32 = effects_io_port.in1_i32;
 	  	  effects_io_port.out2_i32 = effects_io_port.in2_i32;
 	  	  effects_io_port.out3_i32 = effects_io_port.in3_i32;
 	  	  effects_io_port.out4_i32 = effects_io_port.in4_i32;
 
-	  // LOOP1
-		  int32_t out;
-		// TESTING
-			float32_t vol_sub1 = log_scale(intercom_st.fx_param_pun[0][0].value_u8);
-			float32_t vol_norm = log_scale(intercom_st.fx_param_pun[0][1].value_u8);
-			float32_t vol_up1  = log_scale(intercom_st.fx_param_pun[0][2].value_u8);
-		  octave_effects_st.volumes_st.clean_f32 = vol_norm;
-		  octave_effects_st.volumes_st.up_1_f32 = vol_up1;
-		  octave_effects_st.volumes_st.up_2_f32 = vol_up1;
 
 
-		  if(enable_effect != 0){
-			//   out = octave_effects_st.callback(&octave_effects_st,effects_io_port.in1_i32/2) + Do_PitchShift(effects_io_port.in1_i32/2)*vol_sub1;
-			out = SAB_custom_fx_process(&custom_fx_st,effects_io_port.in1_i32,0);
-//			  out = delay_effect.callback(&delay_effect,effects_io_port.in1_i32/2);
-		  }else{
-			  out = effects_io_port.in1_i32*1.122;
-		  }
+		if(fsw_btn_1_pressed | fsw_btn_2_pressed){
+			SAB_fsw_pressed_callback(&SAB_fx_manager_st);
+			switch (SAB_fx_manager_st.preset_mode_st.preset_mode_en)
+			{
+			case PRESET_MODE_A_ACTIVE:
+				HAL_GPIO_WritePin(FSW_LED1_GPIO_Port, FSW_LED1_Pin, 1);
+				HAL_GPIO_WritePin(FSW_LED2_GPIO_Port, FSW_LED2_Pin, 0);
+				break;
+			case PRESET_MODE_B_ACTIVE:
+				HAL_GPIO_WritePin(FSW_LED1_GPIO_Port, FSW_LED1_Pin, 0);
+				HAL_GPIO_WritePin(FSW_LED2_GPIO_Port, FSW_LED2_Pin, 1);
+				break;
+			
+			default:
+				HAL_GPIO_WritePin(FSW_LED1_GPIO_Port, FSW_LED1_Pin, 0);
+				HAL_GPIO_WritePin(FSW_LED2_GPIO_Port, FSW_LED2_Pin, 0);
+				break;
+			}
+			fsw_btn_1_pressed = 0;
+			fsw_btn_2_pressed = 0;
+		}
 
-		  effects_io_port.out1_i32 = out;
-//
+// 		  if(enable_effect != 0){
+// 			//   out = octave_effects_st.callback(&octave_effects_st,effects_io_port.in1_i32/2) + Do_PitchShift(effects_io_port.in1_i32/2)*vol_sub1;
+// 			out = SAB_custom_fx_process(&custom_fx_st,effects_io_port.in1_i32,0);
+// //			  out = delay_effect.callback(&delay_effect,effects_io_port.in1_i32/2);
+// 		  }else{
+// 			  out = effects_io_port.in1_i32*1.122;
+// 		  }
 
-//		  effects_io_port.out1_i32 = delay_effect.callback(&delay_effect,effects_io_port.in1_i32/2);
 	  }
     /* USER CODE END WHILE */
 
