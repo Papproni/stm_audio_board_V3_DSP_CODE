@@ -25,7 +25,8 @@ Generated on: 2024.11.28. */
 #include "SAB_custom_fx.h"
 #include "guitar_effect_octave.h"
 
-
+#include "stdint.h"
+#include "arm_math.h"
 
 
 // Enum representing different effect types
@@ -45,18 +46,49 @@ typedef enum {
     CUSTOM_FX
 } EffectType;
 
+
+typedef struct preset_bypasses_st{
+	sab_loopbypass_tun 	loop_bypass_un;
+	uint32_t 			fx_bypasses_u32;
+}preset_bypasses_tst;
+
+#define NUM_OF_PRESET_MODES 3
+enum fx_active_modes{
+	PRESET_MDOE_NORMAL,
+	PRESET_MODE_A_ACTIVE,
+	PRESET_MODE_B_ACTIVE
+};
+
+typedef struct activations_st{
+	preset_bypasses_tst	bypass_states_st[NUM_OF_PRESET_MODES];
+}activations_tst; 
+
+typedef struct preset_saves_st{
+	sab_loop_num_tun 	loop_data[NUM_OF_LOOPS];
+	sab_fx_param_tun 	fx_params_tun[NUM_OF_FX_SLOTS_IN_LOOP*NUM_OF_LOOPS][NUM_OF_MAX_PARAMS];
+	sab_loopbypass_tun	loopbypass_un;
+	preset_bypasses_tst activation_u32;
+}preset_saves_tst; 
+
+
 // Struct for a guitar effect with function pointers
 typedef struct {
     void (*init)(void*);           // Function pointer to initialize the effect
     int (*process)(void*);         // Function pointer to process the effect
     void (*delete)(void*);
+    fx_data_tst			intercom_fx_data;
+	sab_fx_param_tun 	intercom_parameters_aun[NUM_OF_MAX_PARAMS];
 } GuitarEffect;
+
+
 
 // Manager structure: fx_manager
 typedef struct {
 	GuitarEffect*   fx_instances[12];
     EffectType      fx_types_chain[12];
-    char *          fx_chain_names[12];
+    char          fx_chain_names[12][10];
+
+    sab_intercom_tst *intercom_pst;
     
 } SAB_fx_manager_tst;
 
@@ -77,5 +109,8 @@ void init_effect_chain(GuitarEffect** chain, EffectType* fx_chain, int chain_len
 void process_effect_chain(GuitarEffect** chain, int chain_length);
 
 void cleanup_effect_chain(GuitarEffect** chain, int chain_length);
+
+void SAB_save_preset_to_flash(SAB_fx_manager_tst* self);
+void SAB_load_preset_from_flash(SAB_fx_manager_tst* self);
 
 #endif

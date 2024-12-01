@@ -399,6 +399,20 @@ static test_fx_params_fill(struct sab_intercom_st *self)
 
 	// SCB_CleanDCache_by_Addr((uint32_t *)(self->fx_param_un->all_au8), sizeof(sab_fx_param_tun)*12);
 }
+
+
+// Macro to statically define FX data
+#define DEFINE_FX_DATA(...) \
+    const fx_data_tst IMPLEMENTED_FX_DATA[] = { __VA_ARGS__ }; \
+    const size_t IMPLEMENTED_FX_DATA_COUNT = sizeof(IMPLEMENTED_FX_DATA) / sizeof(IMPLEMENTED_FX_DATA[0]);
+
+// Use the macro to define your FX data
+DEFINE_FX_DATA(
+    { .fx_state_en = FX_STATE_OFF, .name = "BOOST",     .color = { 0, 200, 100 } },
+    { .fx_state_en = FX_STATE_ON,  .name = "OVERDRIVE", .color = { 255, 100, 50 } },
+    { .fx_state_en = FX_STATE_OFF, .name = "DELAY",     .color = { 0, 150, 255 } }
+);
+
 void testing_data(struct sab_intercom_st *self)
 {
 	test_fx_params_fill(self);
@@ -429,31 +443,35 @@ void testing_data(struct sab_intercom_st *self)
 	self->loopbypass_un.L23 = 0; // closed
 	self->loopbypass_un.L34 = 1; // open
 
-	self->num_of_implemented_effects = 5;
-	self->implemented_fx_data_ptr = (fx_data_tst *)malloc(sizeof(fx_data_tst) * self->num_of_implemented_effects);
+	self->num_of_implemented_effects = IMPLEMENTED_FX_DATA_COUNT;
+	self->implemented_fx_data_ptr = IMPLEMENTED_FX_DATA;
 
-	strcpy(self->implemented_fx_data_ptr[0].name, "BOOST");
-	self->implemented_fx_data_ptr[0].color[0] = 0;
-	self->implemented_fx_data_ptr[0].color[1] = 200;
-	self->implemented_fx_data_ptr[0].color[2] = 100;
 
-	strcpy(self->implemented_fx_data_ptr[1].name, "OVERDRIVE");
-	self->implemented_fx_data_ptr[1].color[0] = 255;
-	self->implemented_fx_data_ptr[1].color[1] = 100;
-	self->implemented_fx_data_ptr[1].color[2] = 50;
+	// self->num_of_implemented_effects = 5;
+	// self->implemented_fx_data_ptr = (fx_data_tst *)malloc(sizeof(fx_data_tst) * self->num_of_implemented_effects);
 
-	strcpy(self->implemented_fx_data_ptr[2].name, "DELAY");
-	self->implemented_fx_data_ptr[2].color[0] = 0;
-	self->implemented_fx_data_ptr[2].color[1] = 150;
-	self->implemented_fx_data_ptr[2].color[2] = 255;
+	// strcpy(self->implemented_fx_data_ptr[0].name, "BOOST");
+	// self->implemented_fx_data_ptr[0].color[0] = 0;
+	// self->implemented_fx_data_ptr[0].color[1] = 200;
+	// self->implemented_fx_data_ptr[0].color[2] = 100;
 
-	strcpy(self->implemented_fx_data_ptr[3].name, "REVERB");
-	self->implemented_fx_data_ptr[3].color[0] = 100;
-	self->implemented_fx_data_ptr[3].color[1] = 100;
-	self->implemented_fx_data_ptr[3].color[2] = 255;
+	// strcpy(self->implemented_fx_data_ptr[1].name, "OVERDRIVE");
+	// self->implemented_fx_data_ptr[1].color[0] = 255;
+	// self->implemented_fx_data_ptr[1].color[1] = 100;
+	// self->implemented_fx_data_ptr[1].color[2] = 50;
 
-	strcpy(self->implemented_fx_data_ptr[4].name, "CHORUS");
-	self->implemented_fx_data_ptr[4].color[0] = 50;
-	self->implemented_fx_data_ptr[4].color[1] = 255;
-	self->implemented_fx_data_ptr[4].color[2] = 150;
+	// strcpy(self->implemented_fx_data_ptr[2].name, "DELAY");
+	// self->implemented_fx_data_ptr[2].color[0] = 0;
+	// self->implemented_fx_data_ptr[2].color[1] = 150;
+	// self->implemented_fx_data_ptr[2].color[2] = 255;
+
+	// strcpy(self->implemented_fx_data_ptr[3].name, "REVERB");
+	// self->implemented_fx_data_ptr[3].color[0] = 100;
+	// self->implemented_fx_data_ptr[3].color[1] = 100;
+	// self->implemented_fx_data_ptr[3].color[2] = 255;
+
+	// strcpy(self->implemented_fx_data_ptr[4].name, "CHORUS");
+	// self->implemented_fx_data_ptr[4].color[0] = 50;
+	// self->implemented_fx_data_ptr[4].color[1] = 255;
+	// self->implemented_fx_data_ptr[4].color[2] = 150;
 }
