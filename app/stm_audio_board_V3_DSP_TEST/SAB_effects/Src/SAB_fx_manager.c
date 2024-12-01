@@ -137,7 +137,7 @@ EffectType get_fx_type(char* fx_name_char) {
 // Function to process all effects in the chain
 void SAB_process_effect_chain(SAB_fx_manager_tst* self, GuitarEffect** chain, int chain_length) {
     // --------------------------------- LOOP 1 ------------------
-    float32_t data_sample_f32=self->hardware_IO_port->in1_i32;
+    float32_t data_sample_f32=(float32_t)self->hardware_IO_port->in1_i32;
     fx_active_modes_ten mode = self->preset_mode_st.preset_mode_en;
     uint8_t bypass_L12 = self->current_preset_config_st.bypass_states_st[mode].loop_bypass_un.L12;
     uint8_t bypass_L23 = self->current_preset_config_st.bypass_states_st[mode].loop_bypass_un.L23;
@@ -296,8 +296,8 @@ static void SAB_load_current_config(SAB_fx_manager_tst* self ){
     for(int i=0; i<12;i++){
         if(self->fx_instances[i]->init != NULL){
             self->intercom_pst->fx_param_pun[i] = self->fx_instances[i]->intercom_parameters_aun;
-            fx_state_ten state = self->current_preset_config_st.bypass_states_st[self->preset_mode_st.preset_mode_en].fx_states_aen[i];
-            self->fx_instances[i]->intercom_fx_data.fx_state_en = state;
+//            fx_state_ten state = self->current_preset_config_st.bypass_states_st[self->preset_mode_st.preset_mode_en].fx_states_aen[i];
+//            self->fx_instances[i]->intercom_fx_data.fx_state_en = state;
         }
     }
 
