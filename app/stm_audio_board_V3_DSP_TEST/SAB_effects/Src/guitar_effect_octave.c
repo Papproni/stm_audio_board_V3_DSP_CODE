@@ -413,7 +413,33 @@ static int32_t callback_octave_effect(struct octave_effects_st* self,int32_t inp
 
 // Process Function for SAB_pitchshift_tst
 float32_t SAB_octave_process( octave_effects_tst* self, float input_f32){
+	// 1. calculate octaves
 
+	// 2. set volumes
+
+	// 3. return value
+
+
+	// LEGACY CODE
+	self->input_f32 = (float32_t)input_f32;
+	// +1 octave
+	subbandfilter_calculation(self);
+	octave1up(self);
+	// save result
+	self->octave_up_1_f32 = octave1_up_filtered;
+//
+	// +2 octave
+	subbandfilter_octave2_calculation(self);
+	octave2up(self);
+	//		 save result
+	self->octave_up_2_f32 = octave1_up_filtered;
+
+	// Write to DAC
+	self->output_f32 =	(int32_t)self->octave_up_1_f32*self->volumes_st.up_1_f32 +
+						(int32_t)self->octave_up_2_f32*self->volumes_st.up_2_f32 +
+						(int32_t)(self->input_f32*self->volumes_st.clean_f32);
+
+	return self->output_f32;
 }
 
 // Process Function for SAB_pitchshift_tst

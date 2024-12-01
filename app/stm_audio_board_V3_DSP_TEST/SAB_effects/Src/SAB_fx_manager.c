@@ -135,12 +135,49 @@ EffectType get_fx_type(char* fx_name_char) {
 
 
 // Function to process all effects in the chain
-void SAB_process_effect_chain(GuitarEffect** chain, int chain_length) {
-    for (int i = 0; i < chain_length; ++i) {
-        if(chain[i]->process != NULL){
-            chain[i]->process(chain[i]);
+void SAB_process_effect_chain(SAB_fx_manager_tst* self, GuitarEffect** chain, int chain_length) {
+    // --------------------------------- LOOP 1 ------------------
+    float32_t data_sample_f32=self->hardware_IO_port->in1_i32;
+    fx_active_modes_ten mode = self->preset_mode_st.preset_mode_en;
+    uint8_t bypass_L12 = self->current_preset_config_st.bypass_states_st[mode].loop_bypass_un.L12;
+    uint8_t bypass_L23 = self->current_preset_config_st.bypass_states_st[mode].loop_bypass_un.L23;
+    uint8_t bypass_L34 = self->current_preset_config_st.bypass_states_st[mode].loop_bypass_un.L34;
+    for(int i=0; i<3; i++){
+        if(chain[i]->process != NULL && chain[i]->intercom_fx_data.fx_state_en == FX_STATE_ON){
+            data_sample_f32 = chain[i]->process(chain[i],data_sample_f32);
         }
     }
+    if(0 != bypass_L12){
+        self->hardware_IO_port->out1_i32 = data_sample_f32;
+        data_sample_f32 = self->hardware_IO_port->in2_i32;
+    }
+    // --------------------------------- LOOP 2 ------------------
+    for(int i=3; i<6; i++){
+        if(chain[i]->process != NULL && chain[i]->intercom_fx_data.fx_state_en == FX_STATE_ON){
+            data_sample_f32 = chain[i]->process(chain[i],data_sample_f32);
+        }
+    }
+    if(0 != bypass_L23){
+        self->hardware_IO_port->out2_i32 = data_sample_f32;
+        data_sample_f32 = self->hardware_IO_port->in3_i32;
+    }
+    // --------------------------------- LOOP 3 ------------------
+    for(int i=6; i<9; i++){
+        if(chain[i]->process != NULL && chain[i]->intercom_fx_data.fx_state_en == FX_STATE_ON){
+            data_sample_f32 = chain[i]->process(chain[i],data_sample_f32);
+        }
+    }
+    if(0 != bypass_L34){
+        self->hardware_IO_port->out3_i32 = data_sample_f32;
+        data_sample_f32 = self->hardware_IO_port->in4_i32;
+    }
+    // --------------------------------- LOOP 4 ------------------
+    for(int i=9; i<12; i++){
+        if(chain[i]->process != NULL && chain[i]->intercom_fx_data.fx_state_en == FX_STATE_ON){
+            data_sample_f32 = chain[i]->process(chain[i],data_sample_f32);
+        }
+    }
+    self->hardware_IO_port->out4_i32 = data_sample_f32;
 }
 
 // if relevant data came on I2C handle it (fx change, add delete etc)
@@ -231,6 +268,7 @@ void SAB_save_preset_to_flash(SAB_fx_manager_tst* self){
 	}
 	// 3. save to flash
 	Flash_Write_Data(save_location_addr_u32,&self->current_preset_config_st,preset_save_size_in_word_u32);
+	HAL_Delay(100);
 }
 
 void SAB_load_preset_from_flash(SAB_fx_manager_tst* self){
@@ -377,6 +415,6 @@ void SAB_fx_manager_process( SAB_fx_manager_tst* self){
             SAB_load_current_config(self);
         }
     }
-    SAB_process_effect_chain(self->fx_instances,12);
+    SAB_process_effect_chain(self,self->fx_instances,12);
     // sync fx active states
 }

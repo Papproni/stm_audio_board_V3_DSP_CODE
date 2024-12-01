@@ -537,10 +537,10 @@ int main(void)
 //		intercom_st.next_preset(&intercom_st);
 
 	  // LOOPBACK TESTING
-	  	  effects_io_port.out1_i32 = effects_io_port.in1_i32;
-	  	  effects_io_port.out2_i32 = effects_io_port.in2_i32;
-	  	  effects_io_port.out3_i32 = effects_io_port.in3_i32;
-	  	  effects_io_port.out4_i32 = effects_io_port.in4_i32;
+//	  	  effects_io_port.out1_i32 = effects_io_port.in1_i32;
+//	  	  effects_io_port.out2_i32 = effects_io_port.in2_i32;
+//	  	  effects_io_port.out3_i32 = effects_io_port.in3_i32;
+//	  	  effects_io_port.out4_i32 = effects_io_port.in4_i32;
 
 
 
