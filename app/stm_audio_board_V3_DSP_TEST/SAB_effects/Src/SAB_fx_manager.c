@@ -156,9 +156,12 @@ static uint8_t SAB_handle_intercom_change(SAB_fx_manager_tst* self){
     switch (register_u8)
     {
         case SAB_I2C_REG_LOOP1FX:
+        case SAB_I2C_REG_LOOP2FX:
+        case SAB_I2C_REG_LOOP3FX:
+        case SAB_I2C_REG_LOOP4FX:
             // Check if name changed
             slot_ptr= &self->intercom_pst->loop_data[0].slot1;
-            for(int i=0;i<3;i++){
+            for(int i=0;i<12;i++){
                 if(0 != strcmp(slot_ptr[i].name, self->fx_instances[i]->intercom_fx_data.name)){
                     reinit_needed_flg|=1;
                     strcpy(self->current_preset_config_st.fx_names[i],slot_ptr[i].name);
@@ -171,48 +174,7 @@ static uint8_t SAB_handle_intercom_change(SAB_fx_manager_tst* self){
                 }
             }
             break;
-        case SAB_I2C_REG_LOOP2FX:
-            slot_ptr= &self->intercom_pst->loop_data[1].slot1;
-            for(int i=3;i<6;i++){
-                if(0 != strcmp(slot_ptr->name, self->fx_instances[i]->intercom_fx_data.name)){
-                    reinit_needed_flg|=1;
-                    strcpy(self->current_preset_config_st.fx_names[i],slot_ptr->name);
-                }else{
-                     // update fx_state
-                    self->fx_instances[i]->intercom_fx_data.fx_state_en = slot_ptr->fx_state_en;
-                    current_bypass->fx_states_aen[i] = slot_ptr->fx_state_en;
-                }
-                slot_ptr = slot_ptr+i-3;
-            }
-            break;
-        case SAB_I2C_REG_LOOP3FX:
-            slot_ptr= &self->intercom_pst->loop_data[2].slot1;
-            for(int i=6;i<9;i++){
-                if(0 != strcmp(slot_ptr->name, self->fx_instances[i]->intercom_fx_data.name)){
-                    reinit_needed_flg|=1;
-                    strcpy(self->current_preset_config_st.fx_names[i],slot_ptr->name);
-                }else{
-                     // update fx_state
-                    self->fx_instances[i]->intercom_fx_data.fx_state_en = slot_ptr->fx_state_en;
-                    current_bypass->fx_states_aen[i] = slot_ptr->fx_state_en;
-                }
-                slot_ptr = slot_ptr+i-6;
-            }
-            break;
-        case SAB_I2C_REG_LOOP4FX:
-            slot_ptr= &self->intercom_pst->loop_data[3].slot1;
-            for(int i=10;i<12;i++){
-                if(0 != strcmp(slot_ptr->name, self->fx_instances[i]->intercom_fx_data.name)){
-                    reinit_needed_flg|=1;
-                    strcpy(self->current_preset_config_st.fx_names[i],slot_ptr->name);
-                }else{
-                     // update fx_state
-                    self->fx_instances[i]->intercom_fx_data.fx_state_en = slot_ptr->fx_state_en;
-                    current_bypass->fx_states_aen[i] = slot_ptr->fx_state_en;
-                }
-                slot_ptr = slot_ptr+i-10;
-            }
-            break;
+
         case SAB_I2C_REG_LOOPBYPASSSTATE:
             memcpy(&current_bypass->loop_bypass_un,&self->intercom_pst->loopbypass_un, sizeof(sab_loopbypass_tun));
             break;
@@ -350,11 +312,14 @@ void SAB_fsw_pressed_callback(SAB_fx_manager_tst* self){
     }
 
     uint8_t current_mode = self->preset_mode_st.preset_mode_en;
+    fx_data_tst *slot_ptr= &self->intercom_pst->loop_data[0].slot1;
     // update fx states
     for(int i=0; i<12;i++){
         self->fx_instances[i]->intercom_fx_data.fx_state_en = self->current_preset_config_st.bypass_states_st[current_mode].fx_states_aen[i];
+        slot_ptr[i].fx_state_en 							= self->current_preset_config_st.bypass_states_st[current_mode].fx_states_aen[i];
     }
-
+    // update loops
+    memcpy(&self->intercom_pst->loopbypass_un,&self->current_preset_config_st.bypass_states_st[current_mode].loop_bypass_un,sizeof(sab_loopbypass_tun));
 }
 
 void SAB_preset_up_pressed(SAB_fx_manager_tst* self){
@@ -413,4 +378,5 @@ void SAB_fx_manager_process( SAB_fx_manager_tst* self){
         }
     }
     SAB_process_effect_chain(self->fx_instances,12);
+    // sync fx active states
 }
