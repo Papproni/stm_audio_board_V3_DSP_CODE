@@ -418,5 +418,4 @@ void SAB_fx_manager_process( SAB_fx_manager_tst* self){
         }
     }
     SAB_process_effect_chain(self,self->fx_instances,12);
-    // sync fx active states
 }
