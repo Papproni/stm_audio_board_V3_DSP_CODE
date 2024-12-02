@@ -84,8 +84,8 @@ typedef struct preset_saves_st{
 
 // Struct for a guitar effect with function pointers
 typedef struct {
-    void (*init)(void*);           // Function pointer to initialize the effect
-    float32_t (*process)(void*,float32_t input);         // Function pointer to process the effect
+    void (*init)(void*);
+    float32_t (*process)(void*,float32_t input);
     void (*delete)(void*);
     fx_data_tst			intercom_fx_data;
 	sab_fx_param_tun 	intercom_parameters_aun[NUM_OF_MAX_PARAMS];

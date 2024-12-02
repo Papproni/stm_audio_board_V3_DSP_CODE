@@ -34,7 +34,7 @@ typedef struct {
 
     // Generated outputs from other Jinja templates
     
-    float32_t input_block_block0_output_f32;
+    float32_t input_block_block1_output_f32;
     
     // Biquad filter header for biquad_filter_block_block2
 arm_biquad_cascade_df2T_instance_f32 biquad_filter_block_block2;
@@ -42,7 +42,15 @@ float32_t biquad_filter_block_block2_coeffs_af32[5];
 float32_t biquad_filter_block_block2_states_af32[4];
 float32_t biquad_filter_block_block2_output_f32;
     
-    float32_t output_block_block1_input_f32;
+    // Biquad filter header for biquad_filter_block_block3
+arm_biquad_cascade_df2T_instance_f32 biquad_filter_block_block3;
+float32_t biquad_filter_block_block3_coeffs_af32[5];
+float32_t biquad_filter_block_block3_states_af32[4];
+float32_t biquad_filter_block_block3_output_f32;
+    
+    float32_t add_block_block4_output_f32;
+    
+    float32_t output_block_block0_input_f32;
     
 
 } SAB_custom_fx_tst;
@@ -52,10 +60,8 @@ float32_t biquad_filter_block_block2_output_f32;
 void SAB_custom_fx_init( SAB_custom_fx_tst* self);
 
 // Process Function for SAB_custom_fx_tst
-float32_t SAB_custom_fx_process( SAB_custom_fx_tst* self, float32_t input_f32, float32_t output_f32);
+float32_t SAB_custom_fx_process( SAB_custom_fx_tst* self, float32_t input_f32);
 
 void SAB_custom_fx_delete( SAB_custom_fx_tst* self);
-
-
 
 #endif
