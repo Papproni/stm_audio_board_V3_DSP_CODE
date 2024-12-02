@@ -289,7 +289,7 @@ delay_effects_tst delay_effect;
 octave_effects_tst octave_effects_st;
 SAB_custom_fx_tst custom_fx_st;
 
-sab_intercom_tst 	intercom_st;
+sab_intercom_tst 	 intercom_st __attribute__((section(".noncacheable_data")));
 SAB_fx_manager_tst SAB_fx_manager_st;
 
 int32_t sdram_buffer_test_ai32[100]__attribute__((section(".sdram_section")));
@@ -422,7 +422,7 @@ int main(void)
   SCB_EnableICache();
 
   /* Enable D-Cache---------------------------------------------------------*/
-//  SCB_EnableDCache();
+  SCB_EnableDCache();
 
   /* MCU Configuration--------------------------------------------------------*/
 

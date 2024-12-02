@@ -267,8 +267,9 @@ void SAB_save_preset_to_flash(SAB_fx_manager_tst* self){
        
 	}
 	// 3. save to flash
+    __disable_irq();  // Disable interrupts
 	Flash_Write_Data(save_location_addr_u32,&self->current_preset_config_st,preset_save_size_in_word_u32);
-	HAL_Delay(100);
+	__enable_irq();   // Re-enable interrupts
 }
 
 void SAB_load_preset_from_flash(SAB_fx_manager_tst* self){
@@ -276,8 +277,9 @@ void SAB_load_preset_from_flash(SAB_fx_manager_tst* self){
 	uint32_t preset_save_size_in_word_u32 = 	preset_save_size_in_byte_u32 / 4;
 	uint32_t preset_num_u32 = (self->intercom_pst->preset_data_un.preset_Major_u8-'A')*9+self->intercom_pst->preset_data_un.preset_Minor_u8-1;
 	uint32_t save_location_addr_u32 = preset_save_size_in_byte_u32*preset_num_u32+USER_FLASH_ADDRESS;
-
+	__disable_irq();  // Disable interrupts
     Flash_Read_Data(save_location_addr_u32, &self->current_preset_config_st, preset_save_size_in_word_u32);
+    __enable_irq();   // Re-enable interrupts
 }
 
 

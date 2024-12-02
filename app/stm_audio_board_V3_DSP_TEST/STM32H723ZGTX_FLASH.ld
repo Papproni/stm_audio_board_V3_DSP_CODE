@@ -56,7 +56,11 @@ MEMORY
 /* Define output sections */
 SECTIONS
 {
-
+	
+	 .noncacheable_data :
+	{
+	    *(.noncacheable)
+	} > RAM_D2
   .user_data :
 	{
 	  . = ALIGN(4);
