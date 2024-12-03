@@ -235,14 +235,8 @@ static void SAB_cleanup_effect_chain(GuitarEffect** chain, int chain_length) {
 }
 
 void SAB_fx_manager_deinit( SAB_fx_manager_tst* self){
-    // TODO
+    
 }
-
-
-
-
-// FLASH MEMORY
-//  __attribute__((section(".user_data"))) preset_saves_tst presets_flash_st[26*9];
 
 #define USER_FLASH_ADDRESS 0x08080000  // Base address of USER_FLASH section
 
@@ -285,21 +279,16 @@ void SAB_load_preset_from_flash(SAB_fx_manager_tst* self){
 
 static void SAB_load_current_config(SAB_fx_manager_tst* self ){
     for(int i=0; i<12;i++){
-        // MUST ADD THIS VARIABLE FIRST FROM FLASH!!!!
-            self->fx_types_chain[i] = get_fx_type(self->current_preset_config_st.fx_names[i]);
+        self->fx_types_chain[i] = get_fx_type(self->current_preset_config_st.fx_names[i]);
     }
 
     init_effect_chain(&self->fx_instances,self->fx_types_chain,12);
 
-    // LOOP DATA
-    
     // PARAMS ASSIGN / BYPASS SWITCHES SET
     self->preset_mode_st.preset_mode_en = PRESET_MODE_NORMAL;
     for(int i=0; i<12;i++){
         if(self->fx_instances[i]->init != NULL){
             self->intercom_pst->fx_param_pun[i] = self->fx_instances[i]->intercom_parameters_aun;
-//            fx_state_ten state = self->current_preset_config_st.bypass_states_st[self->preset_mode_st.preset_mode_en].fx_states_aen[i];
-//            self->fx_instances[i]->intercom_fx_data.fx_state_en = state;
         }
     }
 

@@ -10,14 +10,6 @@
 #include "main.h"
 
 
- /*
-  * TODO LIST:
-  * TODO 1: config registert from SPI
-  * TODO 2: setup I2S for ADC
-  * TODO 3: setup I2S for DAC
-  * TODO 4: create interface for in and output of data
-  */
-
 #define AD1939_Global_Address_Read 0x09 // This is the chip address 4 shifted left one bit plus the R/Wbit set to read.
 #define AD1939_Global_Address_Write 0x08 // This is the chip address 4 shifted left one bit plus theR/W bit set to write.
 // Register Addresses:
