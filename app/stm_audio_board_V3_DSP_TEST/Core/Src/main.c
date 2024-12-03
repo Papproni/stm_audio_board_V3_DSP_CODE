@@ -150,9 +150,6 @@ void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai){
 #define SDRAM_SIZE 			0x100000 // 16Mb = 2MB
 
 #define ARRAY_SIZE 96000
-// Define a padding variable to offset the array by 2 bytes
-//__attribute__((section(".sdram_section"))) volatile uint32_t sdram_array[ARRAY_SIZE];
-//__attribute__((section(".sdram_section"))) volatile uint16_t sdram_byte;
 
 /*
  * This function puts the device into DFU (bootloader mode)
@@ -388,23 +385,6 @@ void HAL_I2C_SlaveTxCpltCallback(I2C_HandleTypeDef *hi2c)
 void I2C_Slave_Listen(void) {
 	HAL_I2C_Slave_Receive_IT(&hi2c4, RX_Buffer, sizeof(RX_Buffer));
 }
-
-
-/*
- * ----------------------------
- */
-
-float32_t log_scale(uint8_t input_value) {
-    // Add 1 to avoid log(0) and calculate log(1 + input_value)
-    // float log_value = log10(1 + input_value);
-
-    // Scale to fit the 0-8 range
-    float32_t scaled_value = (input_value / 256.0) *4.0f;
-
-    return scaled_value;
-}
-
-
 /* USER CODE END 0 */
 
 /**
@@ -460,25 +440,15 @@ int main(void)
 
   // init CODEC
 	ad1939_init(&hspi1);
-
 	init_guitar_effect_delay(&delay_effect);
-
 	SAB_octave_init(&octave_effects_st);
-
 	SAB_custom_fx_init(&custom_fx_st);
-
 	init_intercom(&intercom_st, 0x10,&hi2c4);
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-	// FLASH TESTING START
-
-//	AUDIO_Init();
-//	JumpToBootloader();
-		// FLASH TESTING END
-
 	HAL_GPIO_WritePin(FSW_LED1_GPIO_Port, FSW_LED1_Pin, 0);
 	HAL_GPIO_WritePin(FSW_LED2_GPIO_Port, FSW_LED2_Pin, 0);
 	HAL_GPIO_WritePin(FSW_LED3_GPIO_Port, FSW_LED3_Pin, 0);
@@ -486,37 +456,20 @@ int main(void)
 
 
 	HAL_GPIO_WritePin(FSW_LED3_GPIO_Port, FSW_LED3_Pin, 1);
-	HAL_GPIO_WritePin(FSW_LED4_GPIO_Port, FSW_LED4_Pin, 1);
+	HAL_GPIO_WritePin(FSW_LED4_GPIO_Port, FSW_LED4_Pin, 0);
 
 	HAL_I2C_EnableListen_IT(&hi2c4);
 
-	// SCB_InvalidateDCache_by_Addr((uint32_t *)&(intercom_st.loop_data[0]), sizeof(sab_loop_num_tun));
-	// memcpy(&intercom_st.loop_data[0].slot2,&octave_effects_st.intercom_fx_data,sizeof(fx_data_tst));
-	// memcpy(&intercom_st.loop_data[0].slot1,&delay_effect.intercom_fx_data,sizeof(fx_data_tst));
-	// memcpy(&intercom_st.loop_data[0].slot3,&custom_fx_st.intercom_fx_data,sizeof(fx_data_tst));
-	// SCB_CleanDCache_by_Addr((uint32_t *)&(intercom_st.loop_data[0]), sizeof(sab_preset_num_tun));
-
-	// intercom_st.fx_param_pun[1] = octave_effects_st.intercom_parameters_aun;
-	// intercom_st.fx_param_pun[0] = delay_effect.intercom_parameters_aun;
-	// intercom_st.fx_param_pun[2] = custom_fx_st.intercom_parameters_aun;
-	// sab_fx_param_tun 	dummy_params_aun[12];
-	// for(int i= 3; i<12;i++){
-	// 	intercom_st.fx_param_pun[i] = dummy_params_aun;
-	// }
-
-	// Load data from flash to intercom!
-
-	// init fx
-
 	SAB_fx_manager_init(&SAB_fx_manager_st, &intercom_st, &effects_io_port, &fsw_btn_1_pressed, &fsw_btn_2_pressed);
 	
-
-
   while (1)
   {
 	if(intercom_st.save_un.save_command>0){
 		SAB_save_preset_to_flash(&SAB_fx_manager_st);
 		intercom_st.save_un.save_command = 0;
+	}
+	if(intercom_st.dsp_fw_update_flg){
+		JumpToBootloader();
 	}
 
 	  if(ADC_READY_FLAG){
@@ -530,17 +483,8 @@ int main(void)
 		}
 		if(1 == preset_up_pressed){
 			preset_up_pressed = 0;
-			intercom_st.next_preset(&intercom_st);
 			SAB_preset_up_pressed(&SAB_fx_manager_st);
 		}
-
-//		intercom_st.next_preset(&intercom_st);
-
-	  // LOOPBACK TESTING
-//	  	  effects_io_port.out1_i32 = effects_io_port.in1_i32;
-//	  	  effects_io_port.out2_i32 = effects_io_port.in2_i32;
-//	  	  effects_io_port.out3_i32 = effects_io_port.in3_i32;
-//	  	  effects_io_port.out4_i32 = effects_io_port.in4_i32;
 
 
 
@@ -566,13 +510,7 @@ int main(void)
 			fsw_btn_2_pressed = 0;
 		}
 
-// 		  if(enable_effect != 0){
-// 			//   out = octave_effects_st.callback(&octave_effects_st,effects_io_port.in1_i32/2) + Do_PitchShift(effects_io_port.in1_i32/2)*vol_sub1;
-// 			out = SAB_custom_fx_process(&custom_fx_st,effects_io_port.in1_i32,0);
-// //			  out = delay_effect.callback(&delay_effect,effects_io_port.in1_i32/2);
-// 		  }else{
-// 			  out = effects_io_port.in1_i32*1.122;
-// 		  }
+
 
 	  }
     /* USER CODE END WHILE */

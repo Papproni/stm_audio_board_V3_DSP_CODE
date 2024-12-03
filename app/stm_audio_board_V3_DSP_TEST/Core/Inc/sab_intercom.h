@@ -33,6 +33,8 @@ typedef struct sab_intercom_st{
     fx_data_tst*    implemented_fx_data_ptr;
     uint8_t         num_of_implemented_effects;
 
+    uint8_t dsp_fw_update_flg;
+
     // GETTER (read)
     void (*get_preset_data) (struct sab_intercom_st* self);
     void (*get_loop_data)   (struct sab_intercom_st* self, uint8_t loop_num_u8);

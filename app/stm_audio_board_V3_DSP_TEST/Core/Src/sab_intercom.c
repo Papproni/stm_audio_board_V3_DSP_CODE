@@ -114,12 +114,8 @@ static void set_current_fx_in_edit(struct sab_intercom_st *self, uint8_t fx_slot
 /// @param size_u8
 void sab_intercom_process_i2c_data(struct sab_intercom_st *self, uint8_t *buffer_pu8, uint8_t size_u8)
 {
-//	SCB_InvalidateDCache_by_Addr((uint32_t *)self->get_reg_data_ptr(self),size_u8);
 	memcpy(self->get_reg_data_ptr(self), buffer_pu8, size_u8);
 	self->change_occured_flg = self->register_addr_u8;
-//	SCB_CleanDCache_by_Addr((uint32_t *)self->get_reg_data_ptr(self),size_u8);
-
-
 }
 
 /// @brief This function returns the data pointer which is adressed by the "register_addr_u8"
@@ -198,6 +194,9 @@ uint32_t sab_intercom_get_reg_data_ptr(struct sab_intercom_st *self)
 
 	case SAB_I2c_REG_CURRENT_FX:
 		return &self->current_fx_in_edit;
+	
+	case SAB_I2C_REG_DSP_FW_UPDATE:
+		return &self->dsp_fw_update_flg;
 
 	default:
 		return NULL; // Return NULL if the register enum is out of bounds
@@ -248,23 +247,13 @@ uint8_t sab_intercom_get_reg_data_size(struct sab_intercom_st *self)
 
 	case SAB_I2c_REG_CURRENT_FX:
 		return sizeof(uint8_t);
+		
+	case SAB_I2C_REG_DSP_FW_UPDATE:
+		return sizeof(uint8_t);
 
 	default:
 		return NULL; // Return NULL if the register enum is out of bounds
 	}
-}
-
-void next_preset(struct sab_intercom_st *self)
-{
-//	SCB_InvalidateDCache_by_Addr((uint32_t *)&self->preset_data_un.all_u32, sizeof(self->preset_data_un.all_u32));
-
-//	SCB_CleanDCache_by_Addr((uint32_t *)&self->preset_data_un.all_u32, sizeof(self->preset_data_un.all_u32));
-}
-
-void prev_preset(struct sab_intercom_st *self)
-{
-//	SCB_InvalidateDCache_by_Addr((uint32_t *)&self->preset_data_un.all_u32, sizeof(self->preset_data_un.all_u32));
-//	SCB_CleanDCache_by_Addr((uint32_t *)&self->preset_data_un.all_u32, sizeof(self->preset_data_un.all_u32));
 }
 
 float32_t conv_raw_to_param_value(uint8_t value, float32_t low, float32_t high) {
@@ -277,98 +266,6 @@ void add_parameter(sab_fx_param_tun *param_ptr, char *name, param_type_ten type,
 	strcpy(param_ptr->name, name);
 	param_ptr->type_en = type;
 	param_ptr->value_u8 = value;
-}
-
-// ----------------------------------INIT-------------------------------------------------
-void init_intercom(struct sab_intercom_st *self, uint8_t slave_address_u8, I2C_HandleTypeDef *i2c_h)
-{
-
-//	SCB_InvalidateDCache_by_Addr((uint32_t *)self, sizeof(self));
-
-	self->slave_addr_u8 = slave_address_u8 << 1;
-	self->i2c_h = i2c_h;
-	// GETTER function pointers
-	self->get_preset_data = get_preset_data;
-	self->get_loop_data = get_loop_data;
-	self->get_fx_param = get_fx_param;
-	self->get_info = get_info;
-	self->get_loopbypass = get_loopbypass;
-
-	self->get_implemented_effects = get_implemented_effects;
-	self->num_of_implemented_effects = 0;
-	self->implemented_fx_data_ptr = NULL;
-	self->current_fx_in_edit = 0;
-	self->save_un.save_command = 0;
-	// SETTER function pointers
-	self->set_fx_param = set_fx_param;
-	self->set_loopbypass = set_loopbypass;
-	self->set_current_fx_in_edit = set_current_fx_in_edit;
-	self->next_preset = next_preset;
-	self->prev_preset = prev_preset;
-	
-
-	self->process_rx_buffer = sab_intercom_process_i2c_data;
-	self->get_reg_data_ptr = sab_intercom_get_reg_data_ptr;
-	self->get_reg_data_len = sab_intercom_get_reg_data_size;
-	self->change_occured_flg = 0;
-//	SCB_CleanDCache_by_Addr((uint32_t *)self, sizeof(self));
-
-	testing_data(self);
-	
-}
-
-static test_fx_params_fill(struct sab_intercom_st *self)
-{
-	// SCB_InvalidateDCache_by_Addr((uint32_t *)(self->fx_param_un->all_au8), sizeof(sab_fx_param_tun)*12);
-	// strcpy(self->fx_param_un[0].name, "SUB"); // Delay time parameter
-	// self->fx_param_un[0].type_en = PARAM_TYPE_POT;		  // Type: Delay
-	// self->fx_param_un[0].value_u8 = 69;		  // Value in ms
-
-	// strcpy(self->fx_param_un[1].name, "VOL"); // Modulation rate
-	// self->fx_param_un[1].type_en = PARAM_TYPE_POT;		  // Type: Modulation
-	// self->fx_param_un[1].value_u8 = 120;	  // Value in Hz
-
-	// strcpy(self->fx_param_un[2].name, "UP"); // Effect depth
-	// self->fx_param_un[2].type_en = PARAM_TYPE_POT;		 // Type: Modulation Depth
-	// self->fx_param_un[2].value_u8 = 85;		 // Percentage
-
-	// strcpy(self->fx_param_un[3].name, "GAIN"); // Amplification gain
-	// self->fx_param_un[3].type_en = PARAM_TYPE_UNUSED;		   // Type: Amplification
-	// self->fx_param_un[3].value_u8 = 100;	   // Value in dB
-
-	// strcpy(self->fx_param_un[4].name, "MIX"); // Dry/Wet mix
-	// self->fx_param_un[4].type_en = PARAM_TYPE_UNUSED;		  // Type: Mix
-	// self->fx_param_un[4].value_u8 = 50;		  // 50% mix
-
-	// strcpy(self->fx_param_un[5].name, "DECAY"); // Reverb decay
-	// self->fx_param_un[5].type_en = PARAM_TYPE_UNUSED;			// Type: Reverb
-	// self->fx_param_un[5].value_u8 = 72;			// Value in percentage
-
-	// strcpy(self->fx_param_un[6].name, "FREQ"); // Filter cutoff frequency
-	// self->fx_param_un[6].type_en = PARAM_TYPE_UNUSED;		   // Type: Filter
-	// self->fx_param_un[6].value_u8 = 200;	   // Frequency in Hz
-
-	// strcpy(self->fx_param_un[7].name, "RES"); // Filter resonance
-	// self->fx_param_un[7].type_en = PARAM_TYPE_UNUSED;		  // Type: Filter
-	// self->fx_param_un[7].value_u8 = 60;		  // Resonance value
-
-	// strcpy(self->fx_param_un[8].name, "LEVEL"); // Output level
-	// self->fx_param_un[8].type_en = PARAM_TYPE_UNUSED;			// Type: Amplification
-	// self->fx_param_un[8].value_u8 = 95;			// Value in dB
-
-	// strcpy(self->fx_param_un[9].name, "FEED"); // Feedback amount
-	// self->fx_param_un[9].type_en = PARAM_TYPE_UNUSED;		   // Type: Delay/Feedback
-	// self->fx_param_un[9].value_u8 = 40;		   // Percentage
-
-	// strcpy(self->fx_param_un[10].name, "THRSH"); // Compression threshold
-	// self->fx_param_un[10].type_en = PARAM_TYPE_UNUSED;			 // Type: Compression
-	// self->fx_param_un[10].value_u8 = 128;		 // Threshold level
-
-	// strcpy(self->fx_param_un[11].name, "SPD"); // Tremolo speed
-	// self->fx_param_un[11].type_en = PARAM_TYPE_UNUSED;		   // Type: Tremolo
-	// self->fx_param_un[11].value_u8 = 90;	   // Speed in Hz
-
-	// SCB_CleanDCache_by_Addr((uint32_t *)(self->fx_param_un->all_au8), sizeof(sab_fx_param_tun)*12);
 }
 
 
@@ -394,31 +291,53 @@ DEFINE_FX_DATA(
 	{ .fx_state_en = FX_STATE_OFF, 	.name = "Pitchshft",    .color = { 0, 150, 255 } }
 );
 
-void testing_data(struct sab_intercom_st *self)
+// ----------------------------------INIT-------------------------------------------------
+void init_intercom(struct sab_intercom_st *self, uint8_t slave_address_u8, I2C_HandleTypeDef *i2c_h)
 {
-	test_fx_params_fill(self);
 
-//	SCB_InvalidateDCache_by_Addr((uint32_t *)&(self->preset_data_un.all_u32), sizeof(sab_preset_num_tun));
+//	SCB_InvalidateDCache_by_Addr((uint32_t *)self, sizeof(self));
+
+	self->slave_addr_u8 = slave_address_u8 << 1;
+	self->i2c_h = i2c_h;
+	// GETTER function pointers
+	self->get_preset_data = get_preset_data;
+	self->get_loop_data = get_loop_data;
+	self->get_fx_param = get_fx_param;
+	self->get_info = get_info;
+	self->get_loopbypass = get_loopbypass;
+
+	self->get_implemented_effects = get_implemented_effects;
+	self->num_of_implemented_effects = 0;
+	self->implemented_fx_data_ptr = NULL;
+	self->current_fx_in_edit = 0;
+	self->save_un.save_command = 0;
+	// SETTER function pointers
+	self->set_fx_param = set_fx_param;
+	self->set_loopbypass = set_loopbypass;
+	self->set_current_fx_in_edit = set_current_fx_in_edit;
+
+	self->process_rx_buffer = sab_intercom_process_i2c_data;
+	self->get_reg_data_ptr = sab_intercom_get_reg_data_ptr;
+	self->get_reg_data_len = sab_intercom_get_reg_data_size;
+	self->change_occured_flg = 0;
+
+	self->dsp_fw_update_flg = 0;
+
 	self->preset_data_un.preset_Major_u8 = 'A';
 	self->preset_data_un.preset_Minor_u8 = 1;
-//	SCB_CleanDCache_by_Addr((uint32_t *)&(self->preset_data_un.all_u32), sizeof(sab_preset_num_tun));
 
 	for (int i = 0; i < (NUM_OF_LOOPS); i++)
 	{
-//		SCB_InvalidateDCache_by_Addr((uint32_t *)&(self->loop_data[i]), sizeof(sab_loop_num_tun));
 		strcpy(self->loop_data[i].slot1.name,"NONE\0");
 		strcpy(self->loop_data[i].slot2.name,"NONE\0");
 		strcpy(self->loop_data[i].slot3.name,"NONE\0");
-//		SCB_CleanDCache_by_Addr((uint32_t *)&(self->loop_data[i]), sizeof(sab_loop_num_tun));
 	}
 
-//	SCB_InvalidateDCache_by_Addr((uint32_t *)&(self->info_un), sizeof(self->info_un));
 	self->info_un.dsp_info_st.dsp_fw_ver_major_u8 = 0;
 	self->info_un.dsp_info_st.dsp_fw_ver_minor_u8 = 1;
 	self->info_un.dsp_info_st.dsp_update_date_day_u8 = 27;
 	self->info_un.dsp_info_st.dsp_update_date_month_u8 = 10;
 	self->info_un.dsp_info_st.dsp_update_date_year_u8 = 24;
-//	SCB_CleanDCache_by_Addr((uint32_t *)&(self->info_un), sizeof(self->info_un));
 
 	self->loopbypass_un.L12 = 1; // open
 	self->loopbypass_un.L23 = 0; // closed
@@ -427,3 +346,5 @@ void testing_data(struct sab_intercom_st *self)
 	self->num_of_implemented_effects = IMPLEMENTED_FX_DATA_COUNT;
 	self->implemented_fx_data_ptr = IMPLEMENTED_FX_DATA;
 }
+
+
