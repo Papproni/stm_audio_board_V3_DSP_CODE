@@ -41,6 +41,8 @@ _Min_Heap_Size = 0x2000;      /* required amount of heap  */
 _Min_Stack_Size = 0x4000; /* required amount of stack */
 
 /* Specify the memory areas */
+
+
 MEMORY
 {
   ITCMRAM (xrw)    : ORIGIN = 0x00000000,   LENGTH = 64K

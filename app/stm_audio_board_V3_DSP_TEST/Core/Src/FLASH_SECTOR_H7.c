@@ -208,11 +208,11 @@ uint32_t Flash_Write_Data (uint32_t StartSectorAddress, uint32_t *data, uint16_t
 
 	  uint32_t StartSector = GetSector(StartSectorAddress);
 	  uint32_t EndSectorAddress = StartSectorAddress + numberofwords*4;
-	  uint32_t EndSector = GetSector(EndSectorAddress);
+	  uint32_t EndSector = GetSector(EndSectorAddress)+1;
 
 	  /* Fill EraseInit structure*/
 	  EraseInitStruct.TypeErase     = FLASH_TYPEERASE_SECTORS;
-	  // EraseInitStruct.VoltageRange  = FLASH_VOLTAGE_RANGE_3;
+	  EraseInitStruct.VoltageRange  = FLASH_VOLTAGE_RANGE_3;
 	  EraseInitStruct.Sector        = StartSector;
 
 	  // The the proper BANK to erase the Sector

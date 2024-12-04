@@ -7,6 +7,7 @@ Generated on: 2024.11.28. */
 
 #include "stdint.h"
 #include "sab_intercom.h"
+#include "main.h"
 
 // Generated effect libs
 #include "SAB_delay.h"

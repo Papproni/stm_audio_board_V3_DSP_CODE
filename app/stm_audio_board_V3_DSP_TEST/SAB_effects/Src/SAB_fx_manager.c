@@ -244,7 +244,7 @@ void SAB_save_preset_to_flash(SAB_fx_manager_tst* self){
 	// preset_saves_tst preset_flash_st;
 	// 1. Calculate data addr
 	uint32_t preset_save_size_in_byte_u32 = 	sizeof(preset_saves_tst);
-	uint32_t preset_save_size_in_word_u32 = 	preset_save_size_in_byte_u32 / 4;
+	uint32_t preset_save_size_in_word_u32 = 	(preset_save_size_in_byte_u32+3) / 4;
 	uint32_t preset_num_u32 = (self->intercom_pst->preset_data_un.preset_Major_u8-'A')*9+self->intercom_pst->preset_data_un.preset_Minor_u8-1;
 	uint32_t save_location_addr_u32 = preset_save_size_in_byte_u32*preset_num_u32+USER_FLASH_ADDRESS;
     // 2.1. fx names [NEW]
@@ -258,7 +258,7 @@ void SAB_save_preset_to_flash(SAB_fx_manager_tst* self){
         for(int j=0;j<12;j++){
             self->current_preset_config_st.fx_params_value[i][j] = self->fx_instances[i]->intercom_parameters_aun[j].value_u8;
         }
-       
+
 	}
 	// 3. save to flash
     __disable_irq();  // Disable interrupts
@@ -285,10 +285,13 @@ static void SAB_load_current_config(SAB_fx_manager_tst* self ){
     init_effect_chain(&self->fx_instances,self->fx_types_chain,12);
 
     // PARAMS ASSIGN / BYPASS SWITCHES SET
-    self->preset_mode_st.preset_mode_en = PRESET_MODE_NORMAL;
+
+    fx_data_tst *slot_ptr= &self->intercom_pst->loop_data[0].slot1;
     for(int i=0; i<12;i++){
         if(self->fx_instances[i]->init != NULL){
             self->intercom_pst->fx_param_pun[i] = self->fx_instances[i]->intercom_parameters_aun;
+            self->fx_instances[i]->intercom_fx_data.fx_state_en = self->current_preset_config_st.bypass_states_st[self->preset_mode_st.preset_mode_en].fx_states_aen[i];
+			slot_ptr[i].fx_state_en 							= self->current_preset_config_st.bypass_states_st[self->preset_mode_st.preset_mode_en].fx_states_aen[i];
         }
     }
 
@@ -371,8 +374,11 @@ void SAB_preset_up_pressed(SAB_fx_manager_tst* self){
         SAB_load_preset_from_flash(self);
         // DELETE CURRENT PRESET
         SAB_cleanup_effect_chain(self,12);
+        self->preset_mode_st.preset_mode_en = PRESET_MODE_NORMAL;
         // INIT NEW PRESET
         SAB_load_current_config(self);
+        HAL_GPIO_WritePin(FSW_LED1_GPIO_Port, FSW_LED1_Pin, 0);
+		HAL_GPIO_WritePin(FSW_LED2_GPIO_Port, FSW_LED2_Pin, 0);
 	}
 }
 void SAB_preset_down_pressed(SAB_fx_manager_tst* self){
@@ -394,8 +400,11 @@ void SAB_preset_down_pressed(SAB_fx_manager_tst* self){
         SAB_load_preset_from_flash(self);
         // DELETE CURRENT PRESET
         SAB_cleanup_effect_chain(self,12);
+        self->preset_mode_st.preset_mode_en = PRESET_MODE_NORMAL;
         // INIT NEW PRESET
         SAB_load_current_config(self);
+        HAL_GPIO_WritePin(FSW_LED1_GPIO_Port, FSW_LED1_Pin, 0);
+		HAL_GPIO_WritePin(FSW_LED2_GPIO_Port, FSW_LED2_Pin, 0);
 	}
 }
 

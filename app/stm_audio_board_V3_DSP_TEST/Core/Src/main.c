@@ -17,7 +17,6 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-
 #include "main.h"
 #include "dma.h"
 #include "i2c.h"
@@ -401,9 +400,6 @@ int main(void)
   /* Enable I-Cache---------------------------------------------------------*/
   SCB_EnableICache();
 
-  /* Enable D-Cache---------------------------------------------------------*/
-  SCB_EnableDCache();
-
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
@@ -440,9 +436,6 @@ int main(void)
 
   // init CODEC
 	ad1939_init(&hspi1);
-	init_guitar_effect_delay(&delay_effect);
-	SAB_octave_init(&octave_effects_st);
-	SAB_custom_fx_init(&custom_fx_st);
 	init_intercom(&intercom_st, 0x10,&hi2c4);
 
   /* USER CODE END 2 */
@@ -455,7 +448,7 @@ int main(void)
 	HAL_GPIO_WritePin(FSW_LED4_GPIO_Port, FSW_LED4_Pin, 0);
 
 
-	HAL_GPIO_WritePin(FSW_LED3_GPIO_Port, FSW_LED3_Pin, 0);
+	HAL_GPIO_WritePin(FSW_LED3_GPIO_Port, FSW_LED3_Pin, 1);
 	HAL_GPIO_WritePin(FSW_LED4_GPIO_Port, FSW_LED4_Pin, 1);
 
 	HAL_I2C_EnableListen_IT(&hi2c4);
