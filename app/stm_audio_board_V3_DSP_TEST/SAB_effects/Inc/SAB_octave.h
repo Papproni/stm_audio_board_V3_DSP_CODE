@@ -90,6 +90,15 @@ typedef struct octave_effects_st{
 	 float32_t subbandfilter_B1[numberofsubbands];
 	 float32_t subbandfilter_B2[numberofsubbands];
 	 float32_t subbandfilter_B[numberofsubbands];
+	
+	// SUB
+	float32_t Buf[4000];
+	int BufSize;
+	int Overlap;
+	int WtrP;
+	float Rd_P;
+	float CrossFade;
+	float Shift;
 
 	// DSP functions
 	 void (*subbandfilter_calculation) (struct octave_effects_st* self);

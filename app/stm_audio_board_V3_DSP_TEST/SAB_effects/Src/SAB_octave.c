@@ -5,7 +5,7 @@
  *      Author: pappr
  */
 
-#include "guitar_effect_octave.h"
+#include "SAB_octave.h"
 // FILTER values are from audiotest4_ERB_PS2_naive2 matlab script
  // filter coefficients fs=48000khz
 
@@ -411,15 +411,61 @@ static int32_t callback_octave_effect(struct octave_effects_st* self,int32_t inp
 	return self->output_f32;
 }
 
+static float32_t Do_PitchShift(struct octave_effects_st* self, float32_t sample_f32) {
+
+	int sum = Do_HighPass(sample_f32);
+//	 sum = sample;
+	//sum up and do high-pass
+
+
+	//write to ringbuffer
+	self->Buf[self->WtrP] = sample_f32;
+
+	//read fractional readpointer and generate 0° and 180° read-pointer in integer
+	int RdPtr_Int = roundf(self->Rd_P);
+	int RdPtr_Int2 = 0;
+	if (RdPtr_Int >= self->BufSize/2) RdPtr_Int2 = RdPtr_Int - (self->BufSize/2);
+	else RdPtr_Int2 = RdPtr_Int + (self->BufSize/2);
+
+	//read the two samples...
+	float Rd0 = (float) self->Buf[RdPtr_Int];
+	float Rd1 = (float) self->Buf[RdPtr_Int2];
+
+	//Check if first readpointer starts overlap with write pointer?
+	// if yes -> do cross-fade to second read-pointer
+	if (self->Overlap >= (self->WtrP-RdPtr_Int) && (self->WtrP-RdPtr_Int) >= 0 && self->Shift!=1.0f) {
+		int rel = self->WtrP-RdPtr_Int;
+		self->CrossFade = ((float)rel)/(float)self->Overlap;
+	}
+	else if (self->WtrP-RdPtr_Int == 0) self->CrossFade = 0.0f;
+
+	//Check if second readpointer starts overlap with write pointer?
+	// if yes -> do cross-fade to first read-pointer
+	if (self->Overlap >= (self->WtrP-RdPtr_Int2) && (self->WtrP-RdPtr_Int2) >= 0 && self->Shift!=1.0f) {
+			int rel = self->WtrP-RdPtr_Int2;
+			self->CrossFade = 1.0f - ((float)rel)/(float)self->Overlap;
+		}
+	else if (self->WtrP-RdPtr_Int2 == 0) self->CrossFade = 1.0f;
+
+
+	//do cross-fading and sum up
+	sum = (Rd0*self->CrossFade + Rd1*(1.0f-self->CrossFade));
+
+	//increment fractional read-pointer and write-pointer
+	self->Rd_P += self->Shift;
+	self->WtrP++;
+	if (self->WtrP == self->BufSize) self->WtrP = 0;
+	if (roundf(self->Rd_P) >= self->BufSize) self->Rd_P = 0.0f;
+
+	return sum;
+}
+
 // Process Function for SAB_pitchshift_tst
 float32_t SAB_octave_process( octave_effects_tst* self, float input_f32){
-	// 1. calculate octaves
-
-	// 2. set volumes
-
-	// 3. return value
-
-
+		self->volumes_st.sub_1_f32 = conv_raw_to_param_value(self->intercom_parameters_aun[0].value_u8,0, 10);
+	self->volumes_st.clean_f32 = conv_raw_to_param_value(self->intercom_parameters_aun[1].value_u8,0, 10);
+	self->volumes_st.up_1_f32 = conv_raw_to_param_value(self->intercom_parameters_aun[2].value_u8,0, 10);
+	self->volumes_st.up_2_f32 = self->volumes_st.up_1_f32;
 	// LEGACY CODE
 	self->input_f32 = (float32_t)input_f32;
 	// +1 octave
@@ -434,10 +480,14 @@ float32_t SAB_octave_process( octave_effects_tst* self, float input_f32){
 	//		 save result
 	self->octave_up_2_f32 = octave1_up_filtered;
 
+	self->octave_down_1_f32 = Do_PitchShift(self,input_f32);
+	
+	
 	// Write to DAC
-	self->output_f32 =	(int32_t)self->octave_up_1_f32*self->volumes_st.up_1_f32 +
-						(int32_t)self->octave_up_2_f32*self->volumes_st.up_2_f32 +
-						(int32_t)(self->input_f32*self->volumes_st.clean_f32);
+	self->output_f32 =	self->octave_down_1_f32*self->volumes_st.sub_1_f32+
+						self->octave_up_1_f32*self->volumes_st.up_1_f32 +
+						self->octave_up_2_f32*self->volumes_st.up_2_f32 +
+						(input_f32*self->volumes_st.clean_f32);
 
 	return self->output_f32;
 }
@@ -488,5 +538,12 @@ void SAB_octave_init(octave_effects_tst* self){
 		self->subbandfilter_octave2_yn2[i] 		= 	0;
 	}
 
+	// SUB
+	self->Shift = 0.5;
+	self->BufSize = 4000;
+	self->Overlap = 1000;
+	self->Rd_P = 0;
+	self->WtrP = 0;
+	self->CrossFade = 0;
 	// zero out the IIR filter states
 }

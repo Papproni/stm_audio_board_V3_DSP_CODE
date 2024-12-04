@@ -61,6 +61,7 @@
     "stdint.h": "c",
     "math.h": "c",
     "sab_custom_fx.h": "c",
-    "sab_intercom.h": "c"
+    "sab_intercom.h": "c",
+    "sab_fx_manager.h": "c"
   }
 }

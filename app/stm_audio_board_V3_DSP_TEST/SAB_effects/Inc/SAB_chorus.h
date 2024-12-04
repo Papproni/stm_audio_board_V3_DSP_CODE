@@ -31,8 +31,16 @@ typedef struct {
     float32_t param_12_value;
         float32_t level_f32;
         float32_t rate_f32;
-        float32_t filter_f32;
+        float32_t mix_f32;
+        float32_t base_f32;
         float32_t depth_f32;
+        float32_t feedback_f32;
+    float32_t data_samples[1000];
+
+    uint32_t delayed_counter_u32;
+    uint32_t current_counter_u32;
+    uint32_t time_in_buffer_u32;
+    uint32_t modulation_counter_u32;
 } SAB_chorus_tst;
 
 

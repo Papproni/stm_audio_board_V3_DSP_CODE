@@ -24,7 +24,7 @@ Generated on: 2024.11.28. */
 #include "SAB_CUSTOM.h"
 
 #include "SAB_custom_fx.h"
-#include "guitar_effect_octave.h"
+#include "SAB_octave.h"
 
 #include "stdint.h"
 #include "arm_math.h"

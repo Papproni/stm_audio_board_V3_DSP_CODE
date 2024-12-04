@@ -39,7 +39,6 @@
 #include "string.h"
 #include <math.h>
 #include "arm_math.h"
-#include <guitar_effect_octave.h>
 
 // SAB specifics------START----
 // Effects libs
@@ -399,6 +398,9 @@ int main(void)
 
   /* Enable I-Cache---------------------------------------------------------*/
   SCB_EnableICache();
+
+  /* Enable D-Cache---------------------------------------------------------*/
+  SCB_EnableDCache();
 
   /* MCU Configuration--------------------------------------------------------*/
 

@@ -276,19 +276,19 @@ void add_parameter(sab_fx_param_tun *param_ptr, char *name, param_type_ten type,
 
 // Use the macro to define your FX data
 DEFINE_FX_DATA(
-	{ .fx_state_en = FX_STATE_OFF, 	.name = "Octave",     	.color = { 0, 150, 255 } },
-	{ .fx_state_en = FX_STATE_OFF, 	.name = "CUSTOM_FX",    .color = { 0, 150, 255 } },
-    { .fx_state_en = FX_STATE_OFF,  .name = "Delay", 		.color = { 255, 100, 50 } },
-	{ .fx_state_en = FX_STATE_OFF, 	.name = "Boost",     	.color = { 0, 200, 100 } },
-    { .fx_state_en = FX_STATE_OFF,  .name = "Chorus", 		.color = { 255, 100, 50 } },
-    { .fx_state_en = FX_STATE_OFF, 	.name = "Custom_fx",    .color = { 0, 150, 255 } },
-	{ .fx_state_en = FX_STATE_OFF, 	.name = "Dist",   		.color = { 0, 200, 100 } },
-    { .fx_state_en = FX_STATE_OFF,  .name = "Overdrv", 		.color = { 255, 100, 50 } },
-    { .fx_state_en = FX_STATE_OFF, 	.name = "EQ",    		.color = { 0, 150, 255 } },
-	{ .fx_state_en = FX_STATE_OFF, 	.name = "Flanger",     	.color = { 0, 200, 100 } },
-    { .fx_state_en = FX_STATE_OFF, 	.name = "Fuzz",     	.color = { 0, 150, 255 } },
-	{ .fx_state_en = FX_STATE_OFF, 	.name = "Tremolo",     	.color = { 0, 150, 255 } },
-	{ .fx_state_en = FX_STATE_OFF, 	.name = "Pitchshft",    .color = { 0, 150, 255 } }
+	{.name = "Octave",     	.color = { 0, 150, 255 } },
+	{.name = "CUSTOM_FX",    .color = { 0, 150, 255 } },
+    {.name = "Delay", 		.color = { 255, 100, 50 } },
+	{.name = "Boost",     	.color = { 0, 200, 100 } },
+    {.name = "Chorus", 		.color = { 0, 100, 50 } },
+    {.name = "Custom_fx",    .color = { 0, 150, 255 } },
+	{.name = "Dist",   		.color = { 0, 200, 100 } },
+    {.name = "Overdrv", 		.color = { 255, 100, 50 } },
+    {.name = "EQ",    		.color = { 0, 150, 255 } },
+	{.name = "Flanger",     	.color = { 0, 200, 100 } },
+    {.name = "Fuzz",     	.color = { 0, 150, 255 } },
+	{.name = "Tremolo",     	.color = { 0, 150, 255 } },
+	{.name = "Pitchshft",    .color = { 0, 150, 255 } }
 );
 
 // ----------------------------------INIT-------------------------------------------------
