@@ -239,7 +239,9 @@ void SAB_fx_manager_deinit( SAB_fx_manager_tst* self){
 }
 
 #define USER_FLASH_ADDRESS 0x08080000  // Base address of USER_FLASH section
-
+#define NUM_OF_PRESETS 45
+preset_saves_tst 	 SAB_PRESET_SAVE_FLASH_DATA[NUM_OF_PRESETS] __attribute__((section(".user_data")));
+preset_saves_tst 	 SAB_PRESET_SAVE_RAM_DATA[NUM_OF_PRESETS] __attribute__((section(".preset_save_ram")));
 void SAB_save_preset_to_flash(SAB_fx_manager_tst* self){
 	// preset_saves_tst preset_flash_st;
 	// 1. Calculate data addr
@@ -260,20 +262,31 @@ void SAB_save_preset_to_flash(SAB_fx_manager_tst* self){
         }
 
 	}
+    // save the current preset
+    memcpy(&SAB_PRESET_SAVE_RAM_DATA[preset_num_u32],&self->current_preset_config_st,sizeof(preset_saves_tst));
 	// 3. save to flash
     __disable_irq();  // Disable interrupts
-	Flash_Write_Data(save_location_addr_u32,&self->current_preset_config_st,preset_save_size_in_word_u32);
+	while(0!=Flash_Write_Data(USER_FLASH_ADDRESS,SAB_PRESET_SAVE_RAM_DATA,sizeof(preset_saves_tst)*NUM_OF_PRESETS/4));
+	{
+
+	}
 	__enable_irq();   // Re-enable interrupts
 }
 
+int32_t prev_preset_num_u32 = -1;
 void SAB_load_preset_from_flash(SAB_fx_manager_tst* self){
     uint32_t preset_save_size_in_byte_u32 = 	sizeof(preset_saves_tst);
 	uint32_t preset_save_size_in_word_u32 = 	preset_save_size_in_byte_u32 / 4;
 	uint32_t preset_num_u32 = (self->intercom_pst->preset_data_un.preset_Major_u8-'A')*9+self->intercom_pst->preset_data_un.preset_Minor_u8-1;
 	uint32_t save_location_addr_u32 = preset_save_size_in_byte_u32*preset_num_u32+USER_FLASH_ADDRESS;
-	__disable_irq();  // Disable interrupts
-    Flash_Read_Data(save_location_addr_u32, &self->current_preset_config_st, preset_save_size_in_word_u32);
-    __enable_irq();   // Re-enable interrupts
+
+    if(prev_preset_num_u32 != -1){
+        // save previous preset data
+        memcpy(&SAB_PRESET_SAVE_RAM_DATA[prev_preset_num_u32],&self->current_preset_config_st,sizeof(preset_saves_tst));
+    }
+    prev_preset_num_u32 = preset_num_u32;
+    // load the next from RAM
+    memcpy(&self->current_preset_config_st,&SAB_PRESET_SAVE_RAM_DATA[preset_num_u32],sizeof(preset_saves_tst));
 }
 
 
@@ -310,6 +323,9 @@ void SAB_fx_manager_init( SAB_fx_manager_tst* self, sab_intercom_tst* intercom_p
     self->preset_mode_st.fsw1_ptr 	= fsw1_ptr;
     self->preset_mode_st.fsw2_ptr 	= fsw2_ptr;
 
+    __disable_irq();  // Disable interrupts
+    Flash_Read_Data(USER_FLASH_ADDRESS, &SAB_PRESET_SAVE_RAM_DATA, sizeof(preset_saves_tst)*NUM_OF_PRESETS/4);
+    __enable_irq();   // Re-enable interrupts
     // LOAD DATA FROM FLASH
     SAB_load_preset_from_flash(self);
     SAB_load_current_config(self);
@@ -364,11 +380,13 @@ void SAB_preset_up_pressed(SAB_fx_manager_tst* self){
 		self->intercom_pst->preset_data_un.preset_Minor_u8++;
 		if (self->intercom_pst->preset_data_un.preset_Minor_u8 > 9)
 		{
-			self->intercom_pst->preset_data_un.preset_Minor_u8 = 1;
-			if (self->intercom_pst->preset_data_un.preset_Major_u8 < 'Z')
+			if (self->intercom_pst->preset_data_un.preset_Major_u8 < 'D')
 			{
+                self->intercom_pst->preset_data_un.preset_Minor_u8 = 1;
 				self->intercom_pst->preset_data_un.preset_Major_u8++;
-			}
+			}else{
+                self->intercom_pst->preset_data_un.preset_Minor_u8 = 9;
+            }
 		}
         // LOAD PRESET DATA FROM FLASH
         SAB_load_preset_from_flash(self);

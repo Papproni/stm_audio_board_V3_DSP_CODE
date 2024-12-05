@@ -280,10 +280,6 @@ int Do_PitchShift(int sample) {
 }
 
 // Effect instances
-delay_effects_tst delay_effect;
-octave_effects_tst octave_effects_st;
-SAB_custom_fx_tst custom_fx_st;
-
 sab_intercom_tst 	 intercom_st __attribute__((section(".noncacheable_data")));
 SAB_fx_manager_tst SAB_fx_manager_st;
 
