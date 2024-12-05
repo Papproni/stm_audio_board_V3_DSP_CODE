@@ -91,8 +91,26 @@ typedef struct octave_effects_st{
 	 float32_t subbandfilter_B2[numberofsubbands];
 	 float32_t subbandfilter_B[numberofsubbands];
 	
+		// usefull filters
+	float32_t subband_ones[numberofsubbands];
+	float32_t subband_absolute_value[numberofsubbands];
+	float32_t octave1_up_1;
+	float32_t octave1_up_filtered;
+	// octave Filter
+	arm_biquad_cascade_df2T_instance_f32 highpass_iir_50hz;
+	arm_biquad_cascade_df2T_instance_f32 highpass_iir_50hz_octave2;
+	float32_t highpass_iir_50hz_coeffs[5];
+	float32_t highpass_state[5];
+	float32_t highpass_state_octave2[5];
+
 	// SUB
-	float32_t Buf[4000];
+	arm_biquad_cascade_df2T_instance_f32 biquad_filter_for_sub;
+	float32_t biquad_filter_for_sub_coeffs_af32[5];
+	float32_t biquad_filter_for_sub_states_af32[4];
+	float32_t biquad_filter_for_sub_output_f32;
+
+
+	float32_t Buf[7000];
 	int BufSize;
 	int Overlap;
 	int WtrP;

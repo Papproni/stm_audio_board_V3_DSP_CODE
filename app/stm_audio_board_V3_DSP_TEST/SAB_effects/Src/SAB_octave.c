@@ -346,40 +346,31 @@ static void algorithm_octave_1_down(struct octave_effects_st* self){
 
 
 
-// usefull filters
-static volatile float32_t subband_ones[numberofsubbands];
-static volatile float32_t subband_absolute_value[numberofsubbands];
-static volatile float32_t octave1_up_1=0.0;
-static volatile float32_t octave1_up_filtered=0.0;
-// octave Filter
-static arm_biquad_cascade_df2T_instance_f32 highpass_iir_50hz;
-static arm_biquad_cascade_df2T_instance_f32 highpass_iir_50hz_octave2;
-static volatile float32_t highpass_coeff[5]={0.99538200, -1.99076399, 0.99538200, 1.99074267, -0.99078531};
-static volatile float32_t highpass_state[10];
+
 
 
 static void octave1up(struct octave_effects_st* self){
 	// get absolute values of subbands
-	arm_abs_f32(self->subbandfilter_output, subband_absolute_value, numberofsubbands);
+	arm_abs_f32(self->subbandfilter_output, self->subband_absolute_value, numberofsubbands);
 
 
 	// add the octave subbands together
-	arm_dot_prod_f32(subband_absolute_value, subband_ones, numberofsubbands, &octave1_up_1);
+	arm_dot_prod_f32(self->subband_absolute_value, self->subband_ones, numberofsubbands, &self->octave1_up_1);
 
 	// filter the DC component out
-	arm_biquad_cascade_df2T_f32(&highpass_iir_50hz, &octave1_up_1, &octave1_up_filtered, 1);
+	arm_biquad_cascade_df2T_f32(&self->highpass_iir_50hz, &self->octave1_up_1, &self->octave1_up_filtered, 1);
 }
 
 static void octave2up(struct octave_effects_st* self){
 	// get absolute values of subbands
-	arm_abs_f32(self->subbandfilter_output, subband_absolute_value, numberofsubbands);
+	arm_abs_f32(self->subbandfilter_output, self->subband_absolute_value, numberofsubbands);
 
 
 	// add the octave subbands together
-	arm_dot_prod_f32(subband_absolute_value, subband_ones, numberofsubbands, &octave1_up_1);
+	arm_dot_prod_f32(self->subband_absolute_value, self->subband_ones, numberofsubbands, &self->octave1_up_1);
 
 	// filter the DC component out
-	arm_biquad_cascade_df2T_f32(&highpass_iir_50hz_octave2, &octave1_up_1, &octave1_up_filtered, 1);
+	arm_biquad_cascade_df2T_f32(&self->highpass_iir_50hz_octave2, &self->octave1_up_1, &self->octave1_up_filtered, 1);
 }
 static int32_t callback_octave_effect(struct octave_effects_st* self,int32_t input_i32){
 	// 1. calculate octaves
@@ -395,13 +386,13 @@ static int32_t callback_octave_effect(struct octave_effects_st* self,int32_t inp
 	subbandfilter_calculation(self);
 	octave1up(self);
 	// save result
-	self->octave_up_1_f32 = octave1_up_filtered;
+	self->octave_up_1_f32 = self->octave1_up_filtered;
 //
 	// +2 octave
 	subbandfilter_octave2_calculation(self);
 	octave2up(self);
 	//		 save result
-	self->octave_up_2_f32 = octave1_up_filtered;
+	self->octave_up_2_f32 = self->octave1_up_filtered;
 
 	// Write to DAC
 	self->output_f32 =	(int32_t)self->octave_up_1_f32*self->volumes_st.up_1_f32 +
@@ -412,11 +403,6 @@ static int32_t callback_octave_effect(struct octave_effects_st* self,int32_t inp
 }
 
 static float32_t Do_PitchShift(struct octave_effects_st* self, float32_t sample_f32) {
-
-	int sum = Do_HighPass(sample_f32);
-//	 sum = sample;
-	//sum up and do high-pass
-
 
 	//write to ringbuffer
 	self->Buf[self->WtrP] = sample_f32;
@@ -449,7 +435,7 @@ static float32_t Do_PitchShift(struct octave_effects_st* self, float32_t sample_
 
 
 	//do cross-fading and sum up
-	sum = (Rd0*self->CrossFade + Rd1*(1.0f-self->CrossFade));
+	float32_t sum = (Rd0*self->CrossFade + Rd1*(1.0f-self->CrossFade));
 
 	//increment fractional read-pointer and write-pointer
 	self->Rd_P += self->Shift;
@@ -472,15 +458,16 @@ float32_t SAB_octave_process( octave_effects_tst* self, float input_f32){
 	subbandfilter_calculation(self);
 	octave1up(self);
 	// save result
-	self->octave_up_1_f32 = octave1_up_filtered;
+	self->octave_up_1_f32 = self->octave1_up_filtered;
 //
 	// +2 octave
 	subbandfilter_octave2_calculation(self);
 	octave2up(self);
 	//		 save result
-	self->octave_up_2_f32 = octave1_up_filtered;
-
-	self->octave_down_1_f32 = Do_PitchShift(self,input_f32);
+	self->octave_up_2_f32 = self->octave1_up_filtered;
+	float32_t filtered_input_f32;
+	arm_biquad_cascade_df2T_f32(&self->biquad_filter_for_sub, &input_f32, &filtered_input_f32, 1);
+	self->octave_down_1_f32 = Do_PitchShift(self,filtered_input_f32);
 	
 	
 	// Write to DAC
@@ -511,9 +498,10 @@ void SAB_octave_init(octave_effects_tst* self){
 	add_parameter(&self->intercom_parameters_aun[1],"VOL",PARAM_TYPE_POT,120);
 	add_parameter(&self->intercom_parameters_aun[2],"UP",PARAM_TYPE_POT,85);
 	// SETUP DATA FOR GUI END ------------------------------
-
-	arm_biquad_cascade_df2T_init_f32(&highpass_iir_50hz, 1, &highpass_coeff, &highpass_state);
-	arm_biquad_cascade_df2T_init_f32(&highpass_iir_50hz_octave2, 1, &highpass_coeff, &highpass_state);
+	float32_t local_50hz_coeffs[] = {0.99538200, -1.99076399, 0.99538200, 1.99074267, -0.99078531};
+	memcpy(self->highpass_iir_50hz_coeffs,local_50hz_coeffs,sizeof(float32_t)*5);
+	arm_biquad_cascade_df2T_init_f32(&self->highpass_iir_50hz, 1, &self->highpass_iir_50hz_coeffs, &self->highpass_state);
+	arm_biquad_cascade_df2T_init_f32(&self->highpass_iir_50hz_octave2, 1, &self->highpass_iir_50hz_coeffs, &self->highpass_state_octave2);
 	// assign function pointers
 	self->set_volumes			= set_volumes;
 	self->calc_octave_1_up 		= algorithm_octave_1_down;
@@ -524,7 +512,7 @@ void SAB_octave_init(octave_effects_tst* self){
 	self->volumes_st.up_2_f32 = 1;
 	self->volumes_st.clean_f32      = 1;
 	for(int i=0; i<numberofsubbands;i++){
-		subband_ones[i] = 1;
+		self->subband_ones[i] = 1;
 		self->subbandfilter_dn2[i]		=	0;
 		self->subbandfilter_dn1[i]		=	0;
 		self->subbandfilter_dn[i]		=	0;
@@ -538,7 +526,26 @@ void SAB_octave_init(octave_effects_tst* self){
 		self->subbandfilter_octave2_yn2[i] 		= 	0;
 	}
 
+	// 1kkhz LPF
+	float Q = 3;
+	float Freq = 3000;
+	float omega = 2.0f * 3.14 * Freq / 48000;
+    float alpha = sinf(omega) / (2.0f * Q);
+    float cos_omega = cosf(omega);
+	self->biquad_filter_for_sub_coeffs_af32[0]= (1.0f - cos_omega) / 2.0f 	/ (1.0 + alpha);
+	self->biquad_filter_for_sub_coeffs_af32[1]= 1.0f - cos_omega	/ (1.0 + alpha);
+	self->biquad_filter_for_sub_coeffs_af32[2]= (1.0f - cos_omega) / 2.0f 	/ (1.0 + alpha);
+	self->biquad_filter_for_sub_coeffs_af32[3]= -2.0f * cos_omega	/ (1.0 + alpha);
+	self->biquad_filter_for_sub_coeffs_af32[4]= (1.0f - alpha)	/ (1.0 + alpha);
+	self->biquad_filter_for_sub_coeffs_af32[3]=-self->biquad_filter_for_sub_coeffs_af32[3];
+	self->biquad_filter_for_sub_coeffs_af32[4]=-self->biquad_filter_for_sub_coeffs_af32[4];
+	
 	// SUB
+	arm_biquad_cascade_df2T_init_f32(&self->biquad_filter_for_sub, 1, &self->biquad_filter_for_sub_coeffs_af32, &self->biquad_filter_for_sub_states_af32);
+
+	for(int i=0 ;i<5;i++){
+		self->biquad_filter_for_sub_states_af32[i] = 0;
+	}
 	self->Shift = 0.5;
 	self->BufSize = 4000;
 	self->Overlap = 1000;
