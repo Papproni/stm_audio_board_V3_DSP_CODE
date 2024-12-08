@@ -55,30 +55,30 @@ void init_effect_chain(GuitarEffect** chain, EffectType* fx_chain, int chain_len
             chain[i]->process = SAB_chorus_process;
             chain[i]->delete  = SAB_chorus_delete;
             break;
-        // case BOOST:
-        //     chain[i] = (GuitarEffect*)malloc(sizeof(SAB_boost_tst));
-        //     chain[i]->init = SAB_boost_init;
-        //     chain[i]->process = SAB_boost_process;
-        //     chain[i]->delete  = SAB_boost_delete;
-        //     break;
-        // case PITCHSHIFT:
-        //     chain[i] = (GuitarEffect*)malloc(sizeof(SAB_pitchshift_tst));
-        //     chain[i]->init = SAB_pitchshift_init;
-        //     chain[i]->process = SAB_pitchshift_process;
-        //     chain[i]->delete  = SAB_pitchshift_delete;
-        //     break;
+        case BOOST:
+            chain[i] = (GuitarEffect*)malloc(sizeof(SAB_boost_tst));
+            chain[i]->init = SAB_boost_init;
+            chain[i]->process = SAB_boost_process;
+            chain[i]->delete  = SAB_boost_delete;
+            break;
+        case PITCHSHIFT:
+            chain[i] = (GuitarEffect*)malloc(sizeof(SAB_pitchshift_tst));
+            chain[i]->init = SAB_pitchshift_init;
+            chain[i]->process = SAB_pitchshift_process;
+            chain[i]->delete  = SAB_pitchshift_delete;
+            break;
         // case FUZZ:
         //     chain[i] = (GuitarEffect*)malloc(sizeof(SAB_fuzz_tst));
         //     chain[i]->init = SAB_fuzz_init;
         //     chain[i]->process = SAB_fuzz_process;
         //     chain[i]->delete  = SAB_fuzz_delete;
         //     break;
-        // case TREMOLO:
-        //     chain[i] = (GuitarEffect*)malloc(sizeof(SAB_tremolo_tst));
-        //     chain[i]->init = SAB_tremolo_init;
-        //     chain[i]->process = SAB_tremolo_process;
-        //     chain[i]->delete  = SAB_tremolo_delete;
-        //     break;
+        case TREMOLO:
+            chain[i] = (GuitarEffect*)malloc(sizeof(SAB_tremolo_tst));
+            chain[i]->init = SAB_tremolo_init;
+            chain[i]->process = SAB_tremolo_process;
+            chain[i]->delete  = SAB_tremolo_delete;
+            break;
         // case EQUALIZER:
         //     chain[i] = (GuitarEffect*)malloc(sizeof(SAB_equalizer_tst));
         //     chain[i]->init = SAB_equalizer_init;
@@ -125,7 +125,14 @@ EffectType get_fx_type(char* fx_name_char) {
         return FLANGER;
     } else if (strcmp(fx_name_char, "Chorus") == 0) {
         return CHORUS;
+    } else if (strcmp(fx_name_char, "Boost") == 0) {
+        return BOOST;
+    } else if (strcmp(fx_name_char, "Tremolo") == 0) {
+        return TREMOLO;
+    } else if (strcmp(fx_name_char, "Pitcshft") == 0) {
+        return PITCHSHIFT;
     } else {
+        
         // Handle unknown effect types
         // You might return a default value or handle it as an error
         // For example:
@@ -338,7 +345,6 @@ void SAB_fsw_pressed_callback(SAB_fx_manager_tst* self){
     uint8_t fsw1 = *(self->preset_mode_st.fsw1_ptr); // USED FOR MODE A
     uint8_t fsw2 = *(self->preset_mode_st.fsw2_ptr); // USED FOR MODE B
 
-//    save_current_mode(self);
     switch (self->preset_mode_st.preset_mode_en)
     {
     case PRESET_MODE_NORMAL:

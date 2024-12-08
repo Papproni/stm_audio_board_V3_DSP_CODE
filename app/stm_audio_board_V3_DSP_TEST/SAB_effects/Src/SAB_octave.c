@@ -497,6 +497,16 @@ void SAB_octave_init(octave_effects_tst* self){
 	add_parameter(&self->intercom_parameters_aun[0],"SUB",PARAM_TYPE_POT,69);
 	add_parameter(&self->intercom_parameters_aun[1],"VOL",PARAM_TYPE_POT,120);
 	add_parameter(&self->intercom_parameters_aun[2],"UP",PARAM_TYPE_POT,85);
+    add_parameter(&self->intercom_parameters_aun[3],"NONE",PARAM_TYPE_UNUSED,69);
+    add_parameter(&self->intercom_parameters_aun[4],"NONE",PARAM_TYPE_UNUSED,69);
+    add_parameter(&self->intercom_parameters_aun[5],"NONE",PARAM_TYPE_UNUSED,69);
+    add_parameter(&self->intercom_parameters_aun[6],"NONE",PARAM_TYPE_UNUSED,69);
+    add_parameter(&self->intercom_parameters_aun[7],"NONE",PARAM_TYPE_UNUSED,69);
+    add_parameter(&self->intercom_parameters_aun[8],"NONE",PARAM_TYPE_UNUSED,69);
+    add_parameter(&self->intercom_parameters_aun[9],"NONE",PARAM_TYPE_UNUSED,69);
+    add_parameter(&self->intercom_parameters_aun[10],"NONE",PARAM_TYPE_UNUSED,69);
+    add_parameter(&self->intercom_parameters_aun[11],"NONE",PARAM_TYPE_UNUSED,69);
+	
 	// SETUP DATA FOR GUI END ------------------------------
 	float32_t local_50hz_coeffs[] = {0.99538200, -1.99076399, 0.99538200, 1.99074267, -0.99078531};
 	memcpy(self->highpass_iir_50hz_coeffs,local_50hz_coeffs,sizeof(float32_t)*5);

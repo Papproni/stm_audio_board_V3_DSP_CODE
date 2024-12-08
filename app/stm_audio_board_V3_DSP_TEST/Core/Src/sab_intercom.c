@@ -288,7 +288,7 @@ DEFINE_FX_DATA(
 	{.name = "Flanger",     	.color = { 0, 200, 100 } },
     {.name = "Fuzz",     	.color = { 0, 150, 255 } },
 	{.name = "Tremolo",     	.color = { 0, 150, 255 } },
-	{.name = "Pitchshft",    .color = { 0, 150, 255 } }
+	{.name = "Pitcshft",    .color = { 0, 150, 255 } }
 );
 
 // ----------------------------------INIT-------------------------------------------------

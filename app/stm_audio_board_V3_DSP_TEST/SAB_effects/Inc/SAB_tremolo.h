@@ -17,21 +17,17 @@ typedef struct {
     fx_data_tst			intercom_fx_data;
 	sab_fx_param_tun 	intercom_parameters_aun[NUM_OF_MAX_PARAMS];
 
-    float32_t param_1_value;
-    float32_t param_2_value;
-    float32_t param_3_value;
-    float32_t param_4_value;
-    float32_t param_5_value;
-    float32_t param_6_value;
-    float32_t param_7_value;
-    float32_t param_8_value;
-    float32_t param_9_value;
-    float32_t param_10_value;
-    float32_t param_11_value;
-    float32_t param_12_value;
-        float32_t mix_f32;
-        float32_t rate_f32;
-        float32_t depth_f32;
+    // LFO
+    float32_t phase;
+    float32_t phase_inc;
+
+    // CONTROL PARAMS
+    float32_t rate_f32;
+    float32_t depth_f32;
+    uint8_t signal_type_u8;
+    float32_t vol_f32;
+
+    float32_t triag_prev_f32;
 } SAB_tremolo_tst;
 
 

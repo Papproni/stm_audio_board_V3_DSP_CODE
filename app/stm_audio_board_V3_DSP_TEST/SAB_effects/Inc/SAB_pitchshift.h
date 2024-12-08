@@ -29,9 +29,18 @@ typedef struct {
     float32_t param_10_value;
     float32_t param_11_value;
     float32_t param_12_value;
-        float32_t pitch_f32;
-        float32_t mix_f32;
-        float32_t vol_f32;
+	float32_t Buf[7000];
+	int BufSize;
+	int Overlap;
+	int WtrP;
+	float Rd_P;
+	float CrossFade;
+	float Shift;
+
+    float32_t vol_f32;
+    float32_t mix_f32;
+    float32_t shift_f32;
+
 } SAB_pitchshift_tst;
 
 

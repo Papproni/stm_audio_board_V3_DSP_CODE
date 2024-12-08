@@ -17,7 +17,6 @@ void SAB_boost_init( SAB_boost_tst* self){
 	self->intercom_fx_data.fx_state_en = FX_STATE_OFF;
 
 	// PARAMS:
-    
     add_parameter(&self->intercom_parameters_aun[0],"GAIN",PARAM_TYPE_POT,69);
     add_parameter(&self->intercom_parameters_aun[1],"NONE",PARAM_TYPE_UNUSED,69);
     add_parameter(&self->intercom_parameters_aun[2],"NONE",PARAM_TYPE_UNUSED,69);
@@ -34,8 +33,8 @@ void SAB_boost_init( SAB_boost_tst* self){
 
 // Process Function for SAB_boost_tst
 float32_t SAB_boost_process( SAB_boost_tst* self, float input_f32){
-    self->param_1_value = conv_raw_to_param_value(self->intercom_parameters_aun[0].value_u8,0, 8);
-    self->boost_f32 = 0.01 * pow(5 / 0.01, self->param_1_value);
+    self->param_1_value = conv_raw_to_param_value(self->intercom_parameters_aun[0].value_u8,0,5);
+    self->boost_f32 = self->param_1_value;
     return input_f32*self->boost_f32;
 };
 
