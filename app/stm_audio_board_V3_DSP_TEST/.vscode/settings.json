@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "*.c": "c",
+        "sab_fx_manager.h": "c"
+    }
+}

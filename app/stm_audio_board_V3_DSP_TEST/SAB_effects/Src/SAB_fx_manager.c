@@ -91,6 +91,12 @@ void init_effect_chain(GuitarEffect** chain, EffectType* fx_chain, int chain_len
         //     chain[i]->process = SAB_CUSTOM_process;
         //     chain[i]->delete  = SAB_CUSTOM_delete;
         //     break;
+        case ENVELOPE:
+            chain[i] = (GuitarEffect*)malloc(sizeof(SAB_envelope_tst));
+            chain[i]->init = SAB_envelope_init;
+            chain[i]->process = SAB_envelope_process;
+            chain[i]->delete  = SAB_envelope_delete;
+            break;
         case CUSTOM_FX:
             chain[i] = (GuitarEffect*)malloc(sizeof(SAB_custom_fx_tst));
             chain[i]->init = SAB_custom_fx_init;
@@ -131,6 +137,8 @@ EffectType get_fx_type(char* fx_name_char) {
         return TREMOLO;
     } else if (strcmp(fx_name_char, "Pitcshft") == 0) {
         return PITCHSHIFT;
+    } else if (strcmp(fx_name_char, "Envelope") == 0) {
+        return ENVELOPE;
     } else {
         
         // Handle unknown effect types
@@ -337,6 +345,10 @@ void SAB_fx_manager_init( SAB_fx_manager_tst* self, sab_intercom_tst* intercom_p
     SAB_load_preset_from_flash(self);
     SAB_load_current_config(self);
     
+    if(self->current_preset_config_st.bypass_states_st[self->preset_mode_st.preset_mode_en].loop_bypass_un.L12!=0 && self->current_preset_config_st.bypass_states_st[self->preset_mode_st.preset_mode_en].loop_bypass_un.L12 != 1){
+    	self->current_preset_config_st.bypass_states_st[self->preset_mode_st.preset_mode_en].loop_bypass_un.L12 = 1;
+    }
+
 }
 
 

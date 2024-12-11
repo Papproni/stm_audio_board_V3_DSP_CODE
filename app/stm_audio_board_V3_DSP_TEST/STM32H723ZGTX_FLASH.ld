@@ -72,7 +72,7 @@ SECTIONS
 	} > RAM_D2
   
   	
-  	.user_data :
+  	.user_data ():
 	{
 	  . = ALIGN(4);
 	  KEEP(*(.user_data))  /* Keeps this section in the binary */

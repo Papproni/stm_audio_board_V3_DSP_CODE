@@ -22,6 +22,7 @@ Generated on: 2024.11.28. */
 #include "SAB_tremolo.h"
 #include "SAB_equalizer.h"
 #include "SAB_CUSTOM.h"
+#include "SAB_envelope_filter.h"
 
 #include "SAB_custom_fx.h"
 #include "SAB_octave.h"
@@ -47,7 +48,8 @@ typedef enum {
     TREMOLO,
     EQUALIZER,
     CUSTOM,
-    CUSTOM_FX
+    CUSTOM_FX,
+    ENVELOPE
 } EffectType;
 
 volatile typedef struct{
