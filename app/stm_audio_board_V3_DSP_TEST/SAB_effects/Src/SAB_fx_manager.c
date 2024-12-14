@@ -295,6 +295,13 @@ void SAB_load_preset_from_flash(SAB_fx_manager_tst* self){
 	uint32_t preset_num_u32 = (self->intercom_pst->preset_data_un.preset_Major_u8-'A')*9+self->intercom_pst->preset_data_un.preset_Minor_u8-1;
 	uint32_t save_location_addr_u32 = preset_save_size_in_byte_u32*preset_num_u32+USER_FLASH_ADDRESS;
 
+  for(int i = 0; i<12;i++){
+		// choose params
+		for(int j=0;j<12;j++){
+			self->current_preset_config_st.fx_params_value[i][j] = self->fx_instances[i]->intercom_parameters_aun[j].value_u8;
+		}
+
+	}
     if(prev_preset_num_u32 != -1){
         // save previous preset data
         memcpy(&SAB_PRESET_SAVE_RAM_DATA[prev_preset_num_u32],&self->current_preset_config_st,sizeof(preset_saves_tst));
@@ -310,8 +317,16 @@ static void SAB_load_current_config(SAB_fx_manager_tst* self ){
         self->fx_types_chain[i] = get_fx_type(self->current_preset_config_st.fx_names[i]);
     }
 
+
+
     init_effect_chain(&self->fx_instances,self->fx_types_chain,12);
 
+    for(int i = 0; i<12;i++){
+         // choose params
+         for(int j=0;j<12;j++){
+        	 self->fx_instances[i]->intercom_parameters_aun[j].value_u8 = self->current_preset_config_st.fx_params_value[i][j];
+         }
+ 	}
     // PARAMS ASSIGN / BYPASS SWITCHES SET
 
     fx_data_tst *slot_ptr= &self->intercom_pst->loop_data[0].slot1;
@@ -415,6 +430,8 @@ void SAB_preset_up_pressed(SAB_fx_manager_tst* self){
         SAB_load_current_config(self);
         HAL_GPIO_WritePin(FSW_LED1_GPIO_Port, FSW_LED1_Pin, 0);
 		HAL_GPIO_WritePin(FSW_LED2_GPIO_Port, FSW_LED2_Pin, 0);
+
+
 	}
 }
 void SAB_preset_down_pressed(SAB_fx_manager_tst* self){

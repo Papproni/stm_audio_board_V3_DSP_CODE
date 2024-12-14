@@ -197,93 +197,6 @@ void JumpToBootloader(void)
 }
 
 
-// volatile int BufSize = 4000;
-// volatile int Overlap = 1000;
-
-// volatile int Buf[10000];
-
-// volatile int WtrP;
-// volatile float Rd_P;
-// volatile float CrossFade;
-// float a0, a1, a2, b1, b2, hp_in_z1, hp_in_z2, hp_out_z1, hp_out_z2;
-
-// int Do_HighPass (int inSample) {
-// 	//	1khz high-pass, 48k
-// 	b1 = -1.81531792;
-// 	b2 = 0.83098222;
-// 	a0 = 0.91157503;
-// 	a1 = -1.82315007;
-// 	a2 = 0.91157503;
-
-// 	float inSampleF = (float)inSample;
-// 	float outSampleF =
-// 			a0 * inSampleF
-// 			+ a1 * hp_in_z1
-// 			+ a2 * hp_in_z2
-// 			- b1 * hp_out_z1
-// 			- b2 * hp_out_z2;
-// 	hp_in_z2 = hp_in_z1;
-// 	hp_in_z1 = inSampleF;
-// 	hp_out_z2 = hp_out_z1;
-// 	hp_out_z1 = outSampleF;
-
-// 	return (int) outSampleF;
-// }
-// float Shift = 0.5;//1.189207115002721;
-// int Do_PitchShift(int sample) {
-
-// 	int sum = Do_HighPass(sample);
-// //	 sum = sample;
-// 	//sum up and do high-pass
-
-
-// 	//write to ringbuffer
-// 	Buf[WtrP] = sample;
-
-// 	//read fractional readpointer and generate 0° and 180° read-pointer in integer
-// 	int RdPtr_Int = roundf(Rd_P);
-// 	int RdPtr_Int2 = 0;
-// 	if (RdPtr_Int >= BufSize/2) RdPtr_Int2 = RdPtr_Int - (BufSize/2);
-// 	else RdPtr_Int2 = RdPtr_Int + (BufSize/2);
-
-// 	//read the two samples...
-// 	float Rd0 = (float) Buf[RdPtr_Int];
-// 	float Rd1 = (float) Buf[RdPtr_Int2];
-
-// 	//Check if first readpointer starts overlap with write pointer?
-// 	// if yes -> do cross-fade to second read-pointer
-// 	if (Overlap >= (WtrP-RdPtr_Int) && (WtrP-RdPtr_Int) >= 0 && Shift!=1.0f) {
-// 		int rel = WtrP-RdPtr_Int;
-// 		CrossFade = ((float)rel)/(float)Overlap;
-// 	}
-// 	else if (WtrP-RdPtr_Int == 0) CrossFade = 0.0f;
-
-// 	//Check if second readpointer starts overlap with write pointer?
-// 	// if yes -> do cross-fade to first read-pointer
-// 	if (Overlap >= (WtrP-RdPtr_Int2) && (WtrP-RdPtr_Int2) >= 0 && Shift!=1.0f) {
-// 			int rel = WtrP-RdPtr_Int2;
-// 			CrossFade = 1.0f - ((float)rel)/(float)Overlap;
-// 		}
-// 	else if (WtrP-RdPtr_Int2 == 0) CrossFade = 1.0f;
-
-
-// 	//do cross-fading and sum up
-// 	sum = (Rd0*CrossFade + Rd1*(1.0f-CrossFade));
-
-// 	//increment fractional read-pointer and write-pointer
-// 	Rd_P += Shift;
-// 	WtrP++;
-// 	if (WtrP == BufSize) WtrP = 0;
-// 	if (roundf(Rd_P) >= BufSize) Rd_P = 0.0f;
-
-// 	return sum;
-// }
-
-// Effect instances
-delay_effects_tst delay_effect;
-octave_effects_tst octave_effects_st;
-SAB_custom_fx_tst custom_fx_st;
-
 sab_intercom_tst 	 intercom_st __attribute__((section(".noncacheable_data")));
 SAB_fx_manager_tst SAB_fx_manager_st;
 
@@ -296,18 +209,18 @@ int32_t sdram_buffer_test_ai32[100]__attribute__((section(".sdram_section")));
 //volatile uint8_t enable_effect = 1;
 volatile uint8_t preset_up_pressed = 0;
 volatile uint8_t preset_down_pressed = 0;
-volatile uint8_t fsw_btn_1_pressed = 0;
-volatile uint8_t fsw_btn_2_pressed = 0;
+volatile uint8_t fsw_btn_1_pressed __attribute__((section(".noncacheable_data"))) = 0;
+volatile uint8_t fsw_btn_2_pressed __attribute__((section(".noncacheable_data"))) = 0;
 // EXTI Line9 External Interrupt ISR Handler CallBackFun
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
     if(GPIO_Pin == FSW_BTN1_Pin) // If The INT Source Is EXTI Line9 (A9 Pin)
     {
-    	fsw_btn_1_pressed = ~fsw_btn_1_pressed;
+    	fsw_btn_1_pressed = 1;
     }
     if(GPIO_Pin == FSW_BTN2_Pin) // If The INT Source Is EXTI Line9 (A9 Pin)
 	{
-		fsw_btn_2_pressed = ~fsw_btn_2_pressed;
+		fsw_btn_2_pressed = 1;
 	}
     if(GPIO_Pin == FSW_BTN3_Pin) // If The INT Source Is EXTI Line9 (A9 Pin)
 	{
