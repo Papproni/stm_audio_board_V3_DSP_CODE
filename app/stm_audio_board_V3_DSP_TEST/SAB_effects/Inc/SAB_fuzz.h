@@ -29,9 +29,10 @@ typedef struct {
     float32_t param_10_value;
     float32_t param_11_value;
     float32_t param_12_value;
-        float32_t sustain_f32;
+        float32_t gain_f32;
         float32_t tone_f32;
         float32_t vol_f32;
+        float32_t ths_f32;
 } SAB_fuzz_tst;
 
 

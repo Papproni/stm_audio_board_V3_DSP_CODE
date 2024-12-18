@@ -67,12 +67,12 @@ void init_effect_chain(GuitarEffect** chain, EffectType* fx_chain, int chain_len
             chain[i]->process = SAB_pitchshift_process;
             chain[i]->delete  = SAB_pitchshift_delete;
             break;
-        // case FUZZ:
-        //     chain[i] = (GuitarEffect*)malloc(sizeof(SAB_fuzz_tst));
-        //     chain[i]->init = SAB_fuzz_init;
-        //     chain[i]->process = SAB_fuzz_process;
-        //     chain[i]->delete  = SAB_fuzz_delete;
-        //     break;
+         case FUZZ:
+             chain[i] = (GuitarEffect*)malloc(sizeof(SAB_fuzz_tst));
+             chain[i]->init = SAB_fuzz_init;
+             chain[i]->process = SAB_fuzz_process;
+             chain[i]->delete  = SAB_fuzz_delete;
+             break;
         case TREMOLO:
             chain[i] = (GuitarEffect*)malloc(sizeof(SAB_tremolo_tst));
             chain[i]->init = SAB_tremolo_init;
@@ -139,6 +139,8 @@ EffectType get_fx_type(char* fx_name_char) {
         return PITCHSHIFT;
     } else if (strcmp(fx_name_char, "Envelope") == 0) {
         return ENVELOPE;
+    } else if (strcmp(fx_name_char, "Fuzz") == 0) {
+		return FUZZ;
     } else {
         
         // Handle unknown effect types

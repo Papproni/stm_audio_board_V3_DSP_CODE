@@ -56,15 +56,19 @@ void SAB_chorus_init( SAB_chorus_tst* self){
     self->current_counter_u32  =0;
     self->delayed_counter_u32 = 0;
     self->time_in_buffer_u32 = 0;
+
+    for(int i = 0; i< SAB_CHORUS_BUFFER_SIZE;i++){
+    	self->data_samples[i] = 0;
+    }
 };
 
 // Process Function for SAB_chorus_tst
 float32_t SAB_chorus_process( SAB_chorus_tst* self, float input_f32){
      self->level_f32 = conv_raw_to_param_value(self->intercom_parameters_aun[0].value_u8,0, 8);
-     self->rate_f32 = conv_raw_to_param_value(self->intercom_parameters_aun[1].value_u8,48000, 10000);
+     self->rate_f32 = conv_raw_to_param_value(self->intercom_parameters_aun[1].value_u8,96000, 10000);
      self->mix_f32 = conv_raw_to_param_value(self->intercom_parameters_aun[2].value_u8,0, 1);
      self->depth_f32 = conv_raw_to_param_value(self->intercom_parameters_aun[3].value_u8,5, 100);
-     self->feedback_f32 = conv_raw_to_param_value(self->intercom_parameters_aun[4].value_u8,0, 1);
+     self->feedback_f32 = conv_raw_to_param_value(self->intercom_parameters_aun[4].value_u8,1, 0);
     calculate_buffer_location(self);
 
 	// delay effect

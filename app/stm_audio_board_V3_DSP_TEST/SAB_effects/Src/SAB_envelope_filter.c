@@ -114,10 +114,10 @@ float32_t SAB_envelope_process( SAB_envelope_tst* self, float input_f32){
     self->vol_f32 = conv_raw_to_param_value(self->intercom_parameters_aun[0].value_u8,0,5);
     self->Q_f32 = conv_raw_to_param_value(self->intercom_parameters_aun[1].value_u8,0.01,20);
     float32_t threshold = conv_raw_to_param_value(self->intercom_parameters_aun[2].value_u8,0.1,3);
-    float32_t ATK = conv_raw_to_param_value(self->intercom_parameters_aun[3].value_u8,10,400);
-    float32_t RLS = conv_raw_to_param_value(self->intercom_parameters_aun[4].value_u8,10,400);
-    float32_t GA = conv_raw_to_param_value(self->intercom_parameters_aun[5].value_u8,10,1000);
-    float32_t GR = conv_raw_to_param_value(self->intercom_parameters_aun[6].value_u8,10,1000);
+    float32_t ATK = conv_raw_to_param_value(self->intercom_parameters_aun[3].value_u8,100,400);
+    float32_t RLS = conv_raw_to_param_value(self->intercom_parameters_aun[4].value_u8,100,400);
+    float32_t GA = conv_raw_to_param_value(self->intercom_parameters_aun[5].value_u8,100,1000);
+    float32_t GR = conv_raw_to_param_value(self->intercom_parameters_aun[6].value_u8,100,1000);
 
     // self->Q_f32 = conv_raw_to_param_value(self->intercom_parameters_aun[3].value_u8,0,5);
     
@@ -138,12 +138,12 @@ float32_t SAB_envelope_process( SAB_envelope_tst* self, float input_f32){
     	self->cutoff_f32  -= GR * (1.0f - expf(-1.0f / (RLS)));
     }
 
-    if (self->cutoff_f32 < 100.0f) self->cutoff_f32 = 100.0f;                  // Set minimum cutoff frequency
+    if (self->cutoff_f32 < 200.0f) self->cutoff_f32 = 200.0f;                  // Set minimum cutoff frequency
     if (self->cutoff_f32 > 3000.0f) self->cutoff_f32 = 3000.0f;              // Set maximum cutoff frequency
 
     calculate_biquad_coeffs(&self->biquad_filter_coeffs_af32,LPF, self->cutoff_f32, self->Q_f32, 48000);
     arm_biquad_cascade_df2T_f32(&self->biquad_filter, &input_f32, &self->biquad_filter_output_f32, 1);
 
-    return self->biquad_filter_output_f32;
+    return self->biquad_filter_output_f32*self->vol_f32;
 };
 
