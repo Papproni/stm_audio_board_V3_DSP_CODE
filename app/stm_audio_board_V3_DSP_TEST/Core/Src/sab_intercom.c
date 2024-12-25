@@ -284,7 +284,7 @@ DEFINE_FX_DATA(
     {.name = "Chorus", 		.color = { 0, 100, 50 } },
     {.name = "Custom_fx",    .color = { 0, 150, 255 } },
 	{.name = "Dist",   		.color = { 0, 200, 100 } },
-    {.name = "Overdrv", 		.color = { 255, 100, 50 } },
+    {.name = "Overdrive", 		.color = { 0, 255, 0 } },
     {.name = "EQ",    		.color = { 0, 150, 255 } },
 	{.name = "Flanger",     	.color = { 0, 200, 100 } },
     {.name = "Fuzz",     	.color = { 0, 150, 255 } },

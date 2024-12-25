@@ -29,9 +29,18 @@ typedef struct {
     float32_t param_10_value;
     float32_t param_11_value;
     float32_t param_12_value;
+
+
         float32_t gain_f32;
         float32_t tone_f32;
         float32_t volume_f32;
+
+        float32_t ths_f32;
+
+    arm_biquad_cascade_df2T_instance_f32 biquad_filter;
+    float32_t biquad_filter_coeffs_af32[5];
+    float32_t biquad_filter_states_af32[4];
+    float32_t biquad_filter_output_f32;
 } SAB_overdrive_tst;
 
 
