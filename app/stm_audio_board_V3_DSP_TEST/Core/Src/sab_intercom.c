@@ -276,6 +276,7 @@ void add_parameter(sab_fx_param_tun *param_ptr, char *name, param_type_ten type,
 
 // Use the macro to define your FX data
 DEFINE_FX_DATA(
+	{.name = "Reverb",    .color = { 0, 0, 255 } },
 	{.name = "Envelope",    .color = { 231, 111, 117 } },
 	{.name = "Octave",     	.color = { 0, 150, 255 } },
 	{.name = "CUSTOM_FX",    .color = { 0, 150, 255 } },

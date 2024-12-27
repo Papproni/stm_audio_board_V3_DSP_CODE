@@ -23,7 +23,7 @@ Generated on: 2024.11.28. */
 #include "SAB_equalizer.h"
 #include "SAB_CUSTOM.h"
 #include "SAB_envelope_filter.h"
-
+#include "SAB_reverb.h"
 #include "SAB_custom_fx.h"
 #include "SAB_octave.h"
 
@@ -36,6 +36,7 @@ Generated on: 2024.11.28. */
 
 // Enum representing different effect types
 typedef enum {
+    REVERB,
     DELAY,
     OVERDRIVE,
     DISTORTION,

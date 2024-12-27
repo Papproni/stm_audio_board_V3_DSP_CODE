@@ -79,6 +79,12 @@ void init_effect_chain(GuitarEffect** chain, EffectType* fx_chain, int chain_len
             chain[i]->process = SAB_tremolo_process;
             chain[i]->delete  = SAB_tremolo_delete;
             break;
+        case REVERB:
+            chain[i] = (GuitarEffect*)malloc(sizeof(SAB_reverb_tst));
+            chain[i]->init = SAB_reverb_init;
+            chain[i]->process = SAB_reverb_process;
+            chain[i]->delete  = SAB_reverb_delete;
+            break;
         // case EQUALIZER:
         //     chain[i] = (GuitarEffect*)malloc(sizeof(SAB_equalizer_tst));
         //     chain[i]->init = SAB_equalizer_init;
@@ -141,6 +147,8 @@ EffectType get_fx_type(char* fx_name_char) {
         return ENVELOPE;
     } else if (strcmp(fx_name_char, "Fuzz") == 0) {
 		return FUZZ;
+    } else if (strcmp(fx_name_char, "Reverb") == 0) {
+		return REVERB;
     } else {
         
         // Handle unknown effect types
