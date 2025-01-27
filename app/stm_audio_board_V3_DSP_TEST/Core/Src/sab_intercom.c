@@ -278,19 +278,15 @@ void add_parameter(sab_fx_param_tun *param_ptr, char *name, param_type_ten type,
 DEFINE_FX_DATA(
 	{.name = "Reverb",    .color = { 0, 0, 255 } },
 	{.name = "Envelope",    .color = { 231, 111, 117 } },
-	{.name = "Octave",     	.color = { 0, 150, 255 } },
-	{.name = "CUSTOM_FX",    .color = { 0, 150, 255 } },
-    {.name = "Delay", 		.color = { 255, 100, 50 } },
+	{.name = "Octave",     	.color = { 255, 0, 0 } },
+	{.name = "CUSTOM_FX",    .color = { 255, 0, 0 } },
+    {.name = "Delay", 		.color = { 0, 0, 255 } },
 	{.name = "Boost",     	.color = { 0, 200, 100 } },
     {.name = "Chorus", 		.color = { 0, 100, 50 } },
-    {.name = "Custom_fx",    .color = { 0, 150, 255 } },
-	{.name = "Dist",   		.color = { 0, 200, 100 } },
     {.name = "Overdrive", 		.color = { 0, 255, 0 } },
-    {.name = "EQ",    		.color = { 0, 150, 255 } },
-	{.name = "Flanger",     	.color = { 0, 200, 100 } },
-    {.name = "Fuzz",     	.color = { 0, 150, 255 } },
-	{.name = "Tremolo",     	.color = { 0, 150, 255 } },
-	{.name = "Pitcshft",    .color = { 0, 150, 255 } }
+    {.name = "Fuzz",     	.color = { 255, 0, 0 } },
+	{.name = "Tremolo",     	.color = { 0, 255, 0 } },
+	{.name = "Pitcshft",    .color = { 255, 0, 0 } }
 );
 
 // ----------------------------------INIT-------------------------------------------------
