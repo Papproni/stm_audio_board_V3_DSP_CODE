@@ -59,7 +59,7 @@ float32_t SAB_tremolo_process( SAB_tremolo_tst* self, float input_f32){
     float32_t lfo = 0;
     if ( self->signal_type_u8 == 0){
         // SIN
-        mod = 0.5+sinf(self->phase);
+        mod = 0.5+arm_sin_f32(self->phase);
     }else{
         // Triangle
         mod = generate_triangle_wave(self->phase);

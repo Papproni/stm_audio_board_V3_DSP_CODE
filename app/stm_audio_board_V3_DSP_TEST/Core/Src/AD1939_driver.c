@@ -60,25 +60,11 @@ int ad1939_init(SPI_HandleTypeDef* hspi_codec) {
 
     if (ad1939_write_reg(AD1939_PLL_Control_1, 0b00000100)) return -1;
 
-
-//    if (ad1939_write_reg(AD1939_PLL_Control_0, 0b10011000)) return -1;
-//
-//    if (ad1939_write_reg(AD1939_PLL_Control_1, 0b00000100)) return -1;
-
-
-
-
-
     HAL_Delay(100);
 
     if(ad1939_pll_locked()){
     	// wait till pll is locked takes about 10 ms acc to datasheet
     }
-    // DAC settings
-    // 192 khz
-    //    if (ad1939_write_reg(AD1939_DAC_Control_0, 0b00000100)) return -1;
-    // 96 khz
-//            if (ad1939_write_reg(AD1939_DAC_Control_0, 0b00000010)) return -1;
     // 48 Khz
     if (ad1939_write_reg(AD1939_DAC_Control_0, 0b01000000)) return -1;
     if (ad1939_write_reg(AD1939_DAC_Control_1, 0b00000100)) return -1; // Slave setup

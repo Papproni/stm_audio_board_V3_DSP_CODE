@@ -42,7 +42,6 @@
 
 // SAB specifics------START----
 // Effects libs
-#include "guitar_effect_delay.h"
 #include "sab_intercom.h"
 
 #include "FLASH_SECTOR_H7.h"
@@ -341,8 +340,8 @@ int main(void)
   MX_SPI1_Init();
   MX_FMC_Init();
   MX_OCTOSPI1_Init();
-  MX_USB_DEVICE_Init();
   MX_I2C4_Init();
+  MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
 
   // init SAI interface

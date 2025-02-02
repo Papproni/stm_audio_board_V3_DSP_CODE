@@ -10,7 +10,7 @@ Generated on: 2024.11.28. */
 
 // Effect: chorus
 
-#define SAB_CHORUS_BUFFER_SIZE 5000
+#define SAB_CHORUS_BUFFER_SIZE 7000
 
 typedef struct {
     void (*init)(void*);           // Function pointer to initialize the effect
@@ -36,13 +36,14 @@ typedef struct {
         float32_t rate_f32;
         float32_t mix_f32;
         float32_t depth_f32;
-        float32_t feedback_f32;
+        float32_t phase_f32;
+        float32_t offset_f32;
     float32_t data_samples[SAB_CHORUS_BUFFER_SIZE];
 
-    uint32_t delayed_counter_u32;
-    uint32_t current_counter_u32;
-    uint32_t time_in_buffer_u32;
-    uint32_t modulation_counter_u32;
+    int32_t delayed_counter_i32;
+    int32_t current_counter_i32;
+    int32_t time_in_buffer_i32;
+    float32_t modulation_counter_f32;
 } SAB_chorus_tst;
 
 
