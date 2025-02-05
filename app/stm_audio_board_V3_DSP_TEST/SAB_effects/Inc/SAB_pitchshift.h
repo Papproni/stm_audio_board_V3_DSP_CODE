@@ -29,7 +29,7 @@ typedef struct {
     float32_t param_10_value;
     float32_t param_11_value;
     float32_t param_12_value;
-	float32_t Buf[7000];
+	float32_t Buf[10000];
 	int BufSize;
 	int Overlap;
 	int WtrP;

@@ -295,6 +295,10 @@ void HAL_I2C_SlaveTxCpltCallback(I2C_HandleTypeDef *hi2c)
 void I2C_Slave_Listen(void) {
 	HAL_I2C_Slave_Receive_IT(&hi2c4, RX_Buffer, sizeof(RX_Buffer));
 }
+
+// Variables to store cycle counts
+uint32_t startCycles, endCycles, totalCycles;
+float32_t time_to_process_f32;
 /* USER CODE END 0 */
 
 /**
@@ -341,7 +345,7 @@ int main(void)
   MX_FMC_Init();
   MX_OCTOSPI1_Init();
   MX_I2C4_Init();
-  MX_USB_DEVICE_Init();
+//  MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
 
   // init SAI interface
@@ -369,6 +373,19 @@ int main(void)
 
 	SAB_fx_manager_init(&SAB_fx_manager_st, &intercom_st, &effects_io_port, &fsw_btn_1_pressed, &fsw_btn_2_pressed);
 	
+    /* Enable the TRC (Trace) */
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+
+    /* Unlock the DWT if it is locked (LAR register) */
+    // Some Cortex-M7 MCUs (including STM32H7) require this unlock sequence:
+    DWT->LAR = 0xC5ACCE55;
+
+    /* Reset the cycle counter */
+    DWT->CYCCNT = 0;
+
+    /* Enable the cycle counter */
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+
   while (1)
   {
 	if(intercom_st.save_un.save_command>0){
@@ -381,9 +398,19 @@ int main(void)
 
 	  if(ADC_READY_FLAG){
 		  ADC_READY_FLAG = 0;
+		  // Reset the counter to ensure a clean start
+		      DWT->CYCCNT = 0;
 
+		      // Record the starting cycle count
+		      startCycles = DWT->CYCCNT;
 		SAB_fx_manager_process(&SAB_fx_manager_st);
-		
+		 // Record the ending cycle count
+		    endCycles = DWT->CYCCNT;
+
+		    // Calculate the difference
+		    totalCycles = endCycles - startCycles;
+
+		    time_to_process_f32 = (float)totalCycles/550;
 		if(1 == preset_down_pressed){
 			preset_down_pressed = 0;
 			SAB_preset_down_pressed(&SAB_fx_manager_st);

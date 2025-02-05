@@ -16,7 +16,7 @@ const GuitarEffect DEFAULT_EMPTY_SLOT_FOR_FX_CHAIN = {
  };
 
 
-void init_effect_chain(GuitarEffect** chain, EffectType* fx_chain, int chain_length) {
+inline void init_effect_chain(GuitarEffect** chain, EffectType* fx_chain, int chain_length) {
     for (int i = 0; i < chain_length; ++i) {
         switch (fx_chain[i]) {
         case DELAY:
@@ -114,11 +114,14 @@ void init_effect_chain(GuitarEffect** chain, EffectType* fx_chain, int chain_len
              chain[i] = &DEFAULT_EMPTY_SLOT_FOR_FX_CHAIN;
             break;
         }
-        // Initialize the effect
-        if(NULL != chain[i]->init){
-            chain[i]->init(chain[i]);
-        }
-        
+        if(chain[i] == 0){
+			chain[i] = &DEFAULT_EMPTY_SLOT_FOR_FX_CHAIN;
+		}else{
+	        // Initialize the effect
+	        if(0 != chain[i]->init){
+	            chain[i]->init(chain[i]);
+	        }
+		}
     }
 }
 
@@ -160,7 +163,7 @@ EffectType get_fx_type(char* fx_name_char) {
 
 
 // Function to process all effects in the chain
-void SAB_process_effect_chain(SAB_fx_manager_tst* self, GuitarEffect** chain, int chain_length) {
+static inline void SAB_process_effect_chain(SAB_fx_manager_tst* self, GuitarEffect** chain, int chain_length) {
     // --------------------------------- LOOP 1 ------------------
     float32_t data_sample_f32=(float32_t)self->hardware_IO_port->in1_i32;
     fx_active_modes_ten mode = self->preset_mode_st.preset_mode_en;
@@ -267,7 +270,7 @@ void SAB_fx_manager_deinit( SAB_fx_manager_tst* self){
 #define NUM_OF_PRESETS 45
 preset_saves_tst 	 SAB_PRESET_SAVE_FLASH_DATA[NUM_OF_PRESETS] __attribute__((section(".user_data")));
 preset_saves_tst 	 SAB_PRESET_SAVE_RAM_DATA[NUM_OF_PRESETS] __attribute__((section(".preset_save_ram")));
-void SAB_save_preset_to_flash(SAB_fx_manager_tst* self){
+void inline SAB_save_preset_to_flash(SAB_fx_manager_tst* self){
 	// preset_saves_tst preset_flash_st;
 	// 1. Calculate data addr
 	uint32_t preset_save_size_in_byte_u32 = 	sizeof(preset_saves_tst);
@@ -299,7 +302,7 @@ void SAB_save_preset_to_flash(SAB_fx_manager_tst* self){
 }
 
 int32_t prev_preset_num_u32 = -1;
-void SAB_load_preset_from_flash(SAB_fx_manager_tst* self){
+void inline SAB_load_preset_from_flash(SAB_fx_manager_tst* self){
     uint32_t preset_save_size_in_byte_u32 = 	sizeof(preset_saves_tst);
 	uint32_t preset_save_size_in_word_u32 = 	preset_save_size_in_byte_u32 / 4;
 	uint32_t preset_num_u32 = (self->intercom_pst->preset_data_un.preset_Major_u8-'A')*9+self->intercom_pst->preset_data_un.preset_Minor_u8-1;
@@ -322,7 +325,7 @@ void SAB_load_preset_from_flash(SAB_fx_manager_tst* self){
 }
 
 
-static void SAB_load_current_config(SAB_fx_manager_tst* self ){
+static inline  void SAB_load_current_config(SAB_fx_manager_tst* self ){
     for(int i=0; i<12;i++){
         self->fx_types_chain[i] = get_fx_type(self->current_preset_config_st.fx_names[i]);
     }
@@ -357,7 +360,7 @@ static void SAB_load_current_config(SAB_fx_manager_tst* self ){
 }   
 
 // THis init i used the first time
-void SAB_fx_manager_init( SAB_fx_manager_tst* self, sab_intercom_tst* intercom_pst, SAB_IO_HADRWARE_BUFFERS* hardware_IO_port_ptr, uint8_t* fsw1_ptr, uint8_t* fsw2_ptr){
+inline void  SAB_fx_manager_init( SAB_fx_manager_tst* self, sab_intercom_tst* intercom_pst, SAB_IO_HADRWARE_BUFFERS* hardware_IO_port_ptr, uint8_t* fsw1_ptr, uint8_t* fsw2_ptr){
     self->intercom_pst      		= intercom_pst;
     self->hardware_IO_port  		= hardware_IO_port_ptr;
     self->preset_mode_st.fsw1_ptr 	= fsw1_ptr;
@@ -378,7 +381,7 @@ void SAB_fx_manager_init( SAB_fx_manager_tst* self, sab_intercom_tst* intercom_p
 
 
 
-void SAB_fsw_pressed_callback(SAB_fx_manager_tst* self){
+inline void  SAB_fsw_pressed_callback(SAB_fx_manager_tst* self){
     uint8_t fsw1 = *(self->preset_mode_st.fsw1_ptr); // USED FOR MODE A
     uint8_t fsw2 = *(self->preset_mode_st.fsw2_ptr); // USED FOR MODE B
 
@@ -413,7 +416,7 @@ void SAB_fsw_pressed_callback(SAB_fx_manager_tst* self){
     memcpy(&self->intercom_pst->loopbypass_un,&self->current_preset_config_st.bypass_states_st[current_mode].loop_bypass_un,sizeof(sab_loopbypass_tun));
 }
 
-void SAB_preset_up_pressed(SAB_fx_manager_tst* self){
+inline void  SAB_preset_up_pressed(SAB_fx_manager_tst* self){
     
     if (self->intercom_pst->preset_data_un.preset_Minor_u8 == 9 && self->intercom_pst->preset_data_un.preset_Major_u8 == 'Z')
 	{
@@ -444,7 +447,7 @@ void SAB_preset_up_pressed(SAB_fx_manager_tst* self){
 
 	}
 }
-void SAB_preset_down_pressed(SAB_fx_manager_tst* self){
+inline void  SAB_preset_down_pressed(SAB_fx_manager_tst* self){
     if (self->intercom_pst->preset_data_un.preset_Minor_u8 == 1 && self->intercom_pst->preset_data_un.preset_Major_u8 == 'A')
 	{
 	}
@@ -471,9 +474,15 @@ void SAB_preset_down_pressed(SAB_fx_manager_tst* self){
 	}
 }
 
-void SAB_fx_manager_process( SAB_fx_manager_tst* self){
+inline void SAB_fx_manager_process( SAB_fx_manager_tst* self){
     if(self->intercom_pst->change_occured_flg != 0){
         if(SAB_handle_intercom_change(self)){
+            for(int i = 0; i<12;i++){
+                // choose params
+                for(int j=0;j<12;j++){
+                    self->current_preset_config_st.fx_params_value[i][j] = self->fx_instances[i]->intercom_parameters_aun[j].value_u8;
+                }
+            }
             SAB_cleanup_effect_chain(self->fx_instances,12);
             SAB_load_current_config(self);
         }

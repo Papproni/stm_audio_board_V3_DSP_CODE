@@ -60,27 +60,15 @@ typedef struct octave_effects_st{
 	// create a filter to let only the AC signals to pass to the output
 	arm_biquad_cascade_df2T_instance_f32 highpass_iir_50hz_octave_1_up_st;
 	arm_biquad_cascade_df2T_instance_f32 highpass_iir_50hz_octave_1_down_st;
-
-	// SUBBAND FILTER VECTORS
-	float32_t subbandfilter_input[numberofsubbands];
 	float32_t subbandfilter_output[numberofsubbands];
-
 	// saved states
 	// x[n] , X[n-1], X[n-2]
-	float32_t subbandfilter_dn[numberofsubbands];
-	float32_t subbandfilter_dn1[numberofsubbands];
-	float32_t subbandfilter_dn2[numberofsubbands];
+	float32_t subbandfilter_dn[1];
+	float32_t subbandfilter_dn1[1];
+	float32_t subbandfilter_dn2[1];
 	// Y[n-1] , Y[n-2]
 	float32_t subbandfilter_yn1[numberofsubbands];
 	float32_t subbandfilter_yn2[numberofsubbands];
-
-	// x[n] , X[n-1], X[n-2]
-	float32_t subbandfilter_octave2_dn[numberofsubbands];
-	float32_t subbandfilter_octave2_dn1[numberofsubbands];
-	float32_t subbandfilter_octave2_dn2[numberofsubbands];
-	// Y[n-1] , Y[n-2]
-	float32_t subbandfilter_octave2_yn1[numberofsubbands];
-	float32_t subbandfilter_octave2_yn2[numberofsubbands];
 
 	 float32_t subbandfilter_A1[numberofsubbands];
 	 float32_t subbandfilter_A2[numberofsubbands];
@@ -110,7 +98,7 @@ typedef struct octave_effects_st{
 	float32_t biquad_filter_for_sub_output_f32;
 
 
-	float32_t Buf[7000];
+	float32_t Buf[10000];
 	int BufSize;
 	int Overlap;
 	int WtrP;

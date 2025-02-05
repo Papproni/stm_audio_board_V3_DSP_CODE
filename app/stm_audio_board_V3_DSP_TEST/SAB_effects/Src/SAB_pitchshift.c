@@ -77,8 +77,8 @@ void SAB_pitchshift_init( SAB_pitchshift_tst* self){
 
 
     self->Shift = 0.5;
-	self->BufSize = 4000;
-	self->Overlap = 1000;
+	self->BufSize = 7000;
+	self->Overlap = 3500;
 	self->Rd_P = 0;
 	self->WtrP = 0;
 	self->CrossFade = 0;
@@ -89,7 +89,7 @@ float32_t SAB_pitchshift_process( SAB_pitchshift_tst* self, float input_f32){
 
     self->vol_f32   = conv_raw_to_param_value(self->intercom_parameters_aun[0].value_u8,0, 3);
     self->mix_f32   = conv_raw_to_param_value(self->intercom_parameters_aun[1].value_u8,1, 0);
-    self->shift_f32 = (int)conv_raw_to_param_value(self->intercom_parameters_aun[2].value_u8,-12, 12);
+    self->shift_f32 = (int)conv_raw_to_param_value(self->intercom_parameters_aun[2].value_u8,-12, 13);
      self->Shift =  powf(2.0f, (float)self->shift_f32 / 12.0f);
     float32_t output_f32;
     

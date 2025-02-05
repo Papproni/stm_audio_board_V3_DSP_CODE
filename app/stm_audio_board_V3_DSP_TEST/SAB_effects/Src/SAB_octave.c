@@ -9,7 +9,7 @@
 // FILTER values are from audiotest4_ERB_PS2_naive2 matlab script
  // filter coefficients fs=48000khz
 
-static float32_t subbandfilter_a1[numberofsubbands]={
+static const float32_t subbandfilter_a1[numberofsubbands]={
  		-1.99945743773269,
  		-1.99935942906841,
  		-1.99924062977670,
@@ -65,7 +65,7 @@ static float32_t subbandfilter_a1[numberofsubbands]={
  		0.592390391796649,
  		0.886463172281052,
  		1.18017689199105};
-static float32_t subbandfilter_a2[numberofsubbands]={
+static const float32_t subbandfilter_a2[numberofsubbands]={
  		0.999623840823723,
  		0.999592083812410,
  		0.999557647639999,
@@ -122,7 +122,7 @@ static float32_t subbandfilter_a2[numberofsubbands]={
  		0.987901246292733,
  		0.989118701024236};
 
-static float32_t subbandfilter_b0[numberofsubbands]={
+static const float32_t subbandfilter_b0[numberofsubbands]={
  		0.000188079588138645,
  		0.000203958093794915,
  		0.000221176180000397,
@@ -180,8 +180,8 @@ static float32_t subbandfilter_b0[numberofsubbands]={
  		0.00544064948788215
  };
 
-static float32_t subbandfilter_b1[numberofsubbands]={0.0};
-static float32_t subbandfilter_b2[numberofsubbands]={
+static const float32_t subbandfilter_b1[numberofsubbands]={0.0};
+static const float32_t subbandfilter_b2[numberofsubbands]={
  		-0.000188079588138645,
  		-0.000203958093794915,
  		-0.000221176180000397,
@@ -253,16 +253,19 @@ static void set_volumes(struct octave_effects_st* self){
 
 
 // SUBBAND FILTER FUNCTION - DIRECT FORM 2 - normalfunction exectime: ~6us
-static void subbandfilter_calculation(struct octave_effects_st* self){
+static inline void subbandfilter_calculation(struct octave_effects_st* self){
   float32_t input_f32=self->input_f32;
   // set d[n], d[n-1], d[n-2]
-  for(int i=0;i<numberofsubbands;i++){
-//			  subbandfilter_input[i]	= input_f32;
-	  self->subbandfilter_dn2[i]		= self->subbandfilter_dn1[i];
-	  self->subbandfilter_dn1[i]		= self->subbandfilter_dn[i];
-	  self->subbandfilter_dn[i]		= input_f32;
+//   for(int i=0;i<numberofsubbands;i++){
+// //			  subbandfilter_input[i]	= input_f32;
+// 	  self->subbandfilter_dn2[i]		= self->subbandfilter_dn1[i];
+// 	  self->subbandfilter_dn1[i]		= self->subbandfilter_dn[i];
+// 	  self->subbandfilter_dn[i]		= self->subbandfilter_dn[i];
 
-  }
+//   }
+  self->subbandfilter_dn2[0] = self->subbandfilter_dn1[0];
+  self->subbandfilter_dn1[0] = self->subbandfilter_dn[0];
+  self->subbandfilter_dn[0] = input_f32;
   // A1 = a1*y[n-1]
   arm_mult_f32(subbandfilter_a1, self->subbandfilter_yn1, self->subbandfilter_A1, numberofsubbands);
   // A2 = a2*y[n-2]
@@ -274,64 +277,30 @@ static void subbandfilter_calculation(struct octave_effects_st* self){
   // y_n=b0*d[n]+b1*d[n-1]+b2*d[n-2]
 
   // B1 = b1*x[n-1]
-  arm_mult_f32(subbandfilter_b1, self->subbandfilter_dn1, self->subbandfilter_B1, numberofsubbands);
+//   arm_mult_f32(subbandfilter_b1, self->subbandfilter_dn1, self->subbandfilter_B1, numberofsubbands);
+  arm_scale_f32(subbandfilter_b1,self->subbandfilter_dn1[0],self->subbandfilter_B1,numberofsubbands);
   // B2 = b2*x[n-2]
-  arm_mult_f32(subbandfilter_b2, self->subbandfilter_dn2, self->subbandfilter_B2, numberofsubbands);
+//   arm_mult_f32(subbandfilter_b2, self->subbandfilter_dn2, self->subbandfilter_B2, numberofsubbands);
+  arm_scale_f32(subbandfilter_b2,self->subbandfilter_dn2[0],self->subbandfilter_B2,numberofsubbands);
   // B1+B2
   arm_add_f32(self->subbandfilter_B1, self->subbandfilter_B2, self->subbandfilter_B, numberofsubbands);
 
   // B0 = b0*x[n]
-  arm_mult_f32(subbandfilter_b0, self->subbandfilter_dn, self->subbandfilter_B0, numberofsubbands);
+//   arm_mult_f32(subbandfilter_b0, self->subbandfilter_dn, self->subbandfilter_B0, numberofsubbands);
+  arm_scale_f32(subbandfilter_b0,input_f32,self->subbandfilter_B0,numberofsubbands);
 
   // y=B0+B1+B2
   arm_add_f32(self->subbandfilter_B, self->subbandfilter_B0, self->subbandfilter_B, numberofsubbands);
 
   // y[n]= B - A
   arm_sub_f32(self->subbandfilter_B,self->subbandfilter_A, self->subbandfilter_output, numberofsubbands);
-  for(int i=0;i<numberofsubbands;i++){
-	  self->subbandfilter_yn2[i]		= self->subbandfilter_yn1[i];
-	  self->subbandfilter_yn1[i]		= self->subbandfilter_output[i];
-   }
-}
+//   for(int i=0;i<numberofsubbands;i++){
+// 	  self->subbandfilter_yn2[i]		= self->subbandfilter_yn1[i];
+// 	  self->subbandfilter_yn1[i]		= self->subbandfilter_output[i];
+//    }
+   arm_copy_f32(self->subbandfilter_yn1,self->subbandfilter_yn2,numberofsubbands);
+   arm_copy_f32(self->subbandfilter_output,self->subbandfilter_yn1,numberofsubbands);
 
-
-void subbandfilter_octave2_calculation(struct octave_effects_st* self){
-  float32_t input_f32=self->input_f32;
-  // set d[n], d[n-1], d[n-2]
-  for(int i=0;i<numberofsubbands;i++){
-	  self->subbandfilter_octave2_dn2[i]=self->subbandfilter_octave2_dn1[i];
-	  self->subbandfilter_octave2_dn1[i]=self->subbandfilter_octave2_dn[i];
-	  self->subbandfilter_octave2_dn[i] = input_f32;
-  }
-  // A1 = a1*y[n-1]
-  arm_mult_f32(subbandfilter_a1, self->subbandfilter_octave2_yn1, self->subbandfilter_A1, numberofsubbands);
-  // A2 = a2*y[n-2]
-  arm_mult_f32(subbandfilter_a2, self->subbandfilter_octave2_yn2, self->subbandfilter_A2, numberofsubbands);
-
-  // A = A1+A2
-  arm_add_f32(self->subbandfilter_A1, self->subbandfilter_A2, self->subbandfilter_A, numberofsubbands);
-
-  // y_n=b0*d[n]+b1*d[n-1]+b2*d[n-2]
-
-  // B1 = b1*x[n-1]
-  arm_mult_f32(subbandfilter_b1, self->subbandfilter_octave2_dn1, self->subbandfilter_B1, numberofsubbands);
-  // B2 = b2*x[n-2]
-  arm_mult_f32(subbandfilter_b2, self->subbandfilter_octave2_dn2, self->subbandfilter_B2, numberofsubbands);
-  // B1+B2
-  arm_add_f32(self->subbandfilter_B1, self->subbandfilter_B2, self->subbandfilter_B, numberofsubbands);
-
-  // B0 = b0*x[n]
-  arm_mult_f32(subbandfilter_b0, self->subbandfilter_octave2_dn, self->subbandfilter_B0, numberofsubbands);
-
-  // y=B0+B1+B2
-  arm_add_f32(self->subbandfilter_B, self->subbandfilter_B0, self->subbandfilter_B, numberofsubbands);
-
-  // y[n]= B - A
-  arm_sub_f32(self->subbandfilter_B,self->subbandfilter_A, self->subbandfilter_output, numberofsubbands);
-  for(int i=0;i<numberofsubbands;i++){
-	  self->subbandfilter_octave2_yn2[i] 	= self->subbandfilter_octave2_yn1[i];
-	  self->subbandfilter_octave2_yn1[i]  = self->subbandfilter_output[i];
-   }
 }
 
 // Calculate the octave 1 HIGHER
@@ -345,11 +314,7 @@ static void algorithm_octave_1_down(struct octave_effects_st* self){
 }
 
 
-
-
-
-
-static void octave1up(struct octave_effects_st* self){
+static inline void octave1up(struct octave_effects_st* self){
 	// get absolute values of subbands
 	arm_abs_f32(self->subbandfilter_output, self->subband_absolute_value, numberofsubbands);
 
@@ -361,17 +326,6 @@ static void octave1up(struct octave_effects_st* self){
 	arm_biquad_cascade_df2T_f32(&self->highpass_iir_50hz, &self->octave1_up_1, &self->octave1_up_filtered, 1);
 }
 
-static void octave2up(struct octave_effects_st* self){
-	// get absolute values of subbands
-	arm_abs_f32(self->subbandfilter_output, self->subband_absolute_value, numberofsubbands);
-
-
-	// add the octave subbands together
-	arm_dot_prod_f32(self->subband_absolute_value, self->subband_ones, numberofsubbands, &self->octave1_up_1);
-
-	// filter the DC component out
-	arm_biquad_cascade_df2T_f32(&self->highpass_iir_50hz_octave2, &self->octave1_up_1, &self->octave1_up_filtered, 1);
-}
 static int32_t callback_octave_effect(struct octave_effects_st* self,int32_t input_i32){
 	// 1. calculate octaves
 
@@ -387,10 +341,7 @@ static int32_t callback_octave_effect(struct octave_effects_st* self,int32_t inp
 	octave1up(self);
 	// save result
 	self->octave_up_1_f32 = self->octave1_up_filtered;
-//
-	// +2 octave
-	subbandfilter_octave2_calculation(self);
-	octave2up(self);
+	
 	//		 save result
 	self->octave_up_2_f32 = self->octave1_up_filtered;
 
@@ -404,23 +355,30 @@ static int32_t callback_octave_effect(struct octave_effects_st* self,int32_t inp
 
 static float32_t Do_PitchShift(struct octave_effects_st* self, float32_t sample_f32) {
 
+	int RdPtr_Int ;
+	int RdPtr_Int2;
+	float Rd0;
+	float Rd1;
+	int rel;
+	float32_t sum;
+
 	//write to ringbuffer
 	self->Buf[self->WtrP] = sample_f32;
 
 	//read fractional readpointer and generate 0° and 180° read-pointer in integer
-	int RdPtr_Int = roundf(self->Rd_P);
-	int RdPtr_Int2 = 0;
+	 RdPtr_Int = roundf(self->Rd_P);
+	 RdPtr_Int2 = 0;
 	if (RdPtr_Int >= self->BufSize/2) RdPtr_Int2 = RdPtr_Int - (self->BufSize/2);
 	else RdPtr_Int2 = RdPtr_Int + (self->BufSize/2);
 
 	//read the two samples...
-	float Rd0 = (float) self->Buf[RdPtr_Int];
-	float Rd1 = (float) self->Buf[RdPtr_Int2];
+	Rd0 = (float) self->Buf[RdPtr_Int];
+	Rd1 = (float) self->Buf[RdPtr_Int2];
 
 	//Check if first readpointer starts overlap with write pointer?
 	// if yes -> do cross-fade to second read-pointer
 	if (self->Overlap >= (self->WtrP-RdPtr_Int) && (self->WtrP-RdPtr_Int) >= 0 && self->Shift!=1.0f) {
-		int rel = self->WtrP-RdPtr_Int;
+		 rel = self->WtrP-RdPtr_Int;
 		self->CrossFade = ((float)rel)/(float)self->Overlap;
 	}
 	else if (self->WtrP-RdPtr_Int == 0) self->CrossFade = 0.0f;
@@ -428,14 +386,14 @@ static float32_t Do_PitchShift(struct octave_effects_st* self, float32_t sample_
 	//Check if second readpointer starts overlap with write pointer?
 	// if yes -> do cross-fade to first read-pointer
 	if (self->Overlap >= (self->WtrP-RdPtr_Int2) && (self->WtrP-RdPtr_Int2) >= 0 && self->Shift!=1.0f) {
-			int rel = self->WtrP-RdPtr_Int2;
+			 rel = self->WtrP-RdPtr_Int2;
 			self->CrossFade = 1.0f - ((float)rel)/(float)self->Overlap;
 		}
 	else if (self->WtrP-RdPtr_Int2 == 0) self->CrossFade = 1.0f;
 
 
 	//do cross-fading and sum up
-	float32_t sum = (Rd0*self->CrossFade + Rd1*(1.0f-self->CrossFade));
+	sum = (Rd0*self->CrossFade + Rd1*(1.0f-self->CrossFade));
 
 	//increment fractional read-pointer and write-pointer
 	self->Rd_P += self->Shift;
@@ -450,7 +408,7 @@ static float32_t Do_PitchShift(struct octave_effects_st* self, float32_t sample_
 float32_t SAB_octave_process( octave_effects_tst* self, float input_f32){
 		self->volumes_st.sub_1_f32 = conv_raw_to_param_value(self->intercom_parameters_aun[0].value_u8,0, 10);
 	self->volumes_st.clean_f32 = conv_raw_to_param_value(self->intercom_parameters_aun[1].value_u8,0, 10);
-	self->volumes_st.up_1_f32 = conv_raw_to_param_value(self->intercom_parameters_aun[2].value_u8,0, 10);
+	self->volumes_st.up_1_f32 = conv_raw_to_param_value(self->intercom_parameters_aun[2].value_u8,0, 20);
 	self->volumes_st.up_2_f32 = self->volumes_st.up_1_f32;
 	// LEGACY CODE
 	self->input_f32 = (float32_t)input_f32;
@@ -459,23 +417,16 @@ float32_t SAB_octave_process( octave_effects_tst* self, float input_f32){
 	octave1up(self);
 	// save result
 	self->octave_up_1_f32 = self->octave1_up_filtered;
-//
-	// +2 octave
-	subbandfilter_octave2_calculation(self);
-	octave2up(self);
-	//		 save result
-	self->octave_up_2_f32 = self->octave1_up_filtered;
+
 	float32_t filtered_input_f32;
 	arm_biquad_cascade_df2T_f32(&self->biquad_filter_for_sub, &input_f32, &filtered_input_f32, 1);
 	self->octave_down_1_f32 = Do_PitchShift(self,filtered_input_f32);
 	
-	
-	// Write to DAC
+
+// Write to DAC
 	self->output_f32 =	self->octave_down_1_f32*self->volumes_st.sub_1_f32+
 						self->octave_up_1_f32*self->volumes_st.up_1_f32 +
-						self->octave_up_2_f32*self->volumes_st.up_2_f32 +
 						(input_f32*self->volumes_st.clean_f32);
-
 	return self->output_f32;
 }
 
@@ -523,19 +474,13 @@ void SAB_octave_init(octave_effects_tst* self){
 	self->volumes_st.clean_f32      = 1;
 	for(int i=0; i<numberofsubbands;i++){
 		self->subband_ones[i] = 1;
-		self->subbandfilter_dn2[i]		=	0;
-		self->subbandfilter_dn1[i]		=	0;
-		self->subbandfilter_dn[i]		=	0;
 		self->subbandfilter_yn1[i] 		= 	0;
 		self->subbandfilter_yn2[i] 		= 	0;
-
-		self->subbandfilter_octave2_dn[i]		=	0;
-		self->subbandfilter_octave2_dn1[i]		=	0;
-		self->subbandfilter_octave2_dn2[i]		=	0;
-		self->subbandfilter_octave2_yn1[i] 		= 	0;
-		self->subbandfilter_octave2_yn2[i] 		= 	0;
 	}
 
+	self->subbandfilter_dn2[0]		=	0;
+	self->subbandfilter_dn1[0]		=	0;
+	self->subbandfilter_dn[0]		=	0;
 	// 1kkhz LPF
 	float Q = 3;
 	float Freq = 3000;
@@ -557,8 +502,8 @@ void SAB_octave_init(octave_effects_tst* self){
 		self->biquad_filter_for_sub_states_af32[i] = 0;
 	}
 	self->Shift = 0.5;
-	self->BufSize = 4000;
-	self->Overlap = 1000;
+	self->BufSize = 5000;
+	self->Overlap = 2500;
 	self->Rd_P = 0;
 	self->WtrP = 0;
 	self->CrossFade = 0;
