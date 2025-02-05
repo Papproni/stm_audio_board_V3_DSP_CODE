@@ -47,6 +47,7 @@
 #include "FLASH_SECTOR_H7.h"
 #include "SAB_custom_fx.h"
 #include "SAB_fx_manager.h"
+#include "sdram_memory_handler.h"
 
 // SAB specifics------END----
 /* USER CODE END Includes */
@@ -141,11 +142,6 @@ void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai){
 	effects_io_port.in4_i32 = input_i2s_buffer_au32[IN4_ADC_NUM]<<8;
 }
 
-
-
-#define SDRAM_ADDRESS_START 0xC0000000
-#define SDRAM_SIZE 			0x100000 // 16Mb = 2MB
-
 #define ARRAY_SIZE 96000
 
 /*
@@ -198,8 +194,6 @@ void JumpToBootloader(void)
 
 sab_intercom_tst 	 intercom_st __attribute__((section(".noncacheable_data")));
 SAB_fx_manager_tst SAB_fx_manager_st;
-
-int32_t sdram_buffer_test_ai32[100]__attribute__((section(".sdram_section")));
 
 /*
  * HW BTN INTERRUPT FUNCTIONS ----------------------------
@@ -374,18 +368,18 @@ int main(void)
 	SAB_fx_manager_init(&SAB_fx_manager_st, &intercom_st, &effects_io_port, &fsw_btn_1_pressed, &fsw_btn_2_pressed);
 	
     /* Enable the TRC (Trace) */
-    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+    // CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
 
-    /* Unlock the DWT if it is locked (LAR register) */
-    // Some Cortex-M7 MCUs (including STM32H7) require this unlock sequence:
-    DWT->LAR = 0xC5ACCE55;
+    // /* Unlock the DWT if it is locked (LAR register) */
+    // // Some Cortex-M7 MCUs (including STM32H7) require this unlock sequence:
+    // DWT->LAR = 0xC5ACCE55;
 
-    /* Reset the cycle counter */
-    DWT->CYCCNT = 0;
+    // /* Reset the cycle counter */
+    // DWT->CYCCNT = 0;
 
-    /* Enable the cycle counter */
-    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
-
+    // /* Enable the cycle counter */
+    // DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+  clear_sdram_memory();
   while (1)
   {
 	if(intercom_st.save_un.save_command>0){
@@ -398,19 +392,20 @@ int main(void)
 
 	  if(ADC_READY_FLAG){
 		  ADC_READY_FLAG = 0;
-		  // Reset the counter to ensure a clean start
-		      DWT->CYCCNT = 0;
+		  // // Reset the counter to ensure a clean start
+		  //     DWT->CYCCNT = 0;
 
-		      // Record the starting cycle count
-		      startCycles = DWT->CYCCNT;
+		  //     // Record the starting cycle count
+		  //     startCycles = DWT->CYCCNT;
 		SAB_fx_manager_process(&SAB_fx_manager_st);
+    clear_sdram_memory();
 		 // Record the ending cycle count
-		    endCycles = DWT->CYCCNT;
+		    // endCycles = DWT->CYCCNT;
 
-		    // Calculate the difference
-		    totalCycles = endCycles - startCycles;
+		    // // Calculate the difference
+		    // totalCycles = endCycles - startCycles;
 
-		    time_to_process_f32 = (float)totalCycles/550;
+		    // time_to_process_f32 = (float)totalCycles/550;
 		if(1 == preset_down_pressed){
 			preset_down_pressed = 0;
 			SAB_preset_down_pressed(&SAB_fx_manager_st);
