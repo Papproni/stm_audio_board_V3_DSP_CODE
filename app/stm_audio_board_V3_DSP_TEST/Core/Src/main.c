@@ -377,7 +377,7 @@ int main(void)
 
     // /* Enable the cycle counter */
     // DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
-  clear_sdram_memory();
+  write_to_sdram_memory();
   while (1)
   {
 	if(intercom_st.save_un.save_command>0){
@@ -396,7 +396,7 @@ int main(void)
 		  //     // Record the starting cycle count
 		  //     startCycles = DWT->CYCCNT;
 		SAB_fx_manager_process(&SAB_fx_manager_st);
-    clear_sdram_memory();
+    write_to_sdram_memory();
 		 // Record the ending cycle count
 		    // endCycles = DWT->CYCCNT;
 
