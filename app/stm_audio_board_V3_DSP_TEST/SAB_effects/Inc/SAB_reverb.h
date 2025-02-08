@@ -8,14 +8,14 @@ Generated on: 2024.11.28. */
 #include "stdint.h"
 #define float32_t float
 
-
-#define l_CB0 3460*2
-#define l_CB1 2988*2
-#define l_CB2 3882*2
-#define l_CB3 4312*2
-#define l_AP0 480*2
-#define l_AP1 161*2
-#define l_AP2 46*2
+#define reverb_scale 10
+#define l_CB0 3460*reverb_scale-5000
+#define l_CB1 2988*reverb_scale-8000
+#define l_CB2 3882*reverb_scale-3500
+#define l_CB3 4312*reverb_scale+10
+#define l_AP0 480*reverb_scale+500
+#define l_AP1 161*reverb_scale+50
+#define l_AP2 46*reverb_scale+10
 
 
 
@@ -46,8 +46,15 @@ typedef struct {
 
     //define pointer limits = delay time
     int cf0_lim, cf1_lim, cf2_lim, cf3_lim, ap0_lim, ap1_lim, ap2_lim;
-    float32_t cfbuf0[l_CB0], cfbuf1[l_CB1], cfbuf2[l_CB2], cfbuf3[l_CB3];
-    float32_t apbuf0[l_AP0], apbuf1[l_AP1], apbuf2[l_AP2];
+    // float32_t cfbuf0[l_CB0], cfbuf1[l_CB1], cfbuf2[l_CB2], cfbuf3[l_CB3];
+    // float32_t apbuf0[l_AP0], apbuf1[l_AP1], apbuf2[l_AP2];
+    float32_t* cfbuf0;
+    float32_t* cfbuf1;
+    float32_t* cfbuf2;
+    float32_t* cfbuf3;
+    float32_t* apbuf0;
+    float32_t* apbuf1;
+    float32_t* apbuf2;
     //feedback defines as of Schroeder
     float32_t cf0_g, cf1_g, cf2_g, cf3_g;
     float32_t ap0_g, ap1_g, ap2_g;

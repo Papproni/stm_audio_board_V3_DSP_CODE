@@ -16,7 +16,7 @@ typedef struct sdram_handler_st{
 }sdram_handler_tst;
 
 
-void write_to_sdram_memory();
-uint32_t sdram_malloc_float32_t_array(uint32_t size);
+void clear_sdram_memory();
+uint32_t* sdram_malloc_float32_t_array(uint32_t size);
 
 #endif /* INC_SDRAM_MEMORY_HANDLER_H */

@@ -66,6 +66,7 @@
     "sab_chorus.h": "c",
     "sab_envelope_filter.h": "c",
     "guitar_effect_delay.h": "c",
-    "sab_reverb.h": "c"
+    "sab_reverb.h": "c",
+    "sab_delay.h": "c"
   }
 }

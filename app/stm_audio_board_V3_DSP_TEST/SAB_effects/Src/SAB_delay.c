@@ -37,7 +37,7 @@ void SAB_delay_init( SAB_delay_tst* self){
 	self->intercom_fx_data.color[0] = 0; 	// R
 	self->intercom_fx_data.color[1] = 0;	// G
 	self->intercom_fx_data.color[2] = 255;	// B
-	self->intercom_fx_data.fx_state_en = FX_STATE_OFF;
+	self->intercom_fx_data.fx_state_en = FX_STATE_ON;
 
 	// PARAMS:
 	add_parameter(&self->intercom_parameters_aun[0],"FBK",	PARAM_TYPE_POT,	69);
@@ -56,7 +56,7 @@ void SAB_delay_init( SAB_delay_tst* self){
 	self->current_counter_u32  =0;
     self->delayed_counter_u32 = 0;
     self->time_in_buffer_u32 = 0;
-
+	self->data_samples  = sdram_malloc_float32_t_array(SAB_DELAY_BUFFER_SIZE);
     for(int i = 0; i< SAB_DELAY_BUFFER_SIZE;i++){
     	self->data_samples[i] = 0;
     }

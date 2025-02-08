@@ -9,6 +9,7 @@
 #include "stdint.h"
 #include <stdlib.h>
 #include "arm_math.h"
+#include "sdram_memory_handler.h"
 // THis file contains the communication basics for the I2C protocoll
 // between the DSP and DISPLAY unit
 #define NUM_OF_LOOPS 4

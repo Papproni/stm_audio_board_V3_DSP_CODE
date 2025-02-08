@@ -3,7 +3,7 @@ Generated on: 2024.11.29. */
 
 #include "SAB_reverb.h"
 
-float32_t do_comb(float32_t inSample,float32_t* buffer,uint32_t*cf_ptr,float32_t cf_g, int cf_lim) {
+float32_t do_comb(float32_t inSample,float32_t* buffer,uint32_t* cf_ptr,float32_t cf_g, int cf_lim) {
 	float32_t readback = buffer[*cf_ptr];
 	float32_t new = readback*cf_g + inSample;
 	buffer[*cf_ptr] = new;
@@ -67,29 +67,38 @@ void SAB_reverb_init( SAB_reverb_tst* self){
 	self->ap1_p=0;
 	self->ap2_p=0;
 
-	for(uint32_t i = 0; i<10000;i++){
-		if(i<l_CB0){
-			self->cfbuf0[i] = 0;
-		}
-		if(i<l_CB1){
-			self->cfbuf1[i] = 0;
-		}
-		if(i<l_CB2){
-			self->cfbuf2[i] = 0;
-		}
-		if(i<l_CB3){
-			self->cfbuf3[i] = 0;
-		}
-		if(i<l_AP0){
-			self->apbuf0[i] = 0;
-		}
-		if(i<l_AP1){
-			self->apbuf1[i] = 0;
-		}
-		if(i<l_AP2){
-			self->apbuf2[i] = 0;
-		}
-	}
+	// float32_t cfbuf0[l_CB0], cfbuf1[l_CB1], cfbuf2[l_CB2], cfbuf3[l_CB3];
+    // float32_t apbuf0[l_AP0], apbuf1[l_AP1], apbuf2[l_AP2];
+	self->cfbuf0 = sdram_malloc_float32_t_array(l_CB0);
+	self->cfbuf1 = sdram_malloc_float32_t_array(l_CB1);
+	self->cfbuf2 = sdram_malloc_float32_t_array(l_CB2);
+	self->cfbuf3 = sdram_malloc_float32_t_array(l_CB3);
+	self->apbuf0 = sdram_malloc_float32_t_array(l_AP0);
+	self->apbuf1 = sdram_malloc_float32_t_array(l_AP1);
+	self->apbuf2 = sdram_malloc_float32_t_array(l_AP2);
+	// for(uint32_t i = 0; i<10000;i++){
+	// 	if(i<l_CB0){
+	// 		self->cfbuf0[i] = 0;
+	// 	}
+	// 	if(i<l_CB1){
+	// 		self->cfbuf1[i] = 0;
+	// 	}
+	// 	if(i<l_CB2){
+	// 		self->cfbuf2[i] = 0;
+	// 	}
+	// 	if(i<l_CB3){
+	// 		self->cfbuf3[i] = 0;
+	// 	}
+	// 	if(i<l_AP0){
+	// 		self->apbuf0[i] = 0;
+	// 	}
+	// 	if(i<l_AP1){
+	// 		self->apbuf1[i] = 0;
+	// 	}
+	// 	if(i<l_AP2){
+	// 		self->apbuf2[i] = 0;
+	// 	}
+	// }
 };
 
 // Process Function for SAB_delay_tst
@@ -124,7 +133,7 @@ float32_t SAB_reverb_process( SAB_reverb_tst* self, float input_f32){
 	float32_t allpass1 = do_allpass(allpass0,self->apbuf1,&self->ap1_p,self->ap1_g,self->ap1_lim);
 	//Do_Allpass2(newsample);
 	float32_t allpass2 = do_allpass(allpass1,self->apbuf2,&self->ap2_p,self->ap2_g,self->ap2_lim);
-	
+//
 	output_f32 = (1.0-self->wet_f32)*input_f32 + self->wet_f32*allpass2;
 
     return output_f32;
