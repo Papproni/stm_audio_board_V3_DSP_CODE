@@ -22,6 +22,46 @@
 
 /* USER CODE BEGIN 0 */
 #include "driver_w25qxx.h"
+
+
+uint32_t W25Q128JV_ReadID(OSPI_HandleTypeDef *hospi)
+{
+    OSPI_RegularCmdTypeDef sCommand;
+    uint8_t ID[3] = {0};
+
+    memset(&sCommand, 0, sizeof(sCommand));
+
+    sCommand.OperationType = HAL_OSPI_OPTYPE_COMMON_CFG;
+    sCommand.FlashId = HAL_OSPI_FLASH_ID_1;
+    sCommand.Instruction = 0x9F;  // Read ID command
+    sCommand.InstructionMode = HAL_OSPI_INSTRUCTION_1_LINE; // Single SPI Mode
+    sCommand.InstructionSize = HAL_OSPI_INSTRUCTION_8_BITS;
+    sCommand.AddressMode = HAL_OSPI_ADDRESS_NONE;
+    sCommand.DataMode = HAL_OSPI_DATA_1_LINE;  // Single SPI Mode
+    sCommand.NbData = 3;
+    sCommand.DummyCycles = 0;
+    sCommand.DQSMode = HAL_OSPI_DQS_DISABLE;
+    sCommand.SIOOMode = HAL_OSPI_SIOO_INST_EVERY_CMD;
+
+    // Send command
+    if (HAL_OSPI_Command(hospi, &sCommand, HAL_OSPI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
+    {
+        printf("OSPI Command Failed\n");
+        return 0;
+    }
+
+    // Receive data
+    if (HAL_OSPI_Receive(hospi, ID, HAL_OSPI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
+    {
+        printf("OSPI Receive Failed\n");
+        return 0;
+    }
+
+    printf("Flash ID: %02X %02X %02X\n", ID[0], ID[1], ID[2]);
+
+    return (ID[0] << 16) | (ID[1] << 8) | ID[2];  // Manufacturer ID + Device ID
+}
+
 /* USER CODE END 0 */
 
 OSPI_HandleTypeDef hospi1;
@@ -43,7 +83,7 @@ void MX_OCTOSPI1_Init(void)
   hospi1.Init.FifoThreshold = 4;
   hospi1.Init.DualQuad = HAL_OSPI_DUALQUAD_DISABLE;
   hospi1.Init.MemoryType = HAL_OSPI_MEMTYPE_MICRON;
-  hospi1.Init.DeviceSize = 24;
+  hospi1.Init.DeviceSize = 23;
   hospi1.Init.ChipSelectHighTime = 1;
   hospi1.Init.FreeRunningClock = HAL_OSPI_FREERUNCLK_DISABLE;
   hospi1.Init.ClockMode = HAL_OSPI_CLOCK_MODE_0;
@@ -67,6 +107,8 @@ void MX_OCTOSPI1_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN OCTOSPI1_Init 2 */
+
+  uint32_t id = W25Q128JV_ReadID(&hospi1);
 //
 //	OSPI_RegularCmdTypeDef sCommand;
 //
@@ -113,13 +155,14 @@ void HAL_OSPI_MspInit(OSPI_HandleTypeDef* ospiHandle)
 
     __HAL_RCC_GPIOE_CLK_ENABLE();
     __HAL_RCC_GPIOF_CLK_ENABLE();
+    __HAL_RCC_GPIOB_CLK_ENABLE();
     /**OCTOSPI1 GPIO Configuration
     PE2     ------> OCTOSPIM_P1_IO2
     PF6     ------> OCTOSPIM_P1_IO3
     PF8     ------> OCTOSPIM_P1_IO0
     PF9     ------> OCTOSPIM_P1_IO1
     PF10     ------> OCTOSPIM_P1_CLK
-    PE11     ------> OCTOSPIM_P1_NCS
+    PB10     ------> OCTOSPIM_P1_NCS
     */
     GPIO_InitStruct.Pin = GPIO_PIN_2;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -142,12 +185,12 @@ void HAL_OSPI_MspInit(OSPI_HandleTypeDef* ospiHandle)
     GPIO_InitStruct.Alternate = GPIO_AF9_OCTOSPIM_P1;
     HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 
-    GPIO_InitStruct.Pin = GPIO_PIN_11;
+    GPIO_InitStruct.Pin = GPIO_PIN_10;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF11_OCTOSPIM_P1;
-    HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+    GPIO_InitStruct.Alternate = GPIO_AF9_OCTOSPIM_P1;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /* USER CODE BEGIN OCTOSPI1_MspInit 1 */
 
@@ -173,11 +216,13 @@ void HAL_OSPI_MspDeInit(OSPI_HandleTypeDef* ospiHandle)
     PF8     ------> OCTOSPIM_P1_IO0
     PF9     ------> OCTOSPIM_P1_IO1
     PF10     ------> OCTOSPIM_P1_CLK
-    PE11     ------> OCTOSPIM_P1_NCS
+    PB10     ------> OCTOSPIM_P1_NCS
     */
-    HAL_GPIO_DeInit(GPIOE, GPIO_PIN_2|GPIO_PIN_11);
+    HAL_GPIO_DeInit(GPIOE, GPIO_PIN_2);
 
     HAL_GPIO_DeInit(GPIOF, GPIO_PIN_6|GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10);
+
+    HAL_GPIO_DeInit(GPIOB, GPIO_PIN_10);
 
   /* USER CODE BEGIN OCTOSPI1_MspDeInit 1 */
 
