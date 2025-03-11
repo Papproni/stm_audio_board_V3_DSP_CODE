@@ -260,6 +260,7 @@ static void SAB_cleanup_effect_chain(GuitarEffect** chain, int chain_length) {
             chain[i] = &DEFAULT_EMPTY_SLOT_FOR_FX_CHAIN;
         }
     }
+    clear_sdram_memory();
 }
 
 void SAB_fx_manager_deinit( SAB_fx_manager_tst* self){
@@ -315,11 +316,15 @@ void inline SAB_load_preset_from_flash(SAB_fx_manager_tst* self){
 		}
 
 	}
+
     if(prev_preset_num_u32 != -1){
+
+
         // save previous preset data
         memcpy(&SAB_PRESET_SAVE_RAM_DATA[prev_preset_num_u32],&self->current_preset_config_st,sizeof(preset_saves_tst));
     }
     prev_preset_num_u32 = preset_num_u32;
+
     // load the next from RAM
     memcpy(&self->current_preset_config_st,&SAB_PRESET_SAVE_RAM_DATA[preset_num_u32],sizeof(preset_saves_tst));
 }

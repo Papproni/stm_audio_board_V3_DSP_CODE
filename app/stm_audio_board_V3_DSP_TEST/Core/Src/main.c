@@ -23,7 +23,6 @@
 #include "octospi.h"
 #include "sai.h"
 #include "spi.h"
-#include "usb_device.h"
 #include "gpio.h"
 #include "fmc.h"
 
@@ -31,11 +30,11 @@
 /* USER CODE BEGIN Includes */
 #include "stm32h7xx_hal.h"
 #include "AD1939_driver.h"
-#include "usbd_core.h"
+// #include "usbd_core.h"
 //#include "usbd_audio.h"
-#include "usbd_desc.h"
+// #include "usbd_desc.h"
 //#include "usbd_audio_if.h"
-#include "usb_device.h"
+// #include "usb_device.h"
 #include "string.h"
 #include <math.h>
 #include "arm_math.h"
@@ -339,7 +338,6 @@ int main(void)
   MX_FMC_Init();
   MX_OCTOSPI1_Init();
   MX_I2C4_Init();
-//  MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
 
   // init SAI interface
@@ -379,7 +377,7 @@ int main(void)
 
     // /* Enable the cycle counter */
     // DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
-  clear_sdram_memory();
+    clear_sdram_memory();
   while (1)
   {
 	if(intercom_st.save_un.save_command>0){
@@ -398,7 +396,6 @@ int main(void)
 		  //     // Record the starting cycle count
 		  //     startCycles = DWT->CYCCNT;
 		SAB_fx_manager_process(&SAB_fx_manager_st);
-    clear_sdram_memory();
 		 // Record the ending cycle count
 		    // endCycles = DWT->CYCCNT;
 
@@ -471,9 +468,8 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI48|RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-  RCC_OscInitStruct.HSI48State = RCC_HSI48_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 2;

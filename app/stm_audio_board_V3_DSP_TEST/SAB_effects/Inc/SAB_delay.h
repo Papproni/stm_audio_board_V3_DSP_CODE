@@ -8,7 +8,7 @@ Generated on: 2024.11.28. */
 #include "stdint.h"
 #define float32_t float
 
-#define SAB_DELAY_BUFFER_SIZE 30000
+#define SAB_DELAY_BUFFER_SIZE 192000
 
 // Effect: delay
 typedef struct {
@@ -39,7 +39,7 @@ typedef struct {
     uint32_t delayed_counter_u32;
     uint32_t current_counter_u32;
     uint32_t time_in_buffer_u32;
-    float32_t data_samples[SAB_DELAY_BUFFER_SIZE];
+    float32_t* data_samples; //[SAB_DELAY_BUFFER_SIZE];
 } SAB_delay_tst;
 
 
