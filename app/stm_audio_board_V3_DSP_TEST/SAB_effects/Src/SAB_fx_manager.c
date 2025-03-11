@@ -260,6 +260,7 @@ static void SAB_cleanup_effect_chain(GuitarEffect** chain, int chain_length) {
             chain[i] = &DEFAULT_EMPTY_SLOT_FOR_FX_CHAIN;
         }
     }
+    clear_sdram_memory();
 }
 
 void SAB_fx_manager_deinit( SAB_fx_manager_tst* self){
