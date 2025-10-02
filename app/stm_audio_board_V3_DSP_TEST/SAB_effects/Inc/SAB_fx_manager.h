@@ -70,7 +70,7 @@ typedef struct preset_bypasses_st{
 	fx_state_ten 	    fx_states_aen[NUM_OF_FX_SLOTS_IN_LOOP*NUM_OF_LOOPS];
 }preset_fx_bypasses_tst;
 
-#define NUM_OF_PRESET_MODES 3
+#define NUM_OF_PRESET_MODES 4
 typedef enum {
 	PRESET_MODE_NORMAL,
 	PRESET_MODE_A_ACTIVE,

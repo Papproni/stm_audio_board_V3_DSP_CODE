@@ -109,7 +109,7 @@ void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai){
 	output_i2s_buffer_au32[8+OUT2_DAC_NUM] = effects_io_port.out2_i32>>8;
 	output_i2s_buffer_au32[8+OUT3_DAC_NUM] = effects_io_port.out3_i32>>8;
 	output_i2s_buffer_au32[8+OUT4_DAC_NUM] = effects_io_port.out4_i32>>8;
-	SCB_CleanDCache_by_Addr(&output_i2s_buffer_au32[8], sizeof(output_i2s_buffer_au32)/2);
+  SCB_CleanDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32)/2);
 }
 void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai){
 	DAC_HALF_COMPLETE_FLAG = 1;
@@ -117,7 +117,7 @@ void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai){
 	output_i2s_buffer_au32[OUT2_DAC_NUM] = effects_io_port.out2_i32>>8;
 	output_i2s_buffer_au32[OUT3_DAC_NUM] = effects_io_port.out3_i32>>8;
 	output_i2s_buffer_au32[OUT4_DAC_NUM] = effects_io_port.out4_i32>>8;
-	SCB_CleanDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32)/2);
+  SCB_CleanDCache_by_Addr(&output_i2s_buffer_au32[8], sizeof(output_i2s_buffer_au32)/2);
 }
 
 volatile uint8_t 			ADC_READY_FLAG = 0;
@@ -125,7 +125,7 @@ volatile uint8_t 			ADC_READY_FLAG = 0;
 void HAL_SAI_RxCpltCallback(SAI_HandleTypeDef *hsai){
 	ADC_HALF_COMPLETE_FLAG = 0;
 	ADC_READY_FLAG = 1;
-	SCB_InvalidateDCache_by_Addr(&input_i2s_buffer_au32[8], sizeof(input_i2s_buffer_au32)/2);
+  SCB_InvalidateDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32)/2);
 	effects_io_port.in1_i32 = input_i2s_buffer_au32[8+IN1_ADC_NUM]<<8;
 	effects_io_port.in2_i32 = input_i2s_buffer_au32[8+IN2_ADC_NUM]<<8;
 	effects_io_port.in3_i32 = input_i2s_buffer_au32[8+IN3_ADC_NUM]<<8;
@@ -134,7 +134,8 @@ void HAL_SAI_RxCpltCallback(SAI_HandleTypeDef *hsai){
 void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai){
 	ADC_HALF_COMPLETE_FLAG = 1;
 	ADC_READY_FLAG = 1;
-	SCB_InvalidateDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32)/2);
+
+  	SCB_InvalidateDCache_by_Addr(&input_i2s_buffer_au32[8], sizeof(input_i2s_buffer_au32)/2);
 	effects_io_port.in1_i32 = input_i2s_buffer_au32[IN1_ADC_NUM]<<8;
 	effects_io_port.in2_i32 = input_i2s_buffer_au32[IN2_ADC_NUM]<<8;
 	effects_io_port.in3_i32 = input_i2s_buffer_au32[IN3_ADC_NUM]<<8;
@@ -515,12 +516,12 @@ void PeriphCommonClock_Config(void)
   /** Initializes the peripherals clock
   */
   PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_SAI1|RCC_PERIPHCLK_SPI1;
-  PeriphClkInitStruct.PLL3.PLL3M = 2;
-  PeriphClkInitStruct.PLL3.PLL3N = 15;
-  PeriphClkInitStruct.PLL3.PLL3P = 2;
+  PeriphClkInitStruct.PLL3.PLL3M = 5;
+  PeriphClkInitStruct.PLL3.PLL3N = 157;
+  PeriphClkInitStruct.PLL3.PLL3P = 8;
   PeriphClkInitStruct.PLL3.PLL3Q = 2;
   PeriphClkInitStruct.PLL3.PLL3R = 2;
-  PeriphClkInitStruct.PLL3.PLL3RGE = RCC_PLL3VCIRANGE_3;
+  PeriphClkInitStruct.PLL3.PLL3RGE = RCC_PLL3VCIRANGE_2;
   PeriphClkInitStruct.PLL3.PLL3VCOSEL = RCC_PLL3VCOWIDE;
   PeriphClkInitStruct.PLL3.PLL3FRACN = 2950;
   PeriphClkInitStruct.Sai1ClockSelection = RCC_SAI1CLKSOURCE_PLL3;
