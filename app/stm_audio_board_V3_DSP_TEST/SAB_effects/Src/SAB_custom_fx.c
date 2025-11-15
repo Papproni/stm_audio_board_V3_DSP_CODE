@@ -90,12 +90,12 @@ void SAB_custom_fx_init( SAB_custom_fx_tst* self){
 
 	// PARAMS:
     
-    add_parameter(&self->intercom_parameters_aun[0],"FREQ1",PARAM_TYPE_POT,69);
-    add_parameter(&self->intercom_parameters_aun[1],"Q1",PARAM_TYPE_POT,69);
-    add_parameter(&self->intercom_parameters_aun[2],"VOL1",PARAM_TYPE_POT,69);
-    add_parameter(&self->intercom_parameters_aun[3],"FREQ2",PARAM_TYPE_POT,69);
-    add_parameter(&self->intercom_parameters_aun[4],"Q2",PARAM_TYPE_POT,69);
-    add_parameter(&self->intercom_parameters_aun[5],"VOL2",PARAM_TYPE_POT,69);
+    add_parameter(&self->intercom_parameters_aun[0],"FREQ",PARAM_TYPE_POT,69);
+    add_parameter(&self->intercom_parameters_aun[1],"AMP",PARAM_TYPE_POT,69);
+    add_parameter(&self->intercom_parameters_aun[2],"NONE",PARAM_TYPE_UNUSED,69);
+    add_parameter(&self->intercom_parameters_aun[3],"NONE",PARAM_TYPE_UNUSED,69);
+    add_parameter(&self->intercom_parameters_aun[4],"NONE",PARAM_TYPE_UNUSED,69);
+    add_parameter(&self->intercom_parameters_aun[5],"NONE",PARAM_TYPE_UNUSED,69);
     add_parameter(&self->intercom_parameters_aun[6],"NONE",PARAM_TYPE_UNUSED,69);
     add_parameter(&self->intercom_parameters_aun[7],"NONE",PARAM_TYPE_UNUSED,69);
     add_parameter(&self->intercom_parameters_aun[8],"NONE",PARAM_TYPE_UNUSED,69);
@@ -104,60 +104,38 @@ void SAB_custom_fx_init( SAB_custom_fx_tst* self){
     add_parameter(&self->intercom_parameters_aun[11],"NONE",PARAM_TYPE_UNUSED,69);
 
     // Generated outputs from other Jinja templates
-    /*
-// Biquad filter init
-Type: BANDPASS
-Freq: param_1
-Q:    param_2
-*/
-
-arm_biquad_cascade_df2T_init_f32(&self->biquad_filter_block_block2, 1, &self->biquad_filter_block_block2_coeffs_af32, &self->biquad_filter_block_block2_states_af32);
-self->biquad_filter_block_block2_output_f32  = 0;/*
-// Biquad filter init
-Type: BANDPASS
-Freq: param_4
-Q:    param_5
-*/
-
-arm_biquad_cascade_df2T_init_f32(&self->biquad_filter_block_block3, 1, &self->biquad_filter_block_block3_coeffs_af32, &self->biquad_filter_block_block3_states_af32);
-self->biquad_filter_block_block3_output_f32  = 0;
+    self->generator_block_block1_offs = 0;
+self->generator_block_block1_time = 0;
 
 };
 
+float32_t max_amplitude= 3e+009;
 // Process Function for SAB_custom_fx_tst
 float32_t SAB_custom_fx_process( SAB_custom_fx_tst* self, float32_t input_f32){
-    // Freq1
-    self->param_1_value = conv_raw_to_param_value(self->intercom_parameters_aun[0].value_u8,100, 800);
-    // Q1
-    self->param_2_value = conv_raw_to_param_value(self->intercom_parameters_aun[1].value_u8,0.1, 5);
-    // Vol1
-    self->param_3_value = conv_raw_to_param_value(self->intercom_parameters_aun[2].value_u8,0, 5);
-    // Freq2
-    self->param_4_value = conv_raw_to_param_value(self->intercom_parameters_aun[3].value_u8,3000, 6000);
-    // Q2
-    self->param_5_value = conv_raw_to_param_value(self->intercom_parameters_aun[4].value_u8,0.1, 5);
-    // Vol2
-    self->param_6_value = conv_raw_to_param_value(self->intercom_parameters_aun[5].value_u8,0, 5);
+    // Freq
+    self->param_1_value = conv_raw_to_param_value(self->intercom_parameters_aun[0].value_u8,10, 20000);
+    // Amp
+    self->param_2_value = conv_raw_to_param_value(self->intercom_parameters_aun[1].value_u8,0, max_amplitude);
 
     // Generated outputs from other Jinja templates
+    self->generator_block_block1_time+=1.0;
+    if(self->generator_block_block1_time>47999){
+    	self->generator_block_block1_time = 0;
+    }
+
+
+
     
-    self->input_block_block1_output_f32 = input_f32;
+
+// generator_block_block1 process: SINE
+    self->generator_block_block1_phase = fmod(self->generator_block_block1_time, 1.0/self->param_1_value) * self->param_1_value;
+
+    self->generator_block_block1_output_f32 = self->param_2_value * sin(2 * 3.141592653 * self->generator_block_block1_time/48000.0*self->param_1_value);
+
+    self->generator_block_block1_output_f32 += self->generator_block_block1_offs;
     
-    // Biquad filter process function
-calculate_biquad_coeffs(self->biquad_filter_block_block2_coeffs_af32,BANDPASS, self->param_1_value, self->param_2_value, 48000);
-arm_biquad_cascade_df2T_f32(&self->biquad_filter_block_block2, &self->input_block_block1_output_f32, &self->biquad_filter_block_block2_output_f32, 1);
-self->biquad_filter_block_block2_output_f32 *= self->param_3_value;
-    
-    // Biquad filter process function
-calculate_biquad_coeffs(self->biquad_filter_block_block3_coeffs_af32,BANDPASS, self->param_4_value, self->param_5_value, 48000);
-arm_biquad_cascade_df2T_f32(&self->biquad_filter_block_block3, &self->input_block_block1_output_f32, &self->biquad_filter_block_block3_output_f32, 1);
-self->biquad_filter_block_block3_output_f32 *= self->param_6_value;
-    
-    // add_block_block4
-self->add_block_block4_output_f32 = self->biquad_filter_block_block2_output_f32 + self->biquad_filter_block_block3_output_f32;
-    
-    // output_block_block0
-self->output_block_block0_input_f32 = self->add_block_block4_output_f32;
-return self->output_block_block0_input_f32;
+    // output_block_block2
+self->output_block_block2_input_f32 = self->generator_block_block1_output_f32;
+return self->output_block_block2_input_f32;
     
 };
