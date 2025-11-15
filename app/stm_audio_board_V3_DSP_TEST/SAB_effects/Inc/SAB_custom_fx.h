@@ -44,6 +44,7 @@ float32_t generator_block_block1_output_f32;
     
     float32_t output_block_block2_input_f32;
     
+    float32_t phase_f32;
 
 } SAB_custom_fx_tst;
 

@@ -26,6 +26,7 @@ Generated on: 2024.11.28. */
 #include "SAB_reverb.h"
 #include "SAB_custom_fx.h"
 #include "SAB_octave.h"
+#include "SAB_pitchdetector.h"
 
 #include "stdint.h"
 #include "arm_math.h"
@@ -50,7 +51,8 @@ typedef enum {
     EQUALIZER,
     CUSTOM,
     CUSTOM_FX,
-    ENVELOPE
+    ENVELOPE,
+    PITCHDETECTOR
 } EffectType;
 
 volatile typedef struct{
