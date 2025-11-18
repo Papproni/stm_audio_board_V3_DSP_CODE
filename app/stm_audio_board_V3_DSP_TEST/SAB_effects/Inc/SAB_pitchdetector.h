@@ -8,8 +8,8 @@ Generated on: 2024.11.28. */
 #include "stdint.h"
 #define float32_t float
 
-#ifndef PITCH_DECETOR_BUFFER_SIZE
-#define PITCH_DECETOR_BUFFER_SIZE 25000
+#ifndef PITCH_DETECTOR_BUFFER_SIZE
+#define PITCH_DETECTOR_BUFFER_SIZE 25000
 #endif
 // Effect: pitchdetector
 typedef struct {
@@ -33,15 +33,15 @@ typedef struct {
     float32_t param_11_value;
     float32_t param_12_value;
 	
-    float32_t input_raw_af32[PITCH_DECETOR_BUFFER_SIZE];
-    float32_t centered_f32[PITCH_DECETOR_BUFFER_SIZE];
-    // float32_t input_fltrd_af32[PITCH_DECETOR_BUFFER_SIZE];
-    // float32_t autocorr_af32[PITCH_DECETOR_BUFFER_SIZE][2];
+    float32_t input_raw_af32[PITCH_DETECTOR_BUFFER_SIZE];
+    float32_t centered_f32[PITCH_DETECTOR_BUFFER_SIZE];
+    // float32_t input_fltrd_af32[PITCH_DETECTOR_BUFFER_SIZE];
+    // float32_t autocorr_af32[PITCH_DETECTOR_BUFFER_SIZE][2];
 
     float32_t average_f32;
     int input_raw_cntr_u32;
 	float32_t detected_freq_f32;
-    uint8_t   sign_bits[PITCH_DECETOR_BUFFER_SIZE];
+    uint8_t   sign_bits[PITCH_DETECTOR_BUFFER_SIZE];
 
 
 } SAB_pitchdetector_tst;

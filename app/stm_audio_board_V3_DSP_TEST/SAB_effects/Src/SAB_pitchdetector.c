@@ -95,7 +95,7 @@ static void compute_sign_bits_cmsis(const float32_t *in,
                                     float32_t average,
                                     uint32_t length)
 {
-    static float32_t temp[ PITCH_DECETOR_BUFFER_SIZE ];
+    static float32_t temp[ PITCH_DETECTOR_BUFFER_SIZE ];
 
     // ---------------------------------------------------------
     // 1. Center signal: temp[i] = in[i] - average
@@ -285,20 +285,20 @@ float32_t SAB_pitchdetector_process( SAB_pitchdetector_tst* self, float input_f3
 	arm_biquad_cascade_df1_f32(&lp500, &input_f32, &filtered, 1);
 	self->input_raw_af32[self->input_raw_cntr_u32] = filtered;
 	self->input_raw_cntr_u32++;
-	if(self->input_raw_cntr_u32 >= PITCH_DECETOR_BUFFER_SIZE){
+	if(self->input_raw_cntr_u32 >= PITCH_DETECTOR_BUFFER_SIZE){
 		self->input_raw_cntr_u32 = 0;
 		// Calculate average
-		arm_rms_f32(self->input_raw_af32,PITCH_DECETOR_BUFFER_SIZE,&self->average_f32);
+		arm_rms_f32(self->input_raw_af32,PITCH_DETECTOR_BUFFER_SIZE,&self->average_f32);
 		// -----------------------------------------------------
         // 3) Remove mean -> sign bits
         // -----------------------------------------------------
 		
-		// arm_offset_f32(self->input_raw_af32, -self->average_f32, self->centered_f32, PITCH_DECETOR_BUFFER_SIZE);
-        // for (int i = 0; i < PITCH_DECETOR_BUFFER_SIZE; i++) {
+		// arm_offset_f32(self->input_raw_af32, -self->average_f32, self->centered_f32, PITCH_DETECTOR_BUFFER_SIZE);
+        // for (int i = 0; i < PITCH_DETECTOR_BUFFER_SIZE; i++) {
         //     self->sign_bits[i] = (self->centered_f32[i] >= 0.0f) ? 1U : 0U;
         // }
 
-		for (int i = 0; i < PITCH_DECETOR_BUFFER_SIZE; i++) {
+		for (int i = 0; i < PITCH_DETECTOR_BUFFER_SIZE; i++) {
             float32_t centered = self->input_raw_af32[i] - self->average_f32;
             self->sign_bits[i] = (centered >= 0.0f) ? 1U : 0U;
         }
@@ -308,7 +308,7 @@ float32_t SAB_pitchdetector_process( SAB_pitchdetector_tst* self, float input_f3
         // -----------------------------------------------------
         self->detected_freq_f32 = pitchdet_bitwise_autocorr_cmsis(
             self->sign_bits,
-            PITCH_DECETOR_BUFFER_SIZE,
+            PITCH_DETECTOR_BUFFER_SIZE,
             48000.0f                      // sample rate
         );
 

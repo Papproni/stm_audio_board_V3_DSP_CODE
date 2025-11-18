@@ -118,19 +118,12 @@ float32_t SAB_custom_fx_process( SAB_custom_fx_tst* self, float32_t input_f32){
     self->param_2_value = conv_raw_to_param_value(self->intercom_parameters_aun[1].value_u8,0, max_amplitude);
 
     // Generated outputs from other Jinja templates
-    self->generator_block_block1_time+=1.0;
-    if(self->generator_block_block1_time>47999){
-    	self->generator_block_block1_time = 0;
-    }
 
-    // self->generator_block_block1_phase += self->param_1_value * (1.0f / 48000.0f);
-    self->generator_block_block1_phase += 348 * (1.0f / 48000.0f);
+    self->generator_block_block1_phase += self->param_1_value * (1.0f / 48000.0f);
 
     // wrap into [0,1) without jumps
     if (self->generator_block_block1_phase >= 1.0f)
         self->generator_block_block1_phase -= 1.0f;
-
-    
 
 // generator_block_block1 process: SINE
     // self->generator_block_block1_phase = fmod(self->generator_block_block1_time, 1.0/self->param_1_value) * self->param_1_value;
