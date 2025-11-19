@@ -23,6 +23,7 @@
 #include "octospi.h"
 #include "sai.h"
 #include "spi.h"
+#include "tim.h"
 #include "gpio.h"
 #include "fmc.h"
 
@@ -293,6 +294,31 @@ void I2C_Slave_Listen(void) {
 // Variables to store cycle counts
 uint32_t startCycles, endCycles, totalCycles;
 float32_t time_to_process_f32;
+
+typedef struct {
+    uint8_t  pressed_u8;          // 0 = OFF, 1 = ON (latched)
+    uint32_t counter_ms_u32;  // last time button toggled
+    uint32_t timeout_ms_u32;     // auto-off timeout (0 = disabled)
+} latch_btn_tst;
+
+// Button states
+latch_btn_tst btn1_st = {0,0,500};
+latch_btn_tst btn2_st = {0,0,500};
+latch_btn_tst btn3_st = {0,0,500};
+latch_btn_tst btn4_st = {0,0,500};
+
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
+{
+    HAL_GPIO_TogglePin(DSP_OK_GPIO_Port, DSP_OK_Pin);
+}
+
+
+
+
+
+
+
 /* USER CODE END 0 */
 
 /**
@@ -339,8 +365,9 @@ int main(void)
   MX_FMC_Init();
   MX_OCTOSPI1_Init();
   MX_I2C4_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_TIM_Base_Start_IT(&htim2);
   // init SAI interface
 	HAL_SAI_Transmit_DMA(&hsai_BlockA1, output_i2s_buffer_au32, 	16);
 	HAL_SAI_Receive_DMA(&hsai_BlockB1, input_i2s_buffer_au32, 	16);
@@ -412,6 +439,10 @@ int main(void)
 			preset_up_pressed = 0;
 			SAB_preset_up_pressed(&SAB_fx_manager_st);
 		}
+
+    if(fsw_btn_1_pressed){
+      
+    }
 
 
 

@@ -417,7 +417,7 @@ inline void  SAB_fsw_pressed_callback(SAB_fx_manager_tst* self){
         self->preset_mode_st.preset_mode_en = PRESET_MODE_NORMAL;
         break;
     }
-
+    
     uint8_t current_mode = self->preset_mode_st.preset_mode_en;
     fx_data_tst *slot_ptr= &self->intercom_pst->loop_data[0].slot1;
     // update fx states
