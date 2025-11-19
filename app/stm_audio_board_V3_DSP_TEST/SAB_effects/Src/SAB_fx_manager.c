@@ -85,6 +85,12 @@ inline void init_effect_chain(GuitarEffect** chain, EffectType* fx_chain, int ch
             chain[i]->process = SAB_reverb_process;
             chain[i]->delete  = SAB_reverb_delete;
             break;
+        case BANDPASS:
+            chain[i] = (GuitarEffect*)malloc(sizeof(SAB_bandpass_tst));
+            chain[i]->init = SAB_bandpass_init;
+            chain[i]->process = SAB_bandpass_process;
+            chain[i]->delete  = SAB_bandpass_delete;
+            break;
         // case EQUALIZER:
         //     chain[i] = (GuitarEffect*)malloc(sizeof(SAB_equalizer_tst));
         //     chain[i]->init = SAB_equalizer_init;
@@ -120,6 +126,18 @@ inline void init_effect_chain(GuitarEffect** chain, EffectType* fx_chain, int ch
             chain[i]->init = SAB_generator_init;
             chain[i]->process = SAB_generator_process;
             chain[i]->delete  = SAB_generator_delete;
+            break;
+        case LPF:
+            chain[i] = (GuitarEffect*)malloc(sizeof(SAB_lpf_tst));
+            chain[i]->init = SAB_lpf_init;
+            chain[i]->process = SAB_lpf_process;
+            chain[i]->delete  = SAB_lpf_delete;
+            break;
+        case HPF:
+            chain[i] = (GuitarEffect*)malloc(sizeof(SAB_hpf_tst));
+            chain[i]->init = SAB_hpf_init;
+            chain[i]->process = SAB_hpf_process;
+            chain[i]->delete  = SAB_hpf_delete;
             break;
         default:
             // TODO: ADD DUMMY DATA DEFINE HERE
@@ -168,6 +186,12 @@ EffectType get_fx_type(char* fx_name_char) {
         return PITCHDETECTOR;
         } else if (strcmp(fx_name_char, "SIG_GEN") == 0) {
         return SIG_GEN;
+    } else if (strcmp(fx_name_char, "lpf") == 0) {
+        return LPF;
+    } else if (strcmp(fx_name_char, "hpf") == 0) {
+        return HPF;
+    } else if (strcmp(fx_name_char, "bandpass") == 0) {
+        return BANDPASS;
     } else {
         
         // Handle unknown effect types

@@ -28,6 +28,9 @@ Generated on: 2024.11.28. */
 #include "SAB_octave.h"
 #include "SAB_pitchdetector.h"
 #include "SAB_generator.h"
+#include "SAB_lpf.h"
+#include "SAB_hpf.h"
+#include "SAB_bandpass.h"
 
 #include "stdint.h"
 #include "arm_math.h"
@@ -54,7 +57,10 @@ typedef enum {
     CUSTOM_FX,
     ENVELOPE,
     PITCHDETECTOR,
-    SIG_GEN
+    SIG_GEN,
+    LPF,
+    HPF,
+    BANDPASS
 } EffectType;
 
 volatile typedef struct{

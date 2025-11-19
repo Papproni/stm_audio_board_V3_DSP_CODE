@@ -276,6 +276,9 @@ void add_parameter(sab_fx_param_tun *param_ptr, char *name, param_type_ten type,
 
 // Use the macro to define your FX data
 DEFINE_FX_DATA(
+	{.name = "lpf",    .color = { 150, 75, 0 } },
+	{.name = "hpf",    .color = { 75, 0, 130 } },
+	{.name = "bandpass",    .color = { 75, 0, 130 } },
 	{.name = "SIG_GEN", .color = { 10,50,50}},
 	{.name = "Ptchdtcr", .color = { 100,100,100}},
 	{.name = "Reverb",    .color = { 0, 0, 255 } },
