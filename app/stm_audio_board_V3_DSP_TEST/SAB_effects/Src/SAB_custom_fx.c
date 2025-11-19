@@ -109,13 +109,12 @@ self->generator_block_block1_time = 0;
     self->phase_f32 = 0;
 };
 
-float32_t max_amplitude= 3e+009;
 // Process Function for SAB_custom_fx_tst
 float32_t SAB_custom_fx_process( SAB_custom_fx_tst* self, float32_t input_f32){
     // Freq
     self->param_1_value = conv_raw_to_param_value(self->intercom_parameters_aun[0].value_u8,70, 5000);
     // Amp
-    self->param_2_value = conv_raw_to_param_value(self->intercom_parameters_aun[1].value_u8,0, max_amplitude);
+    self->param_2_value = conv_raw_to_param_value(self->intercom_parameters_aun[1].value_u8,0, 3e+009);
 
     // Generated outputs from other Jinja templates
 

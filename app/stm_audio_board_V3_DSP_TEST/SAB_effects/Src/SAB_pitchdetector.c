@@ -249,9 +249,9 @@ static const float32_t lpCoeffs[5] =
 // Process Function for SAB_pitchdetector_tst
 void SAB_pitchdetector_init( SAB_pitchdetector_tst* self){
     strcpy(self->intercom_fx_data.name, "Ptchdtcr");
-	self->intercom_fx_data.color[0] = 255; 	// R
-	self->intercom_fx_data.color[1] = 0;	// G
-	self->intercom_fx_data.color[2] = 0;	// B
+	self->intercom_fx_data.color[0] = 100; 	// R
+	self->intercom_fx_data.color[1] = 100;	// G
+	self->intercom_fx_data.color[2] = 100;	// B
 	self->intercom_fx_data.fx_state_en = FX_STATE_OFF;
 
 	// PARAMS:

@@ -27,6 +27,7 @@ Generated on: 2024.11.28. */
 #include "SAB_custom_fx.h"
 #include "SAB_octave.h"
 #include "SAB_pitchdetector.h"
+#include "SAB_generator.h"
 
 #include "stdint.h"
 #include "arm_math.h"
@@ -52,7 +53,8 @@ typedef enum {
     CUSTOM,
     CUSTOM_FX,
     ENVELOPE,
-    PITCHDETECTOR
+    PITCHDETECTOR,
+    SIG_GEN
 } EffectType;
 
 volatile typedef struct{

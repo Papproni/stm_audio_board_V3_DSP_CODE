@@ -115,6 +115,12 @@ inline void init_effect_chain(GuitarEffect** chain, EffectType* fx_chain, int ch
             chain[i]->process = SAB_pitchdetector_process;
             chain[i]->delete  = SAB_pitchdetector_delete;
             break;
+        case SIG_GEN:
+            chain[i] = (GuitarEffect*)malloc(sizeof(SAB_generator_tst));
+            chain[i]->init = SAB_generator_init;
+            chain[i]->process = SAB_generator_process;
+            chain[i]->delete  = SAB_generator_delete;
+            break;
         default:
             // TODO: ADD DUMMY DATA DEFINE HERE
              chain[i] = &DEFAULT_EMPTY_SLOT_FOR_FX_CHAIN;
@@ -160,6 +166,8 @@ EffectType get_fx_type(char* fx_name_char) {
 		return REVERB;
     } else if (strcmp(fx_name_char, "Ptchdtcr") == 0) {
         return PITCHDETECTOR;
+        } else if (strcmp(fx_name_char, "SIG_GEN") == 0) {
+        return SIG_GEN;
     } else {
         
         // Handle unknown effect types
