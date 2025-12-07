@@ -195,7 +195,7 @@ float32_t mark2c_softclip(SAB_mark2c_tst* self, float32_t x)
     return fast_tanh_f32(x);
 }
 
-#define NORM_ADC_VAL 5e+009f // 2^23
+#define NORM_ADC_VAL 1e+008f // 2^23
 #define ADC_24_NORM   (1.0f / NORM_ADC_VAL)  // 1 / 2^23
 float32_t mark2c_asym_clip(SAB_mark2c_tst* self, float32_t x)
 {
@@ -260,21 +260,22 @@ void SAB_mark2c_init( SAB_mark2c_tst* self){
 	self->intercom_fx_data.fx_state_en = FX_STATE_OFF;
 
 	// PARAMS:
+    // PAGE1
     
-    add_parameter(&self->intercom_parameters_aun[0],  "GAIN", PARAM_TYPE_POT, 69);   // Input gain
-    add_parameter(&self->intercom_parameters_aun[1],  "TREB", PARAM_TYPE_POT, 69);   // Treble
-    add_parameter(&self->intercom_parameters_aun[2],  "MIDL", PARAM_TYPE_POT, 69);   // Middle
-    add_parameter(&self->intercom_parameters_aun[3],  "BASS", PARAM_TYPE_POT, 69);   // Bass
+    add_parameter(&self->intercom_parameters_aun[0],  "BASS", PARAM_TYPE_POT, 69);   // Bass
+    add_parameter(&self->intercom_parameters_aun[1],  "MIDL", PARAM_TYPE_POT, 69);   // Middle
+    add_parameter(&self->intercom_parameters_aun[2],  "TREB", PARAM_TYPE_POT, 69);   // Treble
+    add_parameter(&self->intercom_parameters_aun[3],  "PRE", PARAM_TYPE_POT, 69);   // Input gain
     add_parameter(&self->intercom_parameters_aun[4],  "LDRV", PARAM_TYPE_POT, 69);   // Lead Drive
-
-    add_parameter(&self->intercom_parameters_aun[5],  "E80",  PARAM_TYPE_POT, 69);   // GEQ 80 Hz
-    add_parameter(&self->intercom_parameters_aun[6],  "E240", PARAM_TYPE_POT, 69);   // GEQ 240 Hz
-    add_parameter(&self->intercom_parameters_aun[7],  "E750", PARAM_TYPE_POT, 69);   // GEQ 750 Hz
-    add_parameter(&self->intercom_parameters_aun[8],  "E22",  PARAM_TYPE_POT, 69);   // GEQ 2200 Hz
-    add_parameter(&self->intercom_parameters_aun[9],  "E66",  PARAM_TYPE_POT, 69);   // GEQ 6600 Hz
-
-    add_parameter(&self->intercom_parameters_aun[10], "PRES", PARAM_TYPE_POT, 69);   // Presence
-    add_parameter(&self->intercom_parameters_aun[11], "MAST", PARAM_TYPE_POT, 69);   // Master Volume
+    add_parameter(&self->intercom_parameters_aun[5], "MAST", PARAM_TYPE_POT, 69);   // Master Volume
+    // PAGE2
+    add_parameter(&self->intercom_parameters_aun[6],  "80",  PARAM_TYPE_POT, 69);   // GEQ 80 Hz
+    add_parameter(&self->intercom_parameters_aun[7],  "240", PARAM_TYPE_POT, 69);   // GEQ 240 Hz
+    add_parameter(&self->intercom_parameters_aun[8],  "750", PARAM_TYPE_POT, 69);   // GEQ 750 Hz
+    add_parameter(&self->intercom_parameters_aun[9],  "2k2",  PARAM_TYPE_POT, 69);   // GEQ 2200 Hz
+    add_parameter(&self->intercom_parameters_aun[10],  "6k6",  PARAM_TYPE_POT, 69);   // GEQ 6600 Hz
+    add_parameter(&self->intercom_parameters_aun[11], "PRES", PARAM_TYPE_POT, 69);   // Presence
+    
 
      // ----- HPF at ~90 Hz -----
     float32_t fc_hp = 90.0f;
@@ -320,18 +321,22 @@ void SAB_mark2c_init( SAB_mark2c_tst* self){
 // Process Function for SAB_mark2c_tst
 float32_t SAB_mark2c_process( SAB_mark2c_tst* self, float input_f32){
 
-    self->gain_pre_f32     = conv_raw_to_param_value(self->intercom_parameters_aun[0].value_u8,  1.0f, 10.0f);
-    self->treb_db_f32      = conv_raw_to_param_value(self->intercom_parameters_aun[1].value_u8, -12.0f, 12.0f);
-    self->mid_db_f32       = conv_raw_to_param_value(self->intercom_parameters_aun[2].value_u8, -12.0f, 12.0f);
-    self->bass_db_f32      = conv_raw_to_param_value(self->intercom_parameters_aun[3].value_u8, -12.0f, 9.0f);
+    
+    
+    self->bass_db_f32      = conv_raw_to_param_value(self->intercom_parameters_aun[0].value_u8, -12.0f, 9.0f);
+    self->mid_db_f32       = conv_raw_to_param_value(self->intercom_parameters_aun[1].value_u8, -12.0f, 12.0f);
+    self->treb_db_f32      = conv_raw_to_param_value(self->intercom_parameters_aun[2].value_u8, -12.0f, 12.0f);
+    self->gain_pre_f32     = conv_raw_to_param_value(self->intercom_parameters_aun[3].value_u8,  1.0f, 10.0f);
     self->lead_drive_f32   = conv_raw_to_param_value(self->intercom_parameters_aun[4].value_u8,  1.0f, 12.0f);
-    self->geq_80_db_f32    = conv_raw_to_param_value(self->intercom_parameters_aun[5].value_u8,  -12.0f, 12.0f);
-    self->geq_240_db_f32   = conv_raw_to_param_value(self->intercom_parameters_aun[6].value_u8,  -12.0f, 12.0f);
-    self->geq_750_db_f32   = conv_raw_to_param_value(self->intercom_parameters_aun[7].value_u8,  -18.0f, 6.0f);
-    self->geq_2200_db_f32  = conv_raw_to_param_value(self->intercom_parameters_aun[8].value_u8,  -12.0f, 12.0f);
-    self->geq_6600_db_f32  = conv_raw_to_param_value(self->intercom_parameters_aun[9].value_u8,  -12.0f, 12.0f);
-    self->presence_db_f32  = conv_raw_to_param_value(self->intercom_parameters_aun[10].value_u8, -6.0f,  12.0f);
-    self->master_f32       = conv_raw_to_param_value(self->intercom_parameters_aun[11].value_u8,  0.0f,   4.0f);
+    self->master_f32       = conv_raw_to_param_value(self->intercom_parameters_aun[5].value_u8,  0.0f,   4.0f);
+
+    self->geq_80_db_f32    = conv_raw_to_param_value(self->intercom_parameters_aun[6].value_u8,  -12.0f, 12.0f);
+    self->geq_240_db_f32   = conv_raw_to_param_value(self->intercom_parameters_aun[7].value_u8,  -12.0f, 12.0f);
+    self->geq_750_db_f32   = conv_raw_to_param_value(self->intercom_parameters_aun[8].value_u8,  -18.0f, 6.0f);
+    self->geq_2200_db_f32  = conv_raw_to_param_value(self->intercom_parameters_aun[9].value_u8,  -12.0f, 12.0f);
+    self->geq_6600_db_f32  = conv_raw_to_param_value(self->intercom_parameters_aun[10].value_u8,  -12.0f, 12.0f);
+    self->presence_db_f32  = conv_raw_to_param_value(self->intercom_parameters_aun[11].value_u8, -6.0f,  12.0f);
+    
 
     float32_t x = input_f32* ADC_24_NORM; // Normalize 24-bit input to -1.0 to +1.0
     x = mark2c_hpf_process(self, x);
@@ -340,8 +345,8 @@ float32_t SAB_mark2c_process( SAB_mark2c_tst* self, float input_f32){
     x = mark2c_asym_clip(self, x);
     x = mark2c_cathode_soften(self, x);
     x = mark2c_geq_process(self, x);
-    // x = mark2c_presence_shelf(self, x);
-    // x *= self->master_f32;
+    x = mark2c_presence_shelf(self, x);
+    x *= self->master_f32;
 
     return x*NORM_ADC_VAL;
 };
