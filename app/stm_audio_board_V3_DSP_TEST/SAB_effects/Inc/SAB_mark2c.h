@@ -30,17 +30,59 @@ typedef struct {
     float32_t param_11_value;
     float32_t param_12_value;
 
+    float32_t gain_pre_f32   ;
+    float32_t treb_db_f32    ;
+    float32_t mid_db_f32     ;
+    float32_t bass_db_f32    ;
+    float32_t lead_drive_f32 ;
+    float32_t geq_80_db_f32  ;
+    float32_t geq_240_db_f32 ;
+    float32_t geq_750_db_f32 ;
+    float32_t geq_2200_db_f32;
+    float32_t geq_6600_db_f32;
+    float32_t presence_db_f32;
+    float32_t master_f32     ;
 
-        float32_t gain_f32;
-        float32_t tone_f32;
-        float32_t volume_f32;
+    // -----------------
+    // 1) INPUT HPF (~90 Hz)
+    // -----------------
+    float32_t hpf_a_f32;
+    float32_t hpf_x1_f32;
+    float32_t hpf_y1_f32;
 
-        float32_t ths_f32;
+    // -----------------
+    // 2) TONE STACK (3-band, pre-distortion)
+    // -----------------
+    arm_biquad_cascade_df2T_instance_f32 tonestack;
+    float32_t tonestack_coeffs_af32[5 * 3]; // 3 stages
+    float32_t tonestack_state_af32[4 * 3];
 
-    arm_biquad_cascade_df2T_instance_f32 biquad_filter;
-    float32_t biquad_filter_coeffs_af32[5];
-    float32_t biquad_filter_states_af32[4];
-    float32_t biquad_filter_output_f32;
+    uint8_t last_treb_raw_u8;
+    uint8_t last_mid_raw_u8;
+    uint8_t last_bass_raw_u8;
+
+    // -----------------
+    // 3) GEQ (5-band, post distortion)
+    // -----------------
+    arm_biquad_cascade_df2T_instance_f32 geq;
+    float32_t geq_coeffs_af32[5 * 5];  // 5 stages
+    float32_t geq_state_af32[4 * 5];
+    uint8_t last_geq_raw_u8[5];        // 80, 240, 750, 2200, 6600
+
+    // -----------------
+    // 4) PRESENCE shelf
+    // -----------------
+    arm_biquad_cascade_df2T_instance_f32 presence;
+    float32_t presence_coeffs_af32[5]; // 1 stage
+    float32_t presence_state_af32[4];
+    uint8_t last_presence_raw_u8;
+
+    // -----------------
+    // 5) CATHODE FOLLOWER softening LPF
+    // -----------------
+    float32_t cf_a_f32;      // LPF coefficient
+    float32_t cf_y1_f32;     // last output
+
 } SAB_mark2c_tst;
 
 
