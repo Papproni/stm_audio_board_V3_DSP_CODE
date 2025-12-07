@@ -31,6 +31,7 @@ Generated on: 2024.11.28. */
 #include "SAB_lpf.h"
 #include "SAB_hpf.h"
 #include "SAB_bandpass.h"
+#include "SAB_mark2c.h"
 
 #include "stdint.h"
 #include "arm_math.h"
@@ -60,7 +61,8 @@ typedef enum {
     SIG_GEN,
     LPF,
     HPF,
-    BANDPASS
+    BANDPASS,
+    MARK2C
 } EffectType;
 
 volatile typedef struct{

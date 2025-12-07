@@ -139,6 +139,12 @@ inline void init_effect_chain(GuitarEffect** chain, EffectType* fx_chain, int ch
             chain[i]->process = SAB_hpf_process;
             chain[i]->delete  = SAB_hpf_delete;
             break;
+        case MARK2C:
+            chain[i] = (GuitarEffect*)malloc(sizeof(SAB_mark2c_tst));
+            chain[i]->init = SAB_mark2c_init;
+            chain[i]->process = SAB_mark2c_process;
+            chain[i]->delete  = SAB_mark2c_delete;
+            break;
         default:
             // TODO: ADD DUMMY DATA DEFINE HERE
              chain[i] = &DEFAULT_EMPTY_SLOT_FOR_FX_CHAIN;
@@ -192,6 +198,8 @@ EffectType get_fx_type(char* fx_name_char) {
         return HPF;
     } else if (strcmp(fx_name_char, "bandpass") == 0) {
         return BANDPASS;
+    } else if (strcmp(fx_name_char, "MarkIIc") == 0) {
+        return MARK2C;
     } else {
         
         // Handle unknown effect types
