@@ -120,11 +120,11 @@ static void mark2c_update_tonestack_coeffs(SAB_mark2c_tst* self)
 // Update GEQ biquads if any slider changed
 static void mark2c_update_geq_coeffs(SAB_mark2c_tst* self)
 {
-    uint8_t raw80   = self->intercom_parameters_aun[5].value_u8;
-    uint8_t raw240  = self->intercom_parameters_aun[6].value_u8;
-    uint8_t raw750  = self->intercom_parameters_aun[7].value_u8;
-    uint8_t raw2200 = self->intercom_parameters_aun[8].value_u8;
-    uint8_t raw6600 = self->intercom_parameters_aun[9].value_u8;
+    uint8_t raw80   = self->intercom_parameters_aun[6].value_u8;
+    uint8_t raw240  = self->intercom_parameters_aun[7].value_u8;
+    uint8_t raw750  = self->intercom_parameters_aun[8].value_u8;
+    uint8_t raw2200 = self->intercom_parameters_aun[9].value_u8;
+    uint8_t raw6600 = self->intercom_parameters_aun[10].value_u8;
 
     if (raw80   == self->last_geq_raw_u8[0] &&
         raw240  == self->last_geq_raw_u8[1] &&
@@ -156,7 +156,7 @@ static void mark2c_update_geq_coeffs(SAB_mark2c_tst* self)
 // Update presence shelf biquad if presence changed
 static void mark2c_update_presence_coeffs(SAB_mark2c_tst* self)
 {
-    uint8_t pres_raw = self->intercom_parameters_aun[10].value_u8;
+    uint8_t pres_raw = self->intercom_parameters_aun[11].value_u8;
     if (pres_raw == self->last_presence_raw_u8) {
         return;
     }
@@ -195,7 +195,7 @@ float32_t mark2c_softclip(SAB_mark2c_tst* self, float32_t x)
     return fast_tanh_f32(x);
 }
 
-#define NORM_ADC_VAL 1e+008f // 2^23
+#define NORM_ADC_VAL 5e+008f // 2^23
 #define ADC_24_NORM   (1.0f / NORM_ADC_VAL)  // 1 / 2^23
 float32_t mark2c_asym_clip(SAB_mark2c_tst* self, float32_t x)
 {
@@ -328,7 +328,7 @@ float32_t SAB_mark2c_process( SAB_mark2c_tst* self, float input_f32){
     self->treb_db_f32      = conv_raw_to_param_value(self->intercom_parameters_aun[2].value_u8, -12.0f, 12.0f);
     self->gain_pre_f32     = conv_raw_to_param_value(self->intercom_parameters_aun[3].value_u8,  1.0f, 10.0f);
     self->lead_drive_f32   = conv_raw_to_param_value(self->intercom_parameters_aun[4].value_u8,  1.0f, 12.0f);
-    self->master_f32       = conv_raw_to_param_value(self->intercom_parameters_aun[5].value_u8,  0.0f,   4.0f);
+    self->master_f32       = conv_raw_to_param_value(self->intercom_parameters_aun[5].value_u8,  0.0f,   2.0f);
 
     self->geq_80_db_f32    = conv_raw_to_param_value(self->intercom_parameters_aun[6].value_u8,  -12.0f, 12.0f);
     self->geq_240_db_f32   = conv_raw_to_param_value(self->intercom_parameters_aun[7].value_u8,  -12.0f, 12.0f);
