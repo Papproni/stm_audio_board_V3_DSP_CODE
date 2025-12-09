@@ -90,9 +90,9 @@ static inline float32_t fast_tanh_f32(float32_t x)
 // Update tone stack coefficients if any of TREB/MID/BASS raw changed
 static void mark2c_update_tonestack_coeffs(SAB_mark2c_tst* self)
 {
-    uint8_t treb_raw = self->intercom_parameters_aun[1].value_u8;
-    uint8_t mid_raw  = self->intercom_parameters_aun[2].value_u8;
-    uint8_t bass_raw = self->intercom_parameters_aun[3].value_u8;
+    uint8_t treb_raw = self->intercom_parameters_aun[2].value_u8;
+    uint8_t mid_raw  = self->intercom_parameters_aun[1].value_u8;
+    uint8_t bass_raw = self->intercom_parameters_aun[0].value_u8;
 
     if (treb_raw == self->last_treb_raw_u8 &&
         mid_raw  == self->last_mid_raw_u8  &&
@@ -323,19 +323,19 @@ float32_t SAB_mark2c_process( SAB_mark2c_tst* self, float input_f32){
 
     
     
-    self->bass_db_f32      = conv_raw_to_param_value(self->intercom_parameters_aun[0].value_u8, -12.0f, 9.0f);
+    self->bass_db_f32      = conv_raw_to_param_value(self->intercom_parameters_aun[0].value_u8, -12.0f, 12.0f);
     self->mid_db_f32       = conv_raw_to_param_value(self->intercom_parameters_aun[1].value_u8, -12.0f, 12.0f);
     self->treb_db_f32      = conv_raw_to_param_value(self->intercom_parameters_aun[2].value_u8, -12.0f, 12.0f);
-    self->gain_pre_f32     = conv_raw_to_param_value(self->intercom_parameters_aun[3].value_u8,  1.0f, 10.0f);
-    self->lead_drive_f32   = conv_raw_to_param_value(self->intercom_parameters_aun[4].value_u8,  1.0f, 12.0f);
+    self->gain_pre_f32     = conv_raw_to_param_value(self->intercom_parameters_aun[3].value_u8,  0.0f, 10.0f);
+    self->lead_drive_f32   = conv_raw_to_param_value(self->intercom_parameters_aun[4].value_u8,  0.0f, 12.0f);
     self->master_f32       = conv_raw_to_param_value(self->intercom_parameters_aun[5].value_u8,  0.0f,   2.0f);
 
     self->geq_80_db_f32    = conv_raw_to_param_value(self->intercom_parameters_aun[6].value_u8,  -12.0f, 12.0f);
     self->geq_240_db_f32   = conv_raw_to_param_value(self->intercom_parameters_aun[7].value_u8,  -12.0f, 12.0f);
-    self->geq_750_db_f32   = conv_raw_to_param_value(self->intercom_parameters_aun[8].value_u8,  -18.0f, 6.0f);
+    self->geq_750_db_f32   = conv_raw_to_param_value(self->intercom_parameters_aun[8].value_u8,  -18.0f, 12.0f);
     self->geq_2200_db_f32  = conv_raw_to_param_value(self->intercom_parameters_aun[9].value_u8,  -12.0f, 12.0f);
     self->geq_6600_db_f32  = conv_raw_to_param_value(self->intercom_parameters_aun[10].value_u8,  -12.0f, 12.0f);
-    self->presence_db_f32  = conv_raw_to_param_value(self->intercom_parameters_aun[11].value_u8, -6.0f,  12.0f);
+    self->presence_db_f32  = conv_raw_to_param_value(self->intercom_parameters_aun[11].value_u8, -12.0f,  12.0f);
     
 
     float32_t x = input_f32* ADC_24_NORM; // Normalize 24-bit input to -1.0 to +1.0
