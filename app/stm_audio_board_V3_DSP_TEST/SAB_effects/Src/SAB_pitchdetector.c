@@ -276,6 +276,10 @@ void SAB_pitchdetector_init( SAB_pitchdetector_tst* self){
 
 
 float32_t freq_f32;
+float32_t max_f32;
+float32_t min_f32;
+float32_t avg_f32;
+uint32_t max_index_u32;
 
 
 // Process Function for SAB_pitchdetector_tst
@@ -289,6 +293,9 @@ float32_t SAB_pitchdetector_process( SAB_pitchdetector_tst* self, float input_f3
 		self->input_raw_cntr_u32 = 0;
 		// Calculate average
 		arm_rms_f32(self->input_raw_af32,PITCH_DETECTOR_BUFFER_SIZE,&self->average_f32);
+        avg_f32 = self->average_f32;
+        arm_max_f32(self->input_raw_af32,PITCH_DETECTOR_BUFFER_SIZE,&max_f32,&max_index_u32);
+        arm_min_f32(self->input_raw_af32,PITCH_DETECTOR_BUFFER_SIZE,&min_f32,&max_index_u32);
 		// -----------------------------------------------------
         // 3) Remove mean -> sign bits
         // -----------------------------------------------------

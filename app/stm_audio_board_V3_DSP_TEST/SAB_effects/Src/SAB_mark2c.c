@@ -192,10 +192,15 @@ float32_t mark2c_softclip(SAB_mark2c_tst* self, float32_t x)
 
     // Soft symmetric saturation
     // You can tweak "drive" here if you want later
-    return fast_tanh_f32(x);
+    // return fast_tanh_f32(x);
+
+     // Increase drive into saturation
+    
+    // Add makeup gain to compensate
+    return 1.4 *  tanhf(x * 2.5f);
 }
 
-#define NORM_ADC_VAL 5e+008f // 2^23
+#define NORM_ADC_VAL 563647235.0f // Measured max abs value from 24-bit ADC (2^23 = 8388608)
 #define ADC_24_NORM   (1.0f / NORM_ADC_VAL)  // 1 / 2^23
 float32_t mark2c_asym_clip(SAB_mark2c_tst* self, float32_t x)
 {
@@ -248,6 +253,51 @@ float32_t mark2c_presence_shelf(SAB_mark2c_tst* self, float32_t x)
     return out;
 }
 
+// Keeley-style compression settings
+float32_t MARK2C_envelope_attack = 0.01f;    // Fast attack: ~0.5ms at 48kHz
+float32_t MARK2C_envelope_release = 0.10f; // Slow release: ~20ms for sustain
+float32_t MARK2C_threshold = 0.15f;          // Threshold (starts compressing around here)
+float32_t MARK2C_ratio = 4.0f;               // 2.5:1 ratio (transparent, musical)
+float32_t MARK2C_soft_knee = 0.1f;           // Soft knee width in dB
+float32_t sound_sample_f32;
+// Keeley-style: transparent, smooth, adds sustain
+float32_t mark2c_envelope_compress(SAB_mark2c_tst* self, float32_t x)
+{   
+    sound_sample_f32 = x;
+    float32_t abs_x = fabsf(x);
+    
+    // Envelope tracking with separate attack/release
+    if (abs_x > self->comp_env_f32) {
+        // Attack phase: fast response to transients
+        self->comp_env_f32 += MARK2C_envelope_attack * (abs_x - self->comp_env_f32);
+    } else {
+        // Release phase: slow recovery (creates sustain)
+        self->comp_env_f32 += MARK2C_envelope_release * (abs_x - self->comp_env_f32);
+    }
+    
+    // Soft-knee compression (smooth transition into limiting)
+    float32_t knee_start = MARK2C_threshold - MARK2C_soft_knee;
+    float32_t knee_end = MARK2C_threshold + MARK2C_soft_knee;
+    
+    float32_t gain_reduction = 1.0f;  // Default: no compression
+    
+    if (self->comp_env_f32 > knee_start) {
+        if (self->comp_env_f32 < knee_end) {
+            // Inside soft-knee zone: gradual transition
+            float32_t knee_factor = (self->comp_env_f32 - knee_start) / (2.0f * MARK2C_soft_knee);
+            float32_t soft_ratio = 1.0f + knee_factor * (MARK2C_ratio - 1.0f);
+            float32_t excess = self->comp_env_f32 - knee_start;
+            gain_reduction = 1.0f / (1.0f + (soft_ratio - 1.0f) * excess / MARK2C_soft_knee);
+        } else {
+            // Past knee: full compression ratio
+            float32_t excess = self->comp_env_f32 - MARK2C_threshold;
+            gain_reduction = 1.0f / (1.0f + (MARK2C_ratio - 1.0f) * excess / MARK2C_threshold);
+        }
+    }
+    
+    // Makeup gain: restore perceived level (Keeley style = subtle, musical)
+    return x * gain_reduction * 1.35f;
+}
 
 
 
@@ -316,6 +366,11 @@ void SAB_mark2c_init( SAB_mark2c_tst* self){
     self->cf_a_f32  = expf(-2.0f * MARK2C_PI * fc_cf / MARK2C_FS);
     self->cf_y1_f32 = 0.0f;
 
+
+    self->comp_env_f32 = 0.0f;
+    self->comp_threshold_f32 = 0.4f;
+    self->comp_ratio_f32 = 4.0f;
+
 };
 
 // Process Function for SAB_mark2c_tst
@@ -326,8 +381,8 @@ float32_t SAB_mark2c_process( SAB_mark2c_tst* self, float input_f32){
     self->bass_db_f32      = conv_raw_to_param_value(self->intercom_parameters_aun[0].value_u8, -12.0f, 12.0f);
     self->mid_db_f32       = conv_raw_to_param_value(self->intercom_parameters_aun[1].value_u8, -12.0f, 12.0f);
     self->treb_db_f32      = conv_raw_to_param_value(self->intercom_parameters_aun[2].value_u8, -12.0f, 12.0f);
-    self->gain_pre_f32     = conv_raw_to_param_value(self->intercom_parameters_aun[3].value_u8,  0.0f, 10.0f);
-    self->lead_drive_f32   = conv_raw_to_param_value(self->intercom_parameters_aun[4].value_u8,  0.0f, 12.0f);
+    self->gain_pre_f32     = conv_raw_to_param_value(self->intercom_parameters_aun[3].value_u8,  1.0f, 10.0f);
+    self->lead_drive_f32   = conv_raw_to_param_value(self->intercom_parameters_aun[4].value_u8,  1.0f, 12.0f);
     self->master_f32       = conv_raw_to_param_value(self->intercom_parameters_aun[5].value_u8,  0.0f,   2.0f);
 
     self->geq_80_db_f32    = conv_raw_to_param_value(self->intercom_parameters_aun[6].value_u8,  -12.0f, 12.0f);
@@ -340,6 +395,7 @@ float32_t SAB_mark2c_process( SAB_mark2c_tst* self, float input_f32){
 
     float32_t x = input_f32* ADC_24_NORM; // Normalize 24-bit input to -1.0 to +1.0
     x = mark2c_hpf_process(self, x);
+    // x = mark2c_envelope_compress(self, x);      // ADD THIS
     x = mark2c_tonestack_process(self, x);
     x = mark2c_softclip(self, x * self->gain_pre_f32);
     x = mark2c_asym_clip(self, x);

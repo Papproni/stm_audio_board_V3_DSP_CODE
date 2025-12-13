@@ -83,6 +83,10 @@ typedef struct {
     float32_t cf_a_f32;      // LPF coefficient
     float32_t cf_y1_f32;     // last output
 
+    float32_t comp_env_f32;
+    float32_t comp_threshold_f32;
+    float32_t comp_ratio_f32;
+    
 } SAB_mark2c_tst;
 
 
