@@ -145,6 +145,12 @@ inline void init_effect_chain(GuitarEffect** chain, EffectType* fx_chain, int ch
             chain[i]->process = SAB_mark2c_process;
             chain[i]->delete  = SAB_mark2c_delete;
             break;
+        case IMRE:
+            chain[i] = (GuitarEffect*)malloc(sizeof(SAB_step_response_tst));
+            chain[i]->init = SAB_step_response_init;
+            chain[i]->process = SAB_step_response_process;
+            chain[i]->delete  = SAB_step_response_delete;
+            break;
         default:
             // TODO: ADD DUMMY DATA DEFINE HERE
              chain[i] = &DEFAULT_EMPTY_SLOT_FOR_FX_CHAIN;
@@ -200,6 +206,8 @@ EffectType get_fx_type(char* fx_name_char) {
         return BANDPASS;
     } else if (strcmp(fx_name_char, "MarkIIc") == 0) {
         return MARK2C;
+    } else if (strcmp(fx_name_char, "ImRe") == 0) {
+        return IMRE;
     } else {
         
         // Handle unknown effect types

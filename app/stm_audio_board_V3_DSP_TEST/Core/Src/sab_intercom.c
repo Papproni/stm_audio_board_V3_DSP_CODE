@@ -276,6 +276,7 @@ void add_parameter(sab_fx_param_tun *param_ptr, char *name, param_type_ten type,
 
 // Use the macro to define your FX data
 DEFINE_FX_DATA(
+	{.name = "ImRe",    .color = { 0, 255, 0 } },
 	{.name = "MarkIIc",    .color = { 0, 255, 0 } },
 	{.name = "lpf",    .color = { 150, 75, 0 } },
 	{.name = "hpf",    .color = { 75, 0, 130 } },
