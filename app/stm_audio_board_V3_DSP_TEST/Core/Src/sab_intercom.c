@@ -13,7 +13,7 @@ static void get_preset_data(struct sab_intercom_st *self)
 {
 	HAL_I2C_Mem_Read(self->i2c_h, self->slave_addr_u8,
 					 SAB_I2C_REG_PRESETNUM, I2C_MEMADD_SIZE_8BIT,
-					 &self->preset_data_un.all_u32, SAB_I2C_REG_PRESETNUM_LEN,
+					 (uint8_t*)&self->preset_data_un.all_u32, SAB_I2C_REG_PRESETNUM_LEN,
 					 1000);
 }
 static void get_loop_data(struct sab_intercom_st *self, uint8_t loop_num_u8)
@@ -21,7 +21,7 @@ static void get_loop_data(struct sab_intercom_st *self, uint8_t loop_num_u8)
 	HAL_I2C_Mem_Read(self->i2c_h, self->slave_addr_u8,
 					 SAB_I2C_REG_LOOP1FX + loop_num_u8 - 1,
 					 I2C_MEMADD_SIZE_8BIT,
-					 self->loop_data->all_pau8, SAB_I2C_REG_LOOPFX_LEN,
+					 (uint8_t*)self->loop_data->all_pau8, SAB_I2C_REG_LOOPFX_LEN,
 					 1000);
 }
 static void get_fx_param(struct sab_intercom_st *self, uint8_t param_slot_u8)
@@ -29,7 +29,7 @@ static void get_fx_param(struct sab_intercom_st *self, uint8_t param_slot_u8)
 	HAL_I2C_Mem_Read(self->i2c_h, self->slave_addr_u8,
 					 SAB_I2C_REG_FXPARAM1 + param_slot_u8 - 1,
 					 I2C_MEMADD_SIZE_8BIT,
-					 &self->fx_param_pun[self->current_fx_in_edit][param_slot_u8 - 1].all_au8, SAB_I2C_REG_FXPARAM_LEN,
+					 (uint8_t*)&self->fx_param_pun[self->current_fx_in_edit][param_slot_u8 - 1].all_au8, SAB_I2C_REG_FXPARAM_LEN,
 					 1000);
 }
 
@@ -38,7 +38,7 @@ static void get_info(struct sab_intercom_st *self)
 	HAL_I2C_Mem_Read(self->i2c_h, self->slave_addr_u8,
 					 SAB_I2C_REG_INFO,
 					 I2C_MEMADD_SIZE_8BIT,
-					 &self->info_un.all_u8, SAB_I2C_REG_INFO_LEN,
+					 (uint8_t*)&self->info_un.all_u8, SAB_I2C_REG_INFO_LEN,
 					 1000);
 }
 static void get_loopbypass(struct sab_intercom_st *self)
@@ -46,7 +46,7 @@ static void get_loopbypass(struct sab_intercom_st *self)
 	HAL_I2C_Mem_Read(self->i2c_h, self->slave_addr_u8,
 					 SAB_I2C_REG_LOOPBYPASSSTATE,
 					 I2C_MEMADD_SIZE_8BIT,
-					 &self->loopbypass_un.all_u8, SAB_I2C_REG_LOOPBYPASSSTATE_LEN,
+					 (uint8_t*)&self->loopbypass_un.all_u8, SAB_I2C_REG_LOOPBYPASSSTATE_LEN,
 					 1000);
 }
 
@@ -76,7 +76,7 @@ static void get_implemented_effects(struct sab_intercom_st *self)
 	HAL_I2C_Mem_Read(self->i2c_h, self->slave_addr_u8,
 					 SAB_I2C_REG_IMPLEMENTED_EFFECTS,
 					 I2C_MEMADD_SIZE_8BIT,
-					 self->implemented_fx_data_ptr, sizeof(fx_data_tst) * self->num_of_implemented_effects,
+					 (uint8_t*)self->implemented_fx_data_ptr, sizeof(fx_data_tst) * self->num_of_implemented_effects,
 					 1000);
 }
 
@@ -88,7 +88,7 @@ static void set_fx_param(struct sab_intercom_st *self, uint8_t param_slot_u8, ui
 	HAL_I2C_Mem_Write(self->i2c_h, self->slave_addr_u8,
 					  SAB_I2C_REG_FXPARAM1 + param_slot_u8 - 1,
 					  I2C_MEMADD_SIZE_8BIT,
-					  &self->fx_param_pun[self->current_fx_in_edit][param_slot_u8 - 1], SAB_I2C_REG_FXPARAM_LEN, 1000);
+					  (uint8_t*)&self->fx_param_pun[self->current_fx_in_edit][param_slot_u8 - 1], SAB_I2C_REG_FXPARAM_LEN, 1000);
 }
 
 static void set_loopbypass(struct sab_intercom_st *self)
@@ -96,7 +96,7 @@ static void set_loopbypass(struct sab_intercom_st *self)
 	HAL_I2C_Mem_Write(self->i2c_h, self->slave_addr_u8,
 					  SAB_I2C_REG_LOOPBYPASSSTATE,
 					  I2C_MEMADD_SIZE_8BIT,
-					  &self->loopbypass_un.all_u8, SAB_I2C_REG_LOOPBYPASSSTATE_LEN, 1000);
+					  (uint8_t*)&self->loopbypass_un.all_u8, SAB_I2C_REG_LOOPBYPASSSTATE_LEN, 1000);
 }
 
 static void set_current_fx_in_edit(struct sab_intercom_st *self, uint8_t fx_slot_u8)
@@ -114,7 +114,7 @@ static void set_current_fx_in_edit(struct sab_intercom_st *self, uint8_t fx_slot
 /// @param size_u8
 void sab_intercom_process_i2c_data(struct sab_intercom_st *self, uint8_t *buffer_pu8, uint8_t size_u8)
 {
-	memcpy(self->get_reg_data_ptr(self), buffer_pu8, size_u8);
+	memcpy((void*)self->get_reg_data_ptr(self), buffer_pu8, size_u8);
 	self->change_occured_flg = self->register_addr_u8;
 }
 
@@ -127,79 +127,79 @@ uint32_t sab_intercom_get_reg_data_ptr(struct sab_intercom_st *self)
 	switch (self->register_addr_u8)
 	{
 	case SAB_I2C_REG_PRESETNUM:
-		return &self->preset_data_un; // Returns pointer to the preset data union
+		return (uint32_t)&self->preset_data_un; // Returns pointer to the preset data union
 
 	case SAB_I2C_REG_LOOP1FX:
-		return &self->loop_data[0]; // Returns pointer to the first loop
+		return (uint32_t)&self->loop_data[0]; // Returns pointer to the first loop
 
 	case SAB_I2C_REG_LOOP2FX:
-		return &self->loop_data[1]; // Returns pointer to the second loop
+		return (uint32_t)&self->loop_data[1]; // Returns pointer to the second loop
 
 	case SAB_I2C_REG_LOOP3FX:
-		return &self->loop_data[2]; // Returns pointer to the third loop
+		return (uint32_t)&self->loop_data[2]; // Returns pointer to the third loop
 
 	case SAB_I2C_REG_LOOP4FX:
-		return &self->loop_data[3]; // Returns pointer to the fourth loop
+		return (uint32_t)&self->loop_data[3]; // Returns pointer to the fourth loop
 
 	case SAB_I2C_REG_FXPARAM1:
-		return &self->fx_param_pun[self->current_fx_in_edit][0]; // Returns pointer to the first FX parameter
+		return (uint32_t)&self->fx_param_pun[self->current_fx_in_edit][0]; // Returns pointer to the first FX parameter
 
 	case SAB_I2C_REG_FXPARAM2:
-		return &self->fx_param_pun[self->current_fx_in_edit][1]; // Returns pointer to the second FX parameter
+		return (uint32_t)&self->fx_param_pun[self->current_fx_in_edit][1]; // Returns pointer to the second FX parameter
 
 	case SAB_I2C_REG_FXPARAM3:
-		return &self->fx_param_pun[self->current_fx_in_edit][2]; // Returns pointer to the third FX parameter
+		return (uint32_t)&self->fx_param_pun[self->current_fx_in_edit][2]; // Returns pointer to the third FX parameter
 
 	case SAB_I2C_REG_FXPARAM4:
-		return &self->fx_param_pun[self->current_fx_in_edit][3]; // Returns pointer to the fourth FX parameter
+		return (uint32_t)&self->fx_param_pun[self->current_fx_in_edit][3]; // Returns pointer to the fourth FX parameter
 
 	case SAB_I2C_REG_FXPARAM5:
-		return &self->fx_param_pun[self->current_fx_in_edit][4]; // Returns pointer to the fifth FX parameter
+		return (uint32_t)&self->fx_param_pun[self->current_fx_in_edit][4]; // Returns pointer to the fifth FX parameter
 
 	case SAB_I2C_REG_FXPARAM6:
-		return &self->fx_param_pun[self->current_fx_in_edit][5]; // Returns pointer to the sixth FX parameter
+		return (uint32_t)&self->fx_param_pun[self->current_fx_in_edit][5]; // Returns pointer to the sixth FX parameter
 
 	case SAB_I2C_REG_FXPARAM7:
-		return &self->fx_param_pun[self->current_fx_in_edit][6]; // Returns pointer to the seventh FX parameter
+		return (uint32_t)&self->fx_param_pun[self->current_fx_in_edit][6]; // Returns pointer to the seventh FX parameter
 
 	case SAB_I2C_REG_FXPARAM8:
-		return &self->fx_param_pun[self->current_fx_in_edit][7]; // Returns pointer to the eighth FX parameter
+		return (uint32_t)&self->fx_param_pun[self->current_fx_in_edit][7]; // Returns pointer to the eighth FX parameter
 
 	case SAB_I2C_REG_FXPARAM9:
-		return &self->fx_param_pun[self->current_fx_in_edit][8]; // Returns pointer to the ninth FX parameter
+		return (uint32_t)&self->fx_param_pun[self->current_fx_in_edit][8]; // Returns pointer to the ninth FX parameter
 
 	case SAB_I2C_REG_FXPARAM10:
-		return &self->fx_param_pun[self->current_fx_in_edit][9]; // Returns pointer to the tenth FX parameter
+		return (uint32_t)&self->fx_param_pun[self->current_fx_in_edit][9]; // Returns pointer to the tenth FX parameter
 
 	case SAB_I2C_REG_FXPARAM11:
-		return &self->fx_param_pun[self->current_fx_in_edit][10]; // Returns pointer to the eleventh FX parameter
+		return (uint32_t)&self->fx_param_pun[self->current_fx_in_edit][10]; // Returns pointer to the eleventh FX parameter
 
 	case SAB_I2C_REG_FXPARAM12:
-		return &self->fx_param_pun[self->current_fx_in_edit][11]; // Returns pointer to the twelfth FX parameter
+		return (uint32_t)&self->fx_param_pun[self->current_fx_in_edit][11]; // Returns pointer to the twelfth FX parameter
 
 	case SAB_I2C_REG_INFO:
-		return &self->info_un; // Returns pointer to the info union
+		return (uint32_t)&self->info_un; // Returns pointer to the info union
 
 	case SAB_I2C_REG_SAVEPRESET:
-		return &self->save_un; // Returns pointer to the save union
+		return (uint32_t)&self->save_un; // Returns pointer to the save union
 
 	case SAB_I2C_REG_LOOPBYPASSSTATE:
-		return &self->loopbypass_un; // Returns pointer to the loop bypass union
+		return (uint32_t)&self->loopbypass_un; // Returns pointer to the loop bypass union
 
 	case SAB_I2C_REG_NUM_OF_IMPLEMENTED_EFFECTS:
-		return &self->num_of_implemented_effects;
+		return (uint32_t)&self->num_of_implemented_effects;
 
 	case SAB_I2C_REG_IMPLEMENTED_EFFECTS:
-		return self->implemented_fx_data_ptr;
+		return (uint32_t)self->implemented_fx_data_ptr;
 
 	case SAB_I2c_REG_CURRENT_FX:
-		return &self->current_fx_in_edit;
+		return (uint32_t)&self->current_fx_in_edit;
 	
 	case SAB_I2C_REG_DSP_FW_UPDATE:
-		return &self->dsp_fw_update_flg;
+		return (uint32_t)&self->dsp_fw_update_flg;
 
 	default:
-		return NULL; // Return NULL if the register enum is out of bounds
+		return 0; // Return NULL if the register enum is out of bounds
 	}
 }
 
@@ -252,7 +252,7 @@ uint8_t sab_intercom_get_reg_data_size(struct sab_intercom_st *self)
 		return sizeof(uint8_t);
 
 	default:
-		return NULL; // Return NULL if the register enum is out of bounds
+		return 0; // Return NULL if the register enum is out of bounds
 	}
 }
 

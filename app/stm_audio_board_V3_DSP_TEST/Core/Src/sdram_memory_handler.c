@@ -17,7 +17,7 @@ void clear_sdram_memory(){
 uint32_t* sdram_malloc_float32_t_array(uint32_t size){
    uint32_t addr = sdram_st.current_ptr;
    sdram_st.current_ptr+=size;
-   return &(samples[addr]);
+   return (uint32_t*)&(samples[addr]);
 }
 
 

@@ -65,7 +65,7 @@ float32_t SAB_step_response_process( SAB_step_response_tst* self, float input_f3
 
 
     start = DWT->CYCCNT;
-    arm_fir_f32(&fir,&inputs_f32,output_block,BLOCK_SIZE_FOR_TEST);
+    arm_fir_f32(&fir,(float32_t*)&inputs_f32,output_block,BLOCK_SIZE_FOR_TEST);
 
     stop  = DWT->CYCCNT;
 

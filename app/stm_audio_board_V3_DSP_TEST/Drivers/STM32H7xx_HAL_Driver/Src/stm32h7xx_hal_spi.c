@@ -62,17 +62,17 @@
           Use Functions HAL_SPI_RegisterCallback() to register an interrupt callback.
 
           Function HAL_SPI_RegisterCallback() allows to register following callbacks:
-            (+) TxCpltCallback        : SPI Tx Completed callback
-            (+) RxCpltCallback        : SPI Rx Completed callback
-            (+) TxRxCpltCallback      : SPI TxRx Completed callback
-            (+) TxHalfCpltCallback    : SPI Tx Half Completed callback
-            (+) RxHalfCpltCallback    : SPI Rx Half Completed callback
-            (+) TxRxHalfCpltCallback  : SPI TxRx Half Completed callback
-            (+) ErrorCallback         : SPI Error callback
-            (+) AbortCpltCallback     : SPI Abort callback
-            (+) SuspendCallback       : SPI Suspend callback
-            (+) MspInitCallback       : SPI Msp Init callback
-            (+) MspDeInitCallback     : SPI Msp DeInit callback
+            (++) TxCpltCallback        : SPI Tx Completed callback
+            (++) RxCpltCallback        : SPI Rx Completed callback
+            (++) TxRxCpltCallback      : SPI TxRx Completed callback
+            (++) TxHalfCpltCallback    : SPI Tx Half Completed callback
+            (++) RxHalfCpltCallback    : SPI Rx Half Completed callback
+            (++) TxRxHalfCpltCallback  : SPI TxRx Half Completed callback
+            (++) ErrorCallback         : SPI Error callback
+            (++) AbortCpltCallback     : SPI Abort callback
+            (++) SuspendCallback       : SPI Suspend callback
+            (++) MspInitCallback       : SPI Msp Init callback
+            (++) MspDeInitCallback     : SPI Msp DeInit callback
           This function takes as parameters the HAL peripheral handle, the Callback ID
           and a pointer to the user callback function.
 
@@ -82,17 +82,17 @@
           HAL_SPI_UnRegisterCallback takes as parameters the HAL peripheral handle,
           and the Callback ID.
           This function allows to reset following callbacks:
-            (+) TxCpltCallback        : SPI Tx Completed callback
-            (+) RxCpltCallback        : SPI Rx Completed callback
-            (+) TxRxCpltCallback      : SPI TxRx Completed callback
-            (+) TxHalfCpltCallback    : SPI Tx Half Completed callback
-            (+) RxHalfCpltCallback    : SPI Rx Half Completed callback
-            (+) TxRxHalfCpltCallback  : SPI TxRx Half Completed callback
-            (+) ErrorCallback         : SPI Error callback
-            (+) AbortCpltCallback     : SPI Abort callback
-            (+) SuspendCallback       : SPI Suspend callback
-            (+) MspInitCallback       : SPI Msp Init callback
-            (+) MspDeInitCallback     : SPI Msp DeInit callback
+            (++) TxCpltCallback        : SPI Tx Completed callback
+            (++) RxCpltCallback        : SPI Rx Completed callback
+            (++) TxRxCpltCallback      : SPI TxRx Completed callback
+            (++) TxHalfCpltCallback    : SPI Tx Half Completed callback
+            (++) RxHalfCpltCallback    : SPI Rx Half Completed callback
+            (++) TxRxHalfCpltCallback  : SPI TxRx Half Completed callback
+            (++) ErrorCallback         : SPI Error callback
+            (++) AbortCpltCallback     : SPI Abort callback
+            (++) SuspendCallback       : SPI Suspend callback
+            (++) MspInitCallback       : SPI Msp Init callback
+            (++) MspDeInitCallback     : SPI Msp DeInit callback
 
        By default, after the HAL_SPI_Init() and when the state is HAL_SPI_STATE_RESET
        all callbacks are set to the corresponding weak functions:
@@ -1133,6 +1133,15 @@ HAL_StatusTypeDef HAL_SPI_Receive(SPI_HandleTypeDef *hspi, uint8_t *pData, uint1
         hspi->pRxBuffPtr += sizeof(uint32_t);
         hspi->RxXferCount--;
       }
+      /* Check if transfer is locked because of a suspend */
+      else if (HAL_IS_BIT_SET(temp_sr_reg, SPI_SR_SUSP))
+      {
+        /* Verify suspend is triggered by hardware and not software */
+        if (HAL_IS_BIT_SET(hspi->Instance->CR1, SPI_CR1_CSTART))
+        {
+          __HAL_SPI_CLEAR_SUSPFLAG(hspi);
+        }
+      }
       else
       {
         /* Timeout management */
@@ -1200,6 +1209,15 @@ HAL_StatusTypeDef HAL_SPI_Receive(SPI_HandleTypeDef *hspi, uint8_t *pData, uint1
         hspi->pRxBuffPtr += sizeof(uint16_t);
         hspi->RxXferCount--;
       }
+      /* Check if transfer is locked because of a suspend */
+      else if (HAL_IS_BIT_SET(temp_sr_reg, SPI_SR_SUSP))
+      {
+        /* Verify suspend is triggered by hardware and not software */
+        if (HAL_IS_BIT_SET(hspi->Instance->CR1, SPI_CR1_CSTART))
+        {
+          __HAL_SPI_CLEAR_SUSPFLAG(hspi);
+        }
+      }
       else
       {
         /* Timeout management */
@@ -1254,6 +1272,15 @@ HAL_StatusTypeDef HAL_SPI_Receive(SPI_HandleTypeDef *hspi, uint8_t *pData, uint1
         *((uint8_t *)hspi->pRxBuffPtr) = *((__IO uint8_t *)&hspi->Instance->RXDR);
         hspi->pRxBuffPtr += sizeof(uint8_t);
         hspi->RxXferCount--;
+      }
+      /* Check if transfer is locked because of a suspend */
+      else if (HAL_IS_BIT_SET(temp_sr_reg, SPI_SR_SUSP))
+      {
+        /* Verify suspend is triggered by hardware and not software */
+        if (HAL_IS_BIT_SET(hspi->Instance->CR1, SPI_CR1_CSTART))
+        {
+          __HAL_SPI_CLEAR_SUSPFLAG(hspi);
+        }
       }
       else
       {
@@ -2235,7 +2262,6 @@ HAL_StatusTypeDef HAL_SPI_Receive_DMA(SPI_HandleTypeDef *hspi, uint8_t *pData, u
   /* Check Direction parameter */
   assert_param(IS_SPI_DIRECTION_2LINES_OR_1LINE_2LINES_RXONLY(hspi->Init.Direction));
 
-
   if (hspi->State != HAL_SPI_STATE_READY)
   {
     __HAL_UNLOCK(hspi);
@@ -2418,9 +2444,14 @@ HAL_StatusTypeDef HAL_SPI_TransmitReceive_DMA(SPI_HandleTypeDef *hspi, const uin
   CLEAR_BIT(hspi->Instance->CFG1, SPI_CFG1_TXDMAEN | SPI_CFG1_RXDMAEN);
 
   /* Packing mode management is enabled by the DMA settings */
-  if (((hspi->Init.DataSize > SPI_DATASIZE_16BIT) && (hspi->hdmarx->Init.MemDataAlignment != DMA_MDATAALIGN_WORD))    || \
-      ((hspi->Init.DataSize > SPI_DATASIZE_8BIT) && ((hspi->hdmarx->Init.MemDataAlignment != DMA_MDATAALIGN_HALFWORD) && \
-                                                     (hspi->hdmarx->Init.MemDataAlignment != DMA_MDATAALIGN_WORD))))
+  if (((hspi->Init.DataSize > SPI_DATASIZE_16BIT) && \
+       ((hspi->hdmarx->Init.MemDataAlignment != DMA_MDATAALIGN_WORD) || \
+        (hspi->hdmatx->Init.MemDataAlignment != DMA_MDATAALIGN_WORD))) || \
+      ((hspi->Init.DataSize > SPI_DATASIZE_8BIT) && \
+       (((hspi->hdmarx->Init.MemDataAlignment != DMA_MDATAALIGN_HALFWORD) && \
+         (hspi->hdmarx->Init.MemDataAlignment != DMA_MDATAALIGN_WORD)) || \
+        ((hspi->hdmatx->Init.MemDataAlignment != DMA_MDATAALIGN_HALFWORD) && \
+         (hspi->hdmatx->Init.MemDataAlignment != DMA_MDATAALIGN_WORD)))))
   {
     /* Restriction the DMA data received is not allowed in this mode */
     /* Unlock the process */
@@ -2749,6 +2780,15 @@ HAL_StatusTypeDef HAL_SPI_Abort_IT(SPI_HandleTypeDef *hspi)
 
   /* If DMA Tx and/or DMA Rx Handles are associated to SPI Handle, DMA Abort complete callbacks should be initialized
      before any call to DMA Abort functions */
+
+  if (hspi->hdmarx != NULL)
+  {
+    if (HAL_IS_BIT_SET(hspi->Instance->CFG1, SPI_CFG1_RXDMAEN))
+    {
+      /* Set DMA Abort Complete callback if SPI DMA Rx request if enabled */
+      hspi->hdmarx->XferAbortCallback = SPI_DMARxAbortCallback;
+    }
+  }
 
   if (hspi->hdmatx != NULL)
   {
@@ -3720,13 +3760,15 @@ static void SPI_RxISR_32BIT(SPI_HandleTypeDef *hspi)
 static void SPI_TxISR_8BIT(SPI_HandleTypeDef *hspi)
 {
   /* Transmit data in 8 Bit mode */
-  *(__IO uint8_t *)&hspi->Instance->TXDR = *((const uint8_t *)hspi->pTxBuffPtr);
-  hspi->pTxBuffPtr += sizeof(uint8_t);
-  hspi->TxXferCount--;
-
-  /* Disable IT if no more data excepted */
-  if (hspi->TxXferCount == 0UL)
+  if (hspi->TxXferCount != 0UL)
   {
+    *(__IO uint8_t *)&hspi->Instance->TXDR = *((const uint8_t *)hspi->pTxBuffPtr);
+    hspi->pTxBuffPtr += sizeof(uint8_t);
+    hspi->TxXferCount--;
+  }
+  else
+  {
+    /* Disable IT if no more data expected */
 #if defined(USE_SPI_RELOAD_TRANSFER)
     /* Check if there is any request to reload */
     if (hspi->Reload.Requested == 1UL)
@@ -3762,19 +3804,21 @@ static void SPI_TxISR_8BIT(SPI_HandleTypeDef *hspi)
 static void SPI_TxISR_16BIT(SPI_HandleTypeDef *hspi)
 {
   /* Transmit data in 16 Bit mode */
-#if defined (__GNUC__)
-  __IO uint16_t *ptxdr_16bits = (__IO uint16_t *)(&(hspi->Instance->TXDR));
-
-  *ptxdr_16bits = *((const uint16_t *)hspi->pTxBuffPtr);
-#else
-  *((__IO uint16_t *)&hspi->Instance->TXDR) = *((const uint16_t *)hspi->pTxBuffPtr);
-#endif /* __GNUC__ */
-  hspi->pTxBuffPtr += sizeof(uint16_t);
-  hspi->TxXferCount--;
-
-  /* Disable IT if no more data excepted */
-  if (hspi->TxXferCount == 0UL)
+  if (hspi->TxXferCount != 0UL)
   {
+#if defined (__GNUC__)
+    __IO uint16_t *ptxdr_16bits = (__IO uint16_t *)(&(hspi->Instance->TXDR));
+
+    *ptxdr_16bits = *((const uint16_t *)hspi->pTxBuffPtr);
+#else
+    *((__IO uint16_t *)&hspi->Instance->TXDR) = *((const uint16_t *)hspi->pTxBuffPtr);
+#endif /* __GNUC__ */
+    hspi->pTxBuffPtr += sizeof(uint16_t);
+    hspi->TxXferCount--;
+  }
+  else
+  {
+    /* Disable IT if no more data expected */
 #if defined(USE_SPI_RELOAD_TRANSFER)
     /* Check if there is any request to reload */
     if (hspi->Reload.Requested == 1UL)
@@ -3810,13 +3854,15 @@ static void SPI_TxISR_16BIT(SPI_HandleTypeDef *hspi)
 static void SPI_TxISR_32BIT(SPI_HandleTypeDef *hspi)
 {
   /* Transmit data in 32 Bit mode */
-  *((__IO uint32_t *)&hspi->Instance->TXDR) = *((const uint32_t *)hspi->pTxBuffPtr);
-  hspi->pTxBuffPtr += sizeof(uint32_t);
-  hspi->TxXferCount--;
-
-  /* Disable IT if no more data excepted */
-  if (hspi->TxXferCount == 0UL)
+  if (hspi->TxXferCount != 0UL)
   {
+    *((__IO uint32_t *)&hspi->Instance->TXDR) = *((const uint32_t *)hspi->pTxBuffPtr);
+    hspi->pTxBuffPtr += sizeof(uint32_t);
+    hspi->TxXferCount--;
+  }
+  else
+  {
+    /* Disable IT if no more data expected */
 #if defined(USE_SPI_RELOAD_TRANSFER)
     /* Check if there is any request to reload */
     if (hspi->Reload.Requested == 1UL)

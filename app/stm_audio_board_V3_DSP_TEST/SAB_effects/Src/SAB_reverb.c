@@ -69,13 +69,13 @@ void SAB_reverb_init( SAB_reverb_tst* self){
 
 	// float32_t cfbuf0[l_CB0], cfbuf1[l_CB1], cfbuf2[l_CB2], cfbuf3[l_CB3];
     // float32_t apbuf0[l_AP0], apbuf1[l_AP1], apbuf2[l_AP2];
-	self->cfbuf0 = sdram_malloc_float32_t_array(l_CB0);
-	self->cfbuf1 = sdram_malloc_float32_t_array(l_CB1);
-	self->cfbuf2 = sdram_malloc_float32_t_array(l_CB2);
-	self->cfbuf3 = sdram_malloc_float32_t_array(l_CB3);
-	self->apbuf0 = sdram_malloc_float32_t_array(l_AP0);
-	self->apbuf1 = sdram_malloc_float32_t_array(l_AP1);
-	self->apbuf2 = sdram_malloc_float32_t_array(l_AP2);
+	self->cfbuf0 = (float32_t*)sdram_malloc_float32_t_array(l_CB0);
+	self->cfbuf1 = (float32_t*)sdram_malloc_float32_t_array(l_CB1);
+	self->cfbuf2 = (float32_t*)sdram_malloc_float32_t_array(l_CB2);
+	self->cfbuf3 = (float32_t*)sdram_malloc_float32_t_array(l_CB3);
+	self->apbuf0 = (float32_t*)sdram_malloc_float32_t_array(l_AP0);
+	self->apbuf1 = (float32_t*)sdram_malloc_float32_t_array(l_AP1);
+	self->apbuf2 = (float32_t*)sdram_malloc_float32_t_array(l_AP2);
 	// for(uint32_t i = 0; i<10000;i++){
 	// 	if(i<l_CB0){
 	// 		self->cfbuf0[i] = 0;

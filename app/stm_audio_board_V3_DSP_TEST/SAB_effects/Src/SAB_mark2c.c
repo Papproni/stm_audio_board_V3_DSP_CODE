@@ -337,8 +337,8 @@ void SAB_mark2c_init( SAB_mark2c_tst* self){
     memset(self->tonestack_state_af32, 0, sizeof(self->tonestack_state_af32));
     arm_biquad_cascade_df2T_init_f32(&self->tonestack,
                                      3,
-                                     self->tonestack_coeffs_af32,
-                                     self->tonestack_state_af32);
+                                     (float32_t*)self->tonestack_coeffs_af32,
+                                     (float32_t*)self->tonestack_state_af32);
     self->last_treb_raw_u8 = 255;
     self->last_mid_raw_u8  = 255;
     self->last_bass_raw_u8 = 255;
@@ -347,8 +347,8 @@ void SAB_mark2c_init( SAB_mark2c_tst* self){
     memset(self->geq_state_af32, 0, sizeof(self->geq_state_af32));
     arm_biquad_cascade_df2T_init_f32(&self->geq,
                                      5,
-                                     self->geq_coeffs_af32,
-                                     self->geq_state_af32);
+                                     (float32_t*)self->geq_coeffs_af32,
+                                     (float32_t*)self->geq_state_af32);
     for (int i = 0; i < 5; i++) {
         self->last_geq_raw_u8[i] = 255;
     }
@@ -357,8 +357,8 @@ void SAB_mark2c_init( SAB_mark2c_tst* self){
     memset(self->presence_state_af32, 0, sizeof(self->presence_state_af32));
     arm_biquad_cascade_df2T_init_f32(&self->presence,
                                      1,
-                                     self->presence_coeffs_af32,
-                                     self->presence_state_af32);
+                                     (float32_t*)self->presence_coeffs_af32,
+                                     (float32_t*)self->presence_state_af32);
     self->last_presence_raw_u8 = 255;
 
     // ----- Cathode LPF (~6 kHz) -----

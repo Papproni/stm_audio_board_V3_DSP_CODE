@@ -102,7 +102,7 @@ void SAB_envelope_init( SAB_envelope_tst* self){
     add_parameter(&self->intercom_parameters_aun[11],"NONE",PARAM_TYPE_UNUSED,69);
 
     // Filter init
-    arm_biquad_cascade_df2T_init_f32(&self->biquad_filter, 1, &self->biquad_filter_coeffs_af32, &self->biquad_filter_states_af32);
+    arm_biquad_cascade_df2T_init_f32(&self->biquad_filter, 1, (float32_t*)&self->biquad_filter_coeffs_af32,  (float32_t*)&self->biquad_filter_states_af32);
     self->biquad_filter_output_f32  = 0;
 
     self->atk_time_f32 = 100;
@@ -141,7 +141,7 @@ float32_t SAB_envelope_process( SAB_envelope_tst* self, float input_f32){
     if (self->cutoff_f32 < 200.0f) self->cutoff_f32 = 200.0f;                  // Set minimum cutoff frequency
     if (self->cutoff_f32 > 3000.0f) self->cutoff_f32 = 3000.0f;              // Set maximum cutoff frequency
 
-    calculate_biquad_coeffs(&self->biquad_filter_coeffs_af32,LPF, self->cutoff_f32, self->Q_f32, 48000);
+    calculate_biquad_coeffs((float32_t*)&self->biquad_filter_coeffs_af32,LPF, self->cutoff_f32, self->Q_f32, 48000);
     arm_biquad_cascade_df2T_f32(&self->biquad_filter, &input_f32, &self->biquad_filter_output_f32, 1);
 
     return self->biquad_filter_output_f32*self->vol_f32;

@@ -21,75 +21,75 @@ inline void init_effect_chain(GuitarEffect** chain, EffectType* fx_chain, int ch
         switch (fx_chain[i]) {
         case DELAY:
             chain[i] = (GuitarEffect*)malloc(sizeof(SAB_delay_tst));
-            chain[i]->init = SAB_delay_init;
-            chain[i]->process = SAB_delay_process;
-            chain[i]->delete  = SAB_delay_delete;
+            chain[i]->init = (void*)SAB_delay_init;
+            chain[i]->process = (void*)SAB_delay_process;
+            chain[i]->delete  = (void*)SAB_delay_delete;
             break;
         case OVERDRIVE:
             chain[i] = (GuitarEffect*)malloc(sizeof(SAB_overdrive_tst));
-            chain[i]->init = SAB_overdrive_init;
-            chain[i]->process = SAB_overdrive_process;
-            chain[i]->delete  = SAB_overdrive_delete;
+            chain[i]->init = (void*)SAB_overdrive_init;
+            chain[i]->process = (void*)SAB_overdrive_process;
+            chain[i]->delete  = (void*)SAB_overdrive_delete;
             break;
         case DISTORTION:
             chain[i] = (GuitarEffect*)malloc(sizeof(SAB_distortion_tst));
-            chain[i]->init = SAB_distortion_init;
-            chain[i]->process = SAB_distortion_process;
-            chain[i]->delete  = SAB_distortion_delete;
+            chain[i]->init = (void*)SAB_distortion_init;
+            chain[i]->process = (void*)SAB_distortion_process;
+            chain[i]->delete  = (void*)SAB_distortion_delete;
             break;
         case OCTAVE:
             chain[i] = (GuitarEffect*)malloc(sizeof(octave_effects_tst));
-            chain[i]->init = SAB_octave_init;
-            chain[i]->process = SAB_octave_process;
-            chain[i]->delete  = SAB_octave_delete;
+            chain[i]->init = (void*)SAB_octave_init;
+            chain[i]->process = (void*)SAB_octave_process;
+            chain[i]->delete  = (void*)SAB_octave_delete;
             break;
         case FLANGER:
             chain[i] = (GuitarEffect*)malloc(sizeof(SAB_flanger_tst));
-            chain[i]->init = SAB_flanger_init;
-            chain[i]->process = SAB_flanger_process;
-            chain[i]->delete  = SAB_flanger_delete;
+            chain[i]->init = (void*)SAB_flanger_init;
+            chain[i]->process = (void*)SAB_flanger_process;
+            chain[i]->delete  = (void*)SAB_flanger_delete;
             break;
         case CHORUS:
             chain[i] = (GuitarEffect*)malloc(sizeof(SAB_chorus_tst));
-            chain[i]->init = SAB_chorus_init;
-            chain[i]->process = SAB_chorus_process;
-            chain[i]->delete  = SAB_chorus_delete;
+            chain[i]->init = (void*)SAB_chorus_init;
+            chain[i]->process = (void*)SAB_chorus_process;
+            chain[i]->delete  = (void*)SAB_chorus_delete;
             break;
         case BOOST:
             chain[i] = (GuitarEffect*)malloc(sizeof(SAB_boost_tst));
-            chain[i]->init = SAB_boost_init;
-            chain[i]->process = SAB_boost_process;
-            chain[i]->delete  = SAB_boost_delete;
+            chain[i]->init = (void*)SAB_boost_init;
+            chain[i]->process = (void*)SAB_boost_process;
+            chain[i]->delete  = (void*)SAB_boost_delete;
             break;
         case PITCHSHIFT:
             chain[i] = (GuitarEffect*)malloc(sizeof(SAB_pitchshift_tst));
-            chain[i]->init = SAB_pitchshift_init;
-            chain[i]->process = SAB_pitchshift_process;
-            chain[i]->delete  = SAB_pitchshift_delete;
+            chain[i]->init = (void*)SAB_pitchshift_init;
+            chain[i]->process = (void*)SAB_pitchshift_process;
+            chain[i]->delete  = (void*)SAB_pitchshift_delete;
             break;
          case FUZZ:
              chain[i] = (GuitarEffect*)malloc(sizeof(SAB_fuzz_tst));
-             chain[i]->init = SAB_fuzz_init;
-             chain[i]->process = SAB_fuzz_process;
-             chain[i]->delete  = SAB_fuzz_delete;
+             chain[i]->init = (void*)SAB_fuzz_init;
+             chain[i]->process = (void*)SAB_fuzz_process;
+             chain[i]->delete  = (void*)SAB_fuzz_delete;
              break;
         case TREMOLO:
             chain[i] = (GuitarEffect*)malloc(sizeof(SAB_tremolo_tst));
-            chain[i]->init = SAB_tremolo_init;
-            chain[i]->process = SAB_tremolo_process;
-            chain[i]->delete  = SAB_tremolo_delete;
+            chain[i]->init = (void*)SAB_tremolo_init;
+            chain[i]->process = (void*)SAB_tremolo_process;
+            chain[i]->delete  = (void*)SAB_tremolo_delete;
             break;
         case REVERB:
             chain[i] = (GuitarEffect*)malloc(sizeof(SAB_reverb_tst));
-            chain[i]->init = SAB_reverb_init;
-            chain[i]->process = SAB_reverb_process;
-            chain[i]->delete  = SAB_reverb_delete;
+            chain[i]->init = (void*)SAB_reverb_init;
+            chain[i]->process = (void*)SAB_reverb_process;
+            chain[i]->delete  = (void*)SAB_reverb_delete;
             break;
         case BANDPASS:
             chain[i] = (GuitarEffect*)malloc(sizeof(SAB_bandpass_tst));
-            chain[i]->init = SAB_bandpass_init;
-            chain[i]->process = SAB_bandpass_process;
-            chain[i]->delete  = SAB_bandpass_delete;
+            chain[i]->init = (void*)SAB_bandpass_init;
+            chain[i]->process = (void*)SAB_bandpass_process;
+            chain[i]->delete  = (void*)SAB_bandpass_delete;
             break;
         // case EQUALIZER:
         //     chain[i] = (GuitarEffect*)malloc(sizeof(SAB_equalizer_tst));
@@ -105,51 +105,51 @@ inline void init_effect_chain(GuitarEffect** chain, EffectType* fx_chain, int ch
         //     break;
         case ENVELOPE:
             chain[i] = (GuitarEffect*)malloc(sizeof(SAB_envelope_tst));
-            chain[i]->init = SAB_envelope_init;
-            chain[i]->process = SAB_envelope_process;
-            chain[i]->delete  = SAB_envelope_delete;
+            chain[i]->init = (void*)SAB_envelope_init;
+            chain[i]->process = (void*)SAB_envelope_process;
+            chain[i]->delete  = (void*)SAB_envelope_delete;
             break;
         case CUSTOM_FX:
             chain[i] = (GuitarEffect*)malloc(sizeof(SAB_custom_fx_tst));
-            chain[i]->init = SAB_custom_fx_init;
-            chain[i]->process = SAB_custom_fx_process;
-            chain[i]->delete  = SAB_custom_fx_delete;
+            chain[i]->init = (void*)SAB_custom_fx_init;
+            chain[i]->process = (void*)SAB_custom_fx_process;
+            chain[i]->delete  = (void*)SAB_custom_fx_delete;
             break;
         case PITCHDETECTOR:
             chain[i] = (GuitarEffect*)malloc(sizeof(SAB_pitchdetector_tst));
-            chain[i]->init = SAB_pitchdetector_init;
-            chain[i]->process = SAB_pitchdetector_process;
-            chain[i]->delete  = SAB_pitchdetector_delete;
+            chain[i]->init = (void*)SAB_pitchdetector_init;
+            chain[i]->process = (void*)SAB_pitchdetector_process;
+            chain[i]->delete  = (void*)SAB_pitchdetector_delete;
             break;
         case SIG_GEN:
             chain[i] = (GuitarEffect*)malloc(sizeof(SAB_generator_tst));
-            chain[i]->init = SAB_generator_init;
-            chain[i]->process = SAB_generator_process;
-            chain[i]->delete  = SAB_generator_delete;
+            chain[i]->init = (void*)SAB_generator_init;
+            chain[i]->process = (void*)SAB_generator_process;
+            chain[i]->delete  = (void*)SAB_generator_delete;
             break;
         case LPF:
             chain[i] = (GuitarEffect*)malloc(sizeof(SAB_lpf_tst));
-            chain[i]->init = SAB_lpf_init;
-            chain[i]->process = SAB_lpf_process;
-            chain[i]->delete  = SAB_lpf_delete;
+            chain[i]->init = (void*)SAB_lpf_init;
+            chain[i]->process = (void*)SAB_lpf_process;
+            chain[i]->delete  = (void*)SAB_lpf_delete;
             break;
         case HPF:
             chain[i] = (GuitarEffect*)malloc(sizeof(SAB_hpf_tst));
-            chain[i]->init = SAB_hpf_init;
-            chain[i]->process = SAB_hpf_process;
-            chain[i]->delete  = SAB_hpf_delete;
+            chain[i]->init = (void*)SAB_hpf_init;
+            chain[i]->process = (void*)SAB_hpf_process;
+            chain[i]->delete  = (void*)SAB_hpf_delete;
             break;
         case MARK2C:
             chain[i] = (GuitarEffect*)malloc(sizeof(SAB_mark2c_tst));
-            chain[i]->init = SAB_mark2c_init;
-            chain[i]->process = SAB_mark2c_process;
-            chain[i]->delete  = SAB_mark2c_delete;
+            chain[i]->init = (void*)SAB_mark2c_init;
+            chain[i]->process = (void*)SAB_mark2c_process;
+            chain[i]->delete  = (void*)SAB_mark2c_delete;
             break;
         case IMRE:
             chain[i] = (GuitarEffect*)malloc(sizeof(SAB_step_response_tst));
-            chain[i]->init = SAB_step_response_init;
-            chain[i]->process = SAB_step_response_process;
-            chain[i]->delete  = SAB_step_response_delete;
+            chain[i]->init = (void*)SAB_step_response_init;
+            chain[i]->process = (void*)SAB_step_response_process;
+            chain[i]->delete  = (void*)SAB_step_response_delete;
             break;
         default:
             // TODO: ADD DUMMY DATA DEFINE HERE
@@ -351,7 +351,7 @@ void inline SAB_save_preset_to_flash(SAB_fx_manager_tst* self){
     memcpy(&SAB_PRESET_SAVE_RAM_DATA[preset_num_u32],&self->current_preset_config_st,sizeof(preset_saves_tst));
 	// 3. save to flash
     __disable_irq();  // Disable interrupts
-	while(0!=Flash_Write_Data(USER_FLASH_ADDRESS,SAB_PRESET_SAVE_RAM_DATA,sizeof(preset_saves_tst)*NUM_OF_PRESETS/4));
+	while(0!=Flash_Write_Data((uint32_t)USER_FLASH_ADDRESS,(uint32_t*)SAB_PRESET_SAVE_RAM_DATA,sizeof(preset_saves_tst)*NUM_OF_PRESETS/4));
 	{
 
 	}
@@ -393,7 +393,7 @@ static inline  void SAB_load_current_config(SAB_fx_manager_tst* self ){
 
 
 
-    init_effect_chain(&self->fx_instances,self->fx_types_chain,12);
+    init_effect_chain((GuitarEffect**)&self->fx_instances,self->fx_types_chain,12);
 
     for(int i = 0; i<12;i++){
          // choose params
@@ -428,7 +428,7 @@ inline void  SAB_fx_manager_init( SAB_fx_manager_tst* self, sab_intercom_tst* in
     self->preset_mode_st.fsw2_ptr 	= fsw2_ptr;
 
     __disable_irq();  // Disable interrupts
-    Flash_Read_Data(USER_FLASH_ADDRESS, &SAB_PRESET_SAVE_RAM_DATA, sizeof(preset_saves_tst)*NUM_OF_PRESETS/4);
+    Flash_Read_Data((uint32_t)USER_FLASH_ADDRESS, (uint32_t*)&SAB_PRESET_SAVE_RAM_DATA, sizeof(preset_saves_tst)*NUM_OF_PRESETS/4);
     __enable_irq();   // Re-enable interrupts
     // LOAD DATA FROM FLASH
     SAB_load_preset_from_flash(self);
@@ -498,7 +498,7 @@ inline void  SAB_preset_up_pressed(SAB_fx_manager_tst* self){
         // LOAD PRESET DATA FROM FLASH
         SAB_load_preset_from_flash(self);
         // DELETE CURRENT PRESET
-        SAB_cleanup_effect_chain(self,12);
+        SAB_cleanup_effect_chain((GuitarEffect**)self,12);
         self->preset_mode_st.preset_mode_en = PRESET_MODE_NORMAL;
         // INIT NEW PRESET
         SAB_load_current_config(self);
@@ -526,7 +526,7 @@ inline void  SAB_preset_down_pressed(SAB_fx_manager_tst* self){
         // LOAD PRESET DATA FROM FLASH
         SAB_load_preset_from_flash(self);
         // DELETE CURRENT PRESET
-        SAB_cleanup_effect_chain(self,12);
+        SAB_cleanup_effect_chain((GuitarEffect**)self,12);
         self->preset_mode_st.preset_mode_en = PRESET_MODE_NORMAL;
         // INIT NEW PRESET
         SAB_load_current_config(self);

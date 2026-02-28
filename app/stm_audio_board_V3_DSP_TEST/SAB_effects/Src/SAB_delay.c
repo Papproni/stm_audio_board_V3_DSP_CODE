@@ -56,7 +56,7 @@ void SAB_delay_init( SAB_delay_tst* self){
 	self->current_counter_u32  =0;
     self->delayed_counter_u32 = 0;
     self->time_in_buffer_u32 = 0;
-	self->data_samples  = sdram_malloc_float32_t_array(SAB_DELAY_BUFFER_SIZE);
+	self->data_samples  = (float32_t*)sdram_malloc_float32_t_array(SAB_DELAY_BUFFER_SIZE);
     for(int i = 0; i< SAB_DELAY_BUFFER_SIZE;i++){
     	self->data_samples[i] = 0;
     }

@@ -98,7 +98,7 @@ void SAB_overdrive_init( SAB_overdrive_tst* self){
     add_parameter(&self->intercom_parameters_aun[10],"NONE",PARAM_TYPE_UNUSED,69);
     add_parameter(&self->intercom_parameters_aun[11],"NONE",PARAM_TYPE_UNUSED,69);
 
-    arm_biquad_cascade_df2T_init_f32(&self->biquad_filter, 1, &self->biquad_filter_coeffs_af32, &self->biquad_filter_states_af32);
+    arm_biquad_cascade_df2T_init_f32(&self->biquad_filter, 1, (float32_t*)&self->biquad_filter_coeffs_af32, (float32_t*)&self->biquad_filter_states_af32);
     self->biquad_filter_output_f32  = 0;
 
 
@@ -125,7 +125,7 @@ float32_t SAB_overdrive_process( SAB_overdrive_tst* self, float input_f32){
     // Clip
     output_f32 = limit(input_f32*self->gain_f32, self->ths_f32,self->ths_f32);
     // LPF
-    calculate_biquad_coeffs(&self->biquad_filter_coeffs_af32,LPF, self->tone_f32, Q_f32, 48000);
+    calculate_biquad_coeffs((float32_t*)&self->biquad_filter_coeffs_af32,LPF, self->tone_f32, Q_f32, 48000);
     arm_biquad_cascade_df2T_f32(&self->biquad_filter, &output_f32, &self->biquad_filter_output_f32, 1);
     output_f32 = (self->biquad_filter_output_f32)*self->volume_f32;
     return output_f32;

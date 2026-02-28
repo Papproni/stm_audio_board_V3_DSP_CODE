@@ -111,7 +111,7 @@ Freq: param_1
 Q:    param_2
 */
 
-arm_biquad_cascade_df2T_init_f32(&self->biquad_filter_block_block2, 1, &self->biquad_filter_block_block2_coeffs_af32, &self->biquad_filter_block_block2_states_af32);
+arm_biquad_cascade_df2T_init_f32(&self->biquad_filter_block_block2, 1, (float32_t*)&self->biquad_filter_block_block2_coeffs_af32, (float32_t*)&self->biquad_filter_block_block2_states_af32);
 self->biquad_filter_block_block2_output_f32  = 0;
 
 };

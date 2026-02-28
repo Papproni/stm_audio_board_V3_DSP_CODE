@@ -461,8 +461,8 @@ void SAB_octave_init(octave_effects_tst* self){
 	// SETUP DATA FOR GUI END ------------------------------
 	float32_t local_50hz_coeffs[] = {0.99538200, -1.99076399, 0.99538200, 1.99074267, -0.99078531};
 	memcpy(self->highpass_iir_50hz_coeffs,local_50hz_coeffs,sizeof(float32_t)*5);
-	arm_biquad_cascade_df2T_init_f32(&self->highpass_iir_50hz, 1, &self->highpass_iir_50hz_coeffs, &self->highpass_state);
-	arm_biquad_cascade_df2T_init_f32(&self->highpass_iir_50hz_octave2, 1, &self->highpass_iir_50hz_coeffs, &self->highpass_state_octave2);
+	arm_biquad_cascade_df2T_init_f32(&self->highpass_iir_50hz, 1, (float32_t*)self->highpass_iir_50hz_coeffs, (float32_t*)self->highpass_state);
+	arm_biquad_cascade_df2T_init_f32(&self->highpass_iir_50hz_octave2, 1, (float32_t*)self->highpass_iir_50hz_coeffs, (float32_t*)self->highpass_state_octave2);
 	// assign function pointers
 	self->set_volumes			= set_volumes;
 	self->calc_octave_1_up 		= algorithm_octave_1_down;
@@ -496,7 +496,7 @@ void SAB_octave_init(octave_effects_tst* self){
 	self->biquad_filter_for_sub_coeffs_af32[4]=-self->biquad_filter_for_sub_coeffs_af32[4];
 	
 	// SUB
-	arm_biquad_cascade_df2T_init_f32(&self->biquad_filter_for_sub, 1, &self->biquad_filter_for_sub_coeffs_af32, &self->biquad_filter_for_sub_states_af32);
+	arm_biquad_cascade_df2T_init_f32(&self->biquad_filter_for_sub, 1, (float32_t*)&self->biquad_filter_for_sub_coeffs_af32, (float32_t*)&self->biquad_filter_for_sub_states_af32);
 
 	for(int i=0 ;i<5;i++){
 		self->biquad_filter_for_sub_states_af32[i] = 0;
