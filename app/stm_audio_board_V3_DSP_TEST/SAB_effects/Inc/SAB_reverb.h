@@ -8,14 +8,14 @@ Generated on: 2024.11.28. */
 #include "stdint.h"
 #define float32_t float
 
-#define reverb_scale 10
-#define l_CB0 3460*reverb_scale-5000
-#define l_CB1 2988*reverb_scale-8000
-#define l_CB2 3882*reverb_scale-3500
-#define l_CB3 4312*reverb_scale+10
-#define l_AP0 480*reverb_scale+500
-#define l_AP1 161*reverb_scale+50
-#define l_AP2 46*reverb_scale+10
+#define reverb_scale 1
+#define l_CB0 3460*reverb_scale
+#define l_CB1 2988*reverb_scale
+#define l_CB2 3882*reverb_scale
+#define l_CB3 4312*reverb_scale
+#define l_AP0 480*reverb_scale
+#define l_AP1 161*reverb_scale
+#define l_AP2 46*reverb_scale
 
 
 

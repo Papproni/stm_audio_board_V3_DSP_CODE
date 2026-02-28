@@ -87,6 +87,7 @@ typedef struct {
     float32_t comp_threshold_f32;
     float32_t comp_ratio_f32;
     
+    float env;   // envelope state
 } SAB_mark2c_tst;
 
 

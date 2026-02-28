@@ -4,8 +4,9 @@
 #include "sdram_memory_handler.h"
 #include "arm_math.h"
 
-#define NUM_OF_SAMPLES 512000
-float32_t samples[NUM_OF_SAMPLES] __attribute__((section(".sdram_section")));
+#define NUM_OF_SAMPLES 48000
+// float32_t samples[NUM_OF_SAMPLES] __attribute__((section(".sdram_section")));
+float32_t samples[NUM_OF_SAMPLES];
 
 sdram_handler_tst sdram_st;
 
