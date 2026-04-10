@@ -49,6 +49,7 @@
 #include "SAB_custom_fx.h"
 #include "SAB_fx_manager.h"
 #include "sdram_memory_handler.h"
+#include "usb_cdc_handler.h"
 
 // SAB specifics------END----
 /* USER CODE END Includes */
@@ -370,6 +371,7 @@ int main(void)
   MX_I2C4_Init();
   MX_TIM2_Init();
   MX_USB_DEVICE_Init();
+  USB_CDC_Handler_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim2);
   // init SAI interface

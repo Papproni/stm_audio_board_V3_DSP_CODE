@@ -263,14 +263,13 @@ float32_t sound_sample_f32;
 
 
 // Tunables (start here)
-static const float TP_DRIVE      = 5.0f;   // 2..10  (more = more squish/sat)
-static const float TP_ASYM       = 0.01f;  // 0..0.5 (even harmonics)
-static const float TP_TH         = 0.35f;  // 0.2..0.6 (where squish starts)
-static const float TP_SQUISH     = 2.0f;   // 0..4   (how hard it clamps)
-static const float TP_ENV_ATTACK = 0.08f;  // fast catch
-static const float TP_ENV_REL    = 0.004f; // slower release
-static const float TP_MAKEUP     = 1.10f;  // final level
-
+float TP_DRIVE      = 1.0f;   // 2..10  (more = more squish/sat)
+float TP_ASYM       = 0.00f;  // 0..0.5 (even harmonics)
+float TP_TH         = 0.35f;  // 0.2..0.6 (where squish starts)
+float TP_SQUISH     = 2.0f;   // 0..4   (how hard it clamps)
+float TP_ENV_ATTACK = 0.08f;  // fast catch
+float TP_ENV_REL    = 0.004f; // slower release
+float TP_MAKEUP     = 1.10f;  // final level
 
 // Keeley-style: transparent, smooth, adds sustain
 float32_t mark2c_envelope_compress(SAB_mark2c_tst* self, float32_t x)
@@ -397,8 +396,8 @@ float32_t SAB_mark2c_process( SAB_mark2c_tst* self, float input_f32){
     float32_t x = input_f32* ADC_24_NORM; // Normalize 24-bit input to -1.0 to +1.0
     x = mark2c_hpf_process(self, x);
     x = mark2c_tonestack_process(self, x);
-    // x = mark2c_softclip(self, x * self->gain_pre_f32);
-    x = mark2c_envelope_compress(self, x * self->gain_pre_f32);
+    x = mark2c_softclip(self, x * self->gain_pre_f32);
+    // x = mark2c_envelope_compress(self, x * self->gain_pre_f32);
     x = mark2c_asym_clip(self, x);
     x = mark2c_cathode_soften(self, x);
     x = mark2c_geq_process(self, x);

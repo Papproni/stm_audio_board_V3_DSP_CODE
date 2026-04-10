@@ -33,6 +33,15 @@ typedef struct {
         float32_t depth_f32;
         float32_t manual_f32;
         float32_t res_f32;
+        
+    // Internal state for flanger
+    #define SAB_FLANGER_BUFFER_SIZE 4800
+    float32_t data_samples[SAB_FLANGER_BUFFER_SIZE];
+    int32_t current_counter_i32;
+    int32_t delayed_counter_i32;
+    float32_t modulation_counter_f32;
+    float32_t mix_f32;
+    float32_t feedback_f32;
 } SAB_flanger_tst;
 
 

@@ -2,6 +2,13 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "SABv3 PyQT GUI",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/pyQT_gui/sab_effect_unit_gui_pyqt.py",
+      "console": "integratedTerminal"
+    },
+    {
       "name": "C/C++ Runner: Debug Session",
       "type": "cppdbg",
       "request": "launch",

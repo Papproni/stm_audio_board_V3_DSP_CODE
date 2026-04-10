@@ -68,5 +68,9 @@
     "guitar_effect_delay.h": "c",
     "sab_reverb.h": "c",
     "sab_delay.h": "c"
+  },
+  "editor.tokenColorCustomizations": {
+    "comments": "",
+    "textMateRules": []
   }
 }
