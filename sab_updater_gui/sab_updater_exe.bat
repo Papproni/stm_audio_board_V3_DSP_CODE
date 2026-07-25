@@ -1,0 +1,1 @@
+python -m PyInstaller --onefile --name SABUpdater --windowed --distpath .\dist --workpath .\build --specpath .\build .\sab_updater.py
