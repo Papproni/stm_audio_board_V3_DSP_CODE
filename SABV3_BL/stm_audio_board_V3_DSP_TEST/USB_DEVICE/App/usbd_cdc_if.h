@@ -52,7 +52,20 @@
 #define APP_RX_DATA_SIZE  2048
 #define APP_TX_DATA_SIZE  2048
 /* USER CODE BEGIN EXPORTED_DEFINES */
-
+#ifdef SABv3_DSP_BL
+  #define SABU_APP_BASE           0x08020000UL
+  #define SABU_APP_END            0x080E0000UL
+  #define START_SECTOR_DELETE     1
+  #define NUM_OF_DELETED_SECTORS  6
+  #define APP_ADDRESS SABU_APP_BASE
+#endif
+#ifdef SABv3_DISPLAY_BL
+  #define SABU_APP_BASE           0x08020000UL
+  #define SABU_APP_END            0x08100000UL
+  #define START_SECTOR_DELETE     1
+  #define NUM_OF_DELETED_SECTORS  7
+  #define APP_ADDRESS SABU_APP_BASE
+#endif
 /* USER CODE END EXPORTED_DEFINES */
 
 /**

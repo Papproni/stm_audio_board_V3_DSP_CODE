@@ -99,8 +99,6 @@ uint8_t UserTxBufferHS[APP_TX_DATA_SIZE];
  * payload, CRC-32.  Commands are HELLO(1), ERASE(2), WRITE(3), RESET(4).
  * WRITE payload is a little-endian offset followed by 32-byte-aligned data. */
 #define SABU_MAGIC             0x55424153UL
-#define SABU_APP_BASE           0x08020000UL
-#define SABU_APP_END            0x080E0000UL
 #define SABU_RING_SIZE          4096U
 #define SABU_MAX_PAYLOAD        516U
 
@@ -167,16 +165,10 @@ static uint8_t sabu_erase_application_sector(uint32_t sector)
 
     memset(&erase, 0, sizeof(erase));
 
-    // erase.TypeErase    = FLASH_TYPEERASE_SECTORS;
-    // erase.Banks        = FLASH_BANK_1;
-    // erase.Sector       = sector;
-    // erase.NbSectors    = 1;
-    // erase.VoltageRange = FLASH_VOLTAGE_RANGE_3;
-
       erase.TypeErase    = FLASH_TYPEERASE_SECTORS;
     erase.Banks        = FLASH_BANK_1;
-    erase.Sector       = 1;
-    erase.NbSectors    = 4;
+    erase.Sector       = START_SECTOR_DELETE;
+    erase.NbSectors    = NUM_OF_DELETED_SECTORS;
     erase.VoltageRange = FLASH_VOLTAGE_RANGE_3;
 
     __disable_irq();
@@ -200,15 +192,10 @@ static uint8_t sabu_erase_application_sector(uint32_t sector)
 
     HAL_FLASH_Lock();
 
-//    SCB_CleanInvalidateDCache();
-//    SCB_InvalidateICache();
-
     __enable_irq();
 
     if (status != HAL_OK)
     {
-        // Put a breakpoint here and inspect:
-        // HAL_FLASH_GetError()
         // sector_error
         return (uint8_t)HAL_FLASH_GetError();
     }
@@ -254,8 +241,6 @@ static uint8_t sabu_write_application(const uint8_t *payload, uint16_t length)
             uint32_t err = HAL_FLASH_GetError();
 
             HAL_FLASH_Lock();
-            // SCB_CleanInvalidateDCache();
-            // SCB_InvalidateICache();
             __enable_irq();
 
             return (uint8_t)err;
@@ -263,9 +248,6 @@ static uint8_t sabu_write_application(const uint8_t *payload, uint16_t length)
     }
 
     HAL_FLASH_Lock();
-
-    // SCB_CleanInvalidateDCache();
-    // SCB_InvalidateICache();
 
     __enable_irq();
 

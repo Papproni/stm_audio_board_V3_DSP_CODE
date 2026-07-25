@@ -50,7 +50,29 @@
   */
 
 /* USER CODE BEGIN PRIVATE_TYPES */
+#ifdef SABv3_DSP_BL
+  #define USBD_VID     1155
+  #define USBD_LANGID_STRING     1033
+  #define USBD_MANUFACTURER_STRING     "SAB effects"
+  #define USBD_PID_HS     12222
+  #define USBD_PRODUCT_STRING_HS     "SABv3_DSP_bootloader"
+  #define USBD_CONFIGURATION_STRING_HS     "CDC Config"
+  #define USBD_INTERFACE_STRING_HS     "CDC Interface"
+  #define USB_SIZ_BOS_DESC            0x0C
+#endif
 
+#ifdef SABv3_DISPLAY_BL
+  #define USBD_VID     1155
+  #define USBD_LANGID_STRING     1033
+  #define USBD_MANUFACTURER_STRING     "SAB effects"
+  #define USBD_PID_HS     12225
+  #define USBD_PRODUCT_STRING_HS     "SABv3_DISPLAY_bootloader"
+  #define USBD_CONFIGURATION_STRING_HS     "CDC Config"
+  #define USBD_INTERFACE_STRING_HS     "CDC Interface"
+  #define USB_SIZ_BOS_DESC            0x0C
+#endif
+
+#ifndef USBD_VID
 /* USER CODE END PRIVATE_TYPES */
 
 /**
@@ -73,7 +95,7 @@
 #define USB_SIZ_BOS_DESC            0x0C
 
 /* USER CODE BEGIN PRIVATE_DEFINES */
-
+#endif
 /* USER CODE END PRIVATE_DEFINES */
 
 /**

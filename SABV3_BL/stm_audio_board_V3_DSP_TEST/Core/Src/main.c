@@ -75,7 +75,7 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-#define APP_ADDRESS             0x08020000UL
+// #define APP_ADDRESS             0x08020000UL
 #define BOOT_REQUEST_MAGIC      0x53414255UL
 
 static uint8_t ApplicationIsValid(void)
