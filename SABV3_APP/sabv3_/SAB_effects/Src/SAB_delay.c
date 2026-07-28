@@ -4,12 +4,29 @@ Generated on: 2024.11.29. */
 #include "SAB_delay.h"
 
 static void calculate_buffer_location(SAB_delay_tst* self){
-	// current_pointer + buffer[time]
-	self->delayed_counter_u32 = self->current_counter_u32 + self->time_in_buffer_u32;
+	uint32_t delay_samples_u32 = self->time_in_buffer_u32;
+	if(delay_samples_u32 >= SAB_DELAY_BUFFER_SIZE){
+		delay_samples_u32 = SAB_DELAY_BUFFER_SIZE - 1;
+	}
+	if(delay_samples_u32 == 0){
+		delay_samples_u32 = 1;
+	}
 
-	// if delay sample is bigger than the buffer go back
-	if(self->delayed_counter_u32 > (SAB_DELAY_BUFFER_SIZE-1) ){
-		self->delayed_counter_u32 = self->delayed_counter_u32- (SAB_DELAY_BUFFER_SIZE-1);
+	if(self->reverse_u8 == 1){
+		if(self->reverse_counter_u32 == UINT32_MAX){
+			int32_t read_index_i32 = (int32_t)self->current_counter_u32 - (int32_t)delay_samples_u32;
+			if(read_index_i32 < 0){
+				read_index_i32 += SAB_DELAY_BUFFER_SIZE;
+			}
+			self->reverse_counter_u32 = (uint32_t)read_index_i32;
+		}
+		self->delayed_counter_u32 = self->reverse_counter_u32;
+	}else{
+		int32_t read_index_i32 = (int32_t)self->current_counter_u32 - (int32_t)delay_samples_u32;
+		if(read_index_i32 < 0){
+			read_index_i32 += SAB_DELAY_BUFFER_SIZE;
+		}
+		self->delayed_counter_u32 = (uint32_t)read_index_i32;
 	}
 }
 
@@ -19,8 +36,18 @@ static float32_t get_delayed_signal(SAB_delay_tst* self){
 
 static void increment_current_sample_counter(SAB_delay_tst* self){
 	self->current_counter_u32++;
-	if(self->current_counter_u32 > (SAB_DELAY_BUFFER_SIZE-1) ){
+	if(self->current_counter_u32 >= SAB_DELAY_BUFFER_SIZE){
 		self->current_counter_u32 = 0;
+	}
+
+	if(self->reverse_u8 == 1){
+		if(self->reverse_counter_u32 == UINT32_MAX){
+			self->reverse_counter_u32 = self->current_counter_u32;
+		}else if(self->reverse_counter_u32 == 0){
+			self->reverse_counter_u32 = SAB_DELAY_BUFFER_SIZE - 1;
+		}else{
+			self->reverse_counter_u32--;
+		}
 	}
 }
 
@@ -43,7 +70,7 @@ void SAB_delay_init( SAB_delay_tst* self){
 	add_parameter(&self->intercom_parameters_aun[0],"FBK",	PARAM_TYPE_POT,	69);
 	add_parameter(&self->intercom_parameters_aun[1],"TIME",	PARAM_TYPE_POT,	120);
 	add_parameter(&self->intercom_parameters_aun[2],"MIX",	PARAM_TYPE_POT,	85);
-	add_parameter(&self->intercom_parameters_aun[3],"NONE",	PARAM_TYPE_UNUSED,	0);
+	add_parameter(&self->intercom_parameters_aun[3],"REV",	PARAM_TYPE_BTN,	0);
 	add_parameter(&self->intercom_parameters_aun[4],"NONE",	PARAM_TYPE_UNUSED,	10);
 	add_parameter(&self->intercom_parameters_aun[5],"NONE",	PARAM_TYPE_UNUSED,	10);
     add_parameter(&self->intercom_parameters_aun[6],"NONE", PARAM_TYPE_UNUSED,69);
@@ -54,8 +81,10 @@ void SAB_delay_init( SAB_delay_tst* self){
     add_parameter(&self->intercom_parameters_aun[11],"NONE",PARAM_TYPE_UNUSED,69);
 
 	self->current_counter_u32  =0;
+	self->reverse_counter_u32 = UINT32_MAX;
     self->delayed_counter_u32 = 0;
     self->time_in_buffer_u32 = 0;
+
 	self->data_samples  = (float32_t*)sdram_malloc_float32_t_array(SAB_DELAY_BUFFER_SIZE);
     for(int i = 0; i< SAB_DELAY_BUFFER_SIZE;i++){
     	self->data_samples[i] = 0;
@@ -67,7 +96,7 @@ float32_t SAB_delay_process( SAB_delay_tst* self, float input_f32){
 	self->feedback_f32  			= conv_raw_to_param_value(self->intercom_parameters_aun[0].value_u8,0, 1);
 	self->time_in_buffer_u32 		= conv_raw_to_param_value(self->intercom_parameters_aun[1].value_u8,1, SAB_DELAY_BUFFER_SIZE-1);
 	self->mix_f32 					= conv_raw_to_param_value(self->intercom_parameters_aun[2].value_u8,0, 1);
-	
+	self->reverse_u8 				= self->intercom_parameters_aun[3].value_u8;
 	calculate_buffer_location(self);
 
 	// delay effect
