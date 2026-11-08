@@ -351,10 +351,10 @@ void inline SAB_save_preset_to_flash(SAB_fx_manager_tst* self){
     memcpy(&SAB_PRESET_SAVE_RAM_DATA[preset_num_u32],&self->current_preset_config_st,sizeof(preset_saves_tst));
 	// 3. save to flash
     __disable_irq();  // Disable interrupts
-	while(0!=Flash_Write_Data((uint32_t)USER_FLASH_ADDRESS,(uint32_t*)SAB_PRESET_SAVE_RAM_DATA,sizeof(preset_saves_tst)*NUM_OF_PRESETS/4));
-	{
-
-	}
+	// Single attempt: a failing write must NOT spin here (IRQs are off, so a retry loop
+	// freezes SysTick + USB forever and only the IWDG can recover). Surface err via LED/intercom if needed.
+	uint32_t flash_save_err_u32 = Flash_Write_Data((uint32_t)USER_FLASH_ADDRESS,(uint32_t*)SAB_PRESET_SAVE_RAM_DATA,sizeof(preset_saves_tst)*NUM_OF_PRESETS/4);
+	(void)flash_save_err_u32;
 	__enable_irq();   // Re-enable interrupts
 }
 

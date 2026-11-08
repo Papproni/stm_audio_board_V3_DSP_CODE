@@ -207,8 +207,8 @@ uint32_t Flash_Write_Data (uint32_t StartSectorAddress, uint32_t *data, uint16_t
 	  /* Get the number of sector to erase from 1st sector */
 
 	  uint32_t StartSector = GetSector(StartSectorAddress);
-	  uint32_t EndSectorAddress = StartSectorAddress + numberofwords*4;
-	  uint32_t EndSector = GetSector(EndSectorAddress)+1;
+	  uint32_t EndSectorAddress = StartSectorAddress + (uint32_t)numberofwords*4 - 1U; // last byte of the data
+	  uint32_t EndSector = GetSector(EndSectorAddress);
 
 	  /* Fill EraseInit structure*/
 	  EraseInitStruct.TypeErase     = FLASH_TYPEERASE_SECTORS;
@@ -218,7 +218,7 @@ uint32_t Flash_Write_Data (uint32_t StartSectorAddress, uint32_t *data, uint16_t
 	  // The the proper BANK to erase the Sector
 	  EraseInitStruct.Banks     = FLASH_BANK_1;
 
-	  EraseInitStruct.NbSectors     = (EndSector - StartSector) + 1;
+	  EraseInitStruct.NbSectors     = (EndSector - StartSector) + 1; // inclusive sector range (no off-by-one past the last sector)
 
 
 	  if (HAL_FLASHEx_Erase(&EraseInitStruct, &SECTORError) != HAL_OK)
