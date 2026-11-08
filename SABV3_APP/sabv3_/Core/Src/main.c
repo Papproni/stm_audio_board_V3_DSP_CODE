@@ -165,10 +165,10 @@ SAB_fx_manager_tst SAB_fx_manager_st;
  */
 
 //volatile uint8_t enable_effect = 1;
-volatile uint8_t preset_up_pressed = 0;
-volatile uint8_t preset_down_pressed = 0;
 volatile uint8_t fsw_btn_1_pressed __attribute__((section(".noncacheable_data"))) = 0;
 volatile uint8_t fsw_btn_2_pressed __attribute__((section(".noncacheable_data"))) = 0;
+volatile uint8_t fsw_btn_3_pressed __attribute__((section(".noncacheable_data"))) = 0;
+volatile uint8_t fsw_btn_4_pressed __attribute__((section(".noncacheable_data"))) = 0;
 // EXTI Line9 External Interrupt ISR Handler CallBackFun
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
@@ -182,14 +182,84 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	}
     if(GPIO_Pin == FSW_BTN3_Pin) // If The INT Source Is EXTI Line9 (A9 Pin)
 	{
-		HAL_GPIO_TogglePin(FSW_LED3_GPIO_Port, FSW_LED3_Pin); // Toggle The Output (LED) Pin
-		preset_up_pressed = 1;
+		fsw_btn_3_pressed = 1;
 	}
     if(GPIO_Pin == FSW_BTN4_Pin) // If The INT Source Is EXTI Line9 (A9 Pin)
 	{
-		HAL_GPIO_TogglePin(FSW_LED4_GPIO_Port, FSW_LED4_Pin); // Toggle The Output (LED) Pin
-		preset_down_pressed = 1;
+		fsw_btn_4_pressed = 1;
 	}
+}
+
+/*
+ * FSW HANDLING ----------------------------
+ * Single press: FSW1->mode A, FSW2->B, FSW3->C, FSW4->D.
+ * Chord (both pressed within FSW_CHORD_WINDOW_MS): FSW1+FSW2 = preset up,
+ *                                                  FSW3+FSW4 = preset down.
+ */
+#define FSW_CHORD_WINDOW_MS 80U
+
+static uint8_t  fsw_pending_id_u8    = 0; // switch (1..4) waiting for chord check, 0 = none
+static uint32_t fsw_pending_tick_u32 = 0;
+
+static inline fx_active_modes_ten fsw_to_mode(uint8_t id_u8){
+	// Physical switch order is A B C D: pin FSW_BTN4 drives the first physical
+	// switch, so the pin->mode map is reversed relative to the pin numbers.
+	switch(id_u8){
+		case 1: return PRESET_MODE_D;
+		case 2: return PRESET_MODE_C;
+		case 3: return PRESET_MODE_B;
+		default: return PRESET_MODE_A;
+	}
+}
+
+static inline uint8_t fsw_is_chord_pair(uint8_t a_u8, uint8_t b_u8){
+	return ((a_u8 == 1 && b_u8 == 2) || (a_u8 == 2 && b_u8 == 1) ||
+	        (a_u8 == 3 && b_u8 == 4) || (a_u8 == 4 && b_u8 == 3));
+}
+
+// LEDs show the active mode. Physical LED order is A B C D but the pins are
+// wired reversed (FSW_LED1 drives the last physical LED), so the map is inverted.
+static inline void fsw_leds_update(fx_active_modes_ten mode_en){
+	HAL_GPIO_WritePin(FSW_LED1_GPIO_Port, FSW_LED1_Pin, (mode_en == PRESET_MODE_D) ? 1 : 0);
+	HAL_GPIO_WritePin(FSW_LED2_GPIO_Port, FSW_LED2_Pin, (mode_en == PRESET_MODE_C) ? 1 : 0);
+	HAL_GPIO_WritePin(FSW_LED3_GPIO_Port, FSW_LED3_Pin, (mode_en == PRESET_MODE_B) ? 1 : 0);
+	HAL_GPIO_WritePin(FSW_LED4_GPIO_Port, FSW_LED4_Pin, (mode_en == PRESET_MODE_A) ? 1 : 0);
+}
+
+static inline void fsw_process(SAB_fx_manager_tst* mgr_pst){
+	uint8_t p1 = fsw_btn_1_pressed, p2 = fsw_btn_2_pressed, p3 = fsw_btn_3_pressed, p4 = fsw_btn_4_pressed;
+	if(p1 | p2 | p3 | p4){
+		fsw_btn_1_pressed = 0; fsw_btn_2_pressed = 0; fsw_btn_3_pressed = 0; fsw_btn_4_pressed = 0;
+		uint32_t now_u32 = HAL_GetTick();
+
+		if((p1 && p2) || (p3 && p4)){ // both seen in the same loop pass -> definite chord
+			if(p1 && p2){ SAB_preset_up_pressed(mgr_pst); }
+			else         { SAB_preset_down_pressed(mgr_pst); }
+			fsw_pending_id_u8 = 0;
+		} else {
+			uint8_t new_id_u8 = p1 ? 1 : (p2 ? 2 : (p3 ? 3 : 4));
+			if(fsw_pending_id_u8 != 0 && ((now_u32 - fsw_pending_tick_u32) <= FSW_CHORD_WINDOW_MS)){
+				if(fsw_is_chord_pair(fsw_pending_id_u8, new_id_u8)){ // completes a chord
+					if(fsw_pending_id_u8 == 1 || new_id_u8 == 1){ SAB_preset_up_pressed(mgr_pst); }
+					else                                        { SAB_preset_down_pressed(mgr_pst); }
+					fsw_pending_id_u8 = 0;
+				} else { // not a chord pair: apply the old press, start pending on the new one
+					SAB_set_preset_mode(mgr_pst, fsw_to_mode(fsw_pending_id_u8));
+					fsw_pending_id_u8    = new_id_u8;
+					fsw_pending_tick_u32 = now_u32;
+				}
+			} else { // nothing pending (or stale): wait for a possible chord partner
+				fsw_pending_id_u8    = new_id_u8;
+				fsw_pending_tick_u32 = now_u32;
+			}
+		}
+	}
+	// pending single press expired without its chord partner -> apply as mode set
+	if(fsw_pending_id_u8 != 0 && ((HAL_GetTick() - fsw_pending_tick_u32) > FSW_CHORD_WINDOW_MS)){
+		SAB_set_preset_mode(mgr_pst, fsw_to_mode(fsw_pending_id_u8));
+		fsw_pending_id_u8 = 0;
+	}
+	fsw_leds_update(mgr_pst->preset_mode_st.preset_mode_en);
 }
 
 
@@ -353,10 +423,6 @@ int main(void)
 	HAL_GPIO_WritePin(FSW_LED3_GPIO_Port, FSW_LED3_Pin, 0);
 	HAL_GPIO_WritePin(FSW_LED4_GPIO_Port, FSW_LED4_Pin, 0);
 
-
-	HAL_GPIO_WritePin(FSW_LED3_GPIO_Port, FSW_LED3_Pin, 1);
-	HAL_GPIO_WritePin(FSW_LED4_GPIO_Port, FSW_LED4_Pin, 1);
-
 	HAL_I2C_EnableListen_IT(&hi2c4);
 
 	SAB_fx_manager_init(&SAB_fx_manager_st, &intercom_st, &effects_io_port, &fsw_btn_1_pressed, &fsw_btn_2_pressed);
@@ -415,42 +481,7 @@ int main(void)
 	 	    // totalCycles = endCycles - startCycles;
 
 	 	    // time_to_process_f32 = (float)totalCycles/550;
-	 	if(1 == preset_down_pressed){
-	 		preset_down_pressed = 0;
-	 		SAB_preset_down_pressed(&SAB_fx_manager_st);
-	 	}
-	 	if(1 == preset_up_pressed){
-	 		preset_up_pressed = 0;
-	 		SAB_preset_up_pressed(&SAB_fx_manager_st);
-	 	}
-
-    if(fsw_btn_1_pressed){
-
-    }
-
-
-
-	 	if(fsw_btn_1_pressed | fsw_btn_2_pressed){
-	 		SAB_fsw_pressed_callback(&SAB_fx_manager_st);
-	 		switch (SAB_fx_manager_st.preset_mode_st.preset_mode_en)
-	 		{
-	 		case PRESET_MODE_A_ACTIVE:
-	 			HAL_GPIO_WritePin(FSW_LED1_GPIO_Port, FSW_LED1_Pin, 1);
-	 			HAL_GPIO_WritePin(FSW_LED2_GPIO_Port, FSW_LED2_Pin, 0);
-	 			break;
-	 		case PRESET_MODE_B_ACTIVE:
-	 			HAL_GPIO_WritePin(FSW_LED1_GPIO_Port, FSW_LED1_Pin, 0);
-	 			HAL_GPIO_WritePin(FSW_LED2_GPIO_Port, FSW_LED2_Pin, 1);
-	 			break;
-
-	 		default:
-	 			HAL_GPIO_WritePin(FSW_LED1_GPIO_Port, FSW_LED1_Pin, 0);
-	 			HAL_GPIO_WritePin(FSW_LED2_GPIO_Port, FSW_LED2_Pin, 0);
-	 			break;
-	 		}
-	 		fsw_btn_1_pressed = 0;
-	 		fsw_btn_2_pressed = 0;
-	 	}
+	 	fsw_process(&SAB_fx_manager_st);
 
 
 

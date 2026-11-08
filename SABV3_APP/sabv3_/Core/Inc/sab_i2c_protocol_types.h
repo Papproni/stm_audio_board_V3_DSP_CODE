@@ -80,8 +80,8 @@ typedef union{
 	struct{
 		uint8_t preset_Major_u8;
 		uint8_t preset_Minor_u8;
-		btn_state_ten BTN3_state_en;
-		btn_state_ten BTN4_state_en;
+		uint8_t fx_active_mode_u8;  // mirrors fx_active_modes_ten (PRESET_MODE_A..D)
+		uint8_t unused_u8;
 	};
 }sab_preset_num_tun;
 

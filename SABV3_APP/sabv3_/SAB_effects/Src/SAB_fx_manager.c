@@ -442,39 +442,25 @@ inline void  SAB_fx_manager_init( SAB_fx_manager_tst* self, sab_intercom_tst* in
 
 
 
-inline void  SAB_fsw_pressed_callback(SAB_fx_manager_tst* self){
-    uint8_t fsw1 = *(self->preset_mode_st.fsw1_ptr); // USED FOR MODE A
-    uint8_t fsw2 = *(self->preset_mode_st.fsw2_ptr); // USED FOR MODE B
-
-    switch (self->preset_mode_st.preset_mode_en)
-    {
-    case PRESET_MODE_NORMAL:
-        if(fsw1) self->preset_mode_st.preset_mode_en = PRESET_MODE_A_ACTIVE;
-        if(fsw2) self->preset_mode_st.preset_mode_en = PRESET_MODE_B_ACTIVE;
-        /* code */
-        break;
-    case PRESET_MODE_A_ACTIVE:
-        if(fsw1) self->preset_mode_st.preset_mode_en = PRESET_MODE_NORMAL;
-        if(fsw2) self->preset_mode_st.preset_mode_en = PRESET_MODE_B_ACTIVE;
-        break;
-    case PRESET_MODE_B_ACTIVE:
-        if(fsw1) self->preset_mode_st.preset_mode_en = PRESET_MODE_A_ACTIVE;
-        if(fsw2) self->preset_mode_st.preset_mode_en = PRESET_MODE_NORMAL;
-        break;
-    default:
-        self->preset_mode_st.preset_mode_en = PRESET_MODE_NORMAL;
-        break;
+// Apply a preset mode: set it, sync the I2C mirror for the display, and push
+// the per-mode fx states + loop bypasses to the intercom.
+inline void  SAB_set_preset_mode(SAB_fx_manager_tst* self, fx_active_modes_ten mode_en){
+    if(mode_en >= NUM_OF_PRESET_MODES){
+        mode_en = PRESET_MODE_A;
     }
-    
-    uint8_t current_mode = self->preset_mode_st.preset_mode_en;
+    self->preset_mode_st.preset_mode_en = mode_en;
+
+    // keep the I2C mirror of the active mode in sync for the display
+    self->intercom_pst->preset_data_un.fx_active_mode_u8 = mode_en;
+
     fx_data_tst *slot_ptr= &self->intercom_pst->loop_data[0].slot1;
     // update fx states
     for(int i=0; i<12;i++){
-        self->fx_instances[i]->intercom_fx_data.fx_state_en = self->current_preset_config_st.bypass_states_st[current_mode].fx_states_aen[i];
-        slot_ptr[i].fx_state_en 							= self->current_preset_config_st.bypass_states_st[current_mode].fx_states_aen[i];
+        self->fx_instances[i]->intercom_fx_data.fx_state_en = self->current_preset_config_st.bypass_states_st[mode_en].fx_states_aen[i];
+        slot_ptr[i].fx_state_en                             = self->current_preset_config_st.bypass_states_st[mode_en].fx_states_aen[i];
     }
     // update loops
-    memcpy(&self->intercom_pst->loopbypass_un,&self->current_preset_config_st.bypass_states_st[current_mode].loop_bypass_un,sizeof(sab_loopbypass_tun));
+    memcpy(&self->intercom_pst->loopbypass_un,&self->current_preset_config_st.bypass_states_st[mode_en].loop_bypass_un,sizeof(sab_loopbypass_tun));
 }
 
 inline void  SAB_preset_up_pressed(SAB_fx_manager_tst* self){
@@ -499,7 +485,8 @@ inline void  SAB_preset_up_pressed(SAB_fx_manager_tst* self){
         SAB_load_preset_from_flash(self);
         // DELETE CURRENT PRESET
         SAB_cleanup_effect_chain((GuitarEffect**)self,12);
-        self->preset_mode_st.preset_mode_en = PRESET_MODE_NORMAL;
+        self->preset_mode_st.preset_mode_en = PRESET_MODE_A;
+        self->intercom_pst->preset_data_un.fx_active_mode_u8 = PRESET_MODE_A;
         // INIT NEW PRESET
         SAB_load_current_config(self);
         HAL_GPIO_WritePin(FSW_LED1_GPIO_Port, FSW_LED1_Pin, 0);
@@ -527,7 +514,8 @@ inline void  SAB_preset_down_pressed(SAB_fx_manager_tst* self){
         SAB_load_preset_from_flash(self);
         // DELETE CURRENT PRESET
         SAB_cleanup_effect_chain((GuitarEffect**)self,12);
-        self->preset_mode_st.preset_mode_en = PRESET_MODE_NORMAL;
+        self->preset_mode_st.preset_mode_en = PRESET_MODE_A;
+        self->intercom_pst->preset_data_un.fx_active_mode_u8 = PRESET_MODE_A;
         // INIT NEW PRESET
         SAB_load_current_config(self);
         HAL_GPIO_WritePin(FSW_LED1_GPIO_Port, FSW_LED1_Pin, 0);

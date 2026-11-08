@@ -85,9 +85,10 @@ typedef struct preset_bypasses_st{
 
 #define NUM_OF_PRESET_MODES 4
 typedef enum {
-	PRESET_MODE_NORMAL,
-	PRESET_MODE_A_ACTIVE,
-	PRESET_MODE_B_ACTIVE
+	PRESET_MODE_A,
+	PRESET_MODE_B,
+	PRESET_MODE_C,
+	PRESET_MODE_D
 }fx_active_modes_ten;
 
 typedef struct preset_saves_st{
@@ -150,7 +151,7 @@ void cleanup_effect_chain(GuitarEffect** chain, int chain_length);
 void SAB_save_preset_to_flash(SAB_fx_manager_tst* self);
 void SAB_load_preset_from_flash(SAB_fx_manager_tst* self);
 
-void SAB_fsw_pressed_callback(SAB_fx_manager_tst* self);
+void SAB_set_preset_mode(SAB_fx_manager_tst* self, fx_active_modes_ten mode_en);
 void SAB_preset_up_pressed(SAB_fx_manager_tst* self);
 void SAB_preset_down_pressed(SAB_fx_manager_tst* self);
 #endif
