@@ -11,6 +11,11 @@ Generated on: 2024.11.28. */
 #ifndef PITCH_DETECTOR_BUFFER_SIZE
 #define PITCH_DETECTOR_BUFFER_SIZE 25000
 #endif
+// Sliding-window re-detection stride (in new samples). Smaller = snappier readout, more CPU.
+// 1200 samples @ 48 kHz -> ~40 pitch updates/sec while keeping the full 25000-sample window.
+#ifndef PITCH_DETECTOR_UPDATE_STRIDE
+#define PITCH_DETECTOR_UPDATE_STRIDE 5000
+#endif
 // Effect: pitchdetector
 typedef struct {
     void (*init)(void*);           // Function pointer to initialize the effect
@@ -40,6 +45,7 @@ typedef struct {
 
     float32_t average_f32;
     int input_raw_cntr_u32;
+    int update_cntr_u32;        // samples since last pitch re-detection (sliding window)
 	float32_t detected_freq_f32;
     uint8_t*   sign_bits;        // SDRAM pool: one byte/sample (allocated in SAB_pitchdetector_init)
 

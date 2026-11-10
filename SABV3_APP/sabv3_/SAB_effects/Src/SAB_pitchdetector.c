@@ -234,6 +234,7 @@ void SAB_pitchdetector_init( SAB_pitchdetector_tst* self){
     add_parameter(&self->intercom_parameters_aun[11],"NONE",PARAM_TYPE_UNUSED,69);
 
 	self->input_raw_cntr_u32 = 0;
+	self->update_cntr_u32    = 0;
 
 	arm_biquad_cascade_df1_init_f32(&lp500, 1, lpCoeffs, lpState);
     // Allocate detection buffers from the shared SDRAM pool (sdram_memory_handler).
@@ -256,10 +257,16 @@ float32_t SAB_pitchdetector_process( SAB_pitchdetector_tst* self, float input_f3
 	// Step1: Get data and store it in buffer
 	float32_t filtered;
 	arm_biquad_cascade_df1_f32(&lp500, &input_f32, &filtered, 1);
-	self->input_raw_af32[self->input_raw_cntr_u32] = filtered;
-	self->input_raw_cntr_u32++;
+	uint32_t write_idx_u32 = (uint32_t)self->input_raw_cntr_u32 % PITCH_DETECTOR_BUFFER_SIZE;
+	self->input_raw_af32[write_idx_u32] = filtered;
+	self->input_raw_cntr_u32++;            // monotonic total samples seen
 	if(self->input_raw_cntr_u32 >= PITCH_DETECTOR_BUFFER_SIZE){
-		self->input_raw_cntr_u32 = 0;
+		self->update_cntr_u32++;
+		if(self->update_cntr_u32 < PITCH_DETECTOR_UPDATE_STRIDE){
+			return 0;                     // not time to re-detect yet (output is always 0)
+		}
+		self->update_cntr_u32 = 0;
+		uint32_t read_idx_u32 = (uint32_t)self->input_raw_cntr_u32 % PITCH_DETECTOR_BUFFER_SIZE; // oldest in window
 		// Calculate average
 		arm_rms_f32(self->input_raw_af32,PITCH_DETECTOR_BUFFER_SIZE,&self->average_f32);
         avg_f32 = self->average_f32;
@@ -274,8 +281,13 @@ float32_t SAB_pitchdetector_process( SAB_pitchdetector_tst* self, float input_f3
         //     self->sign_bits[i] = (self->centered_f32[i] >= 0.0f) ? 1U : 0U;
         // }
 
-		for (int i = 0; i < PITCH_DETECTOR_BUFFER_SIZE; i++) {
-            float32_t centered = self->input_raw_af32[i] - self->average_f32;
+		uint32_t first_seg_u32 = PITCH_DETECTOR_BUFFER_SIZE - read_idx_u32;   // read_idx..end of buffer
+		for (uint32_t i = 0; i < first_seg_u32; i++) {
+            float32_t centered = self->input_raw_af32[read_idx_u32 + i] - self->average_f32;
+            self->sign_bits[i] = (centered >= 0.0f) ? 1U : 0U;
+        }
+		for (uint32_t i = first_seg_u32; i < PITCH_DETECTOR_BUFFER_SIZE; i++) {
+            float32_t centered = self->input_raw_af32[i - first_seg_u32] - self->average_f32;
             self->sign_bits[i] = (centered >= 0.0f) ? 1U : 0U;
         }
 
