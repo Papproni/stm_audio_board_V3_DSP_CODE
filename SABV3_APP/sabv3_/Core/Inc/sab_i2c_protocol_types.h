@@ -29,7 +29,8 @@ enum SAB_I2C_REGS{
 	SAB_I2C_REG_NUM_OF_IMPLEMENTED_EFFECTS,
 	SAB_I2C_REG_IMPLEMENTED_EFFECTS,
 	SAB_I2c_REG_CURRENT_FX,
-	SAB_I2C_REG_DSP_FW_UPDATE
+	SAB_I2C_REG_DSP_FW_UPDATE,
+	SAB_I2C_REG_TUNER_DATA
 };
 // #define SAB_I2C_REG_PRESETNUM        1
 #define SAB_I2C_REG_PRESETNUM_LEN    	4
@@ -64,6 +65,9 @@ enum SAB_I2C_REGS{
 
 // #define SAB_I2C_REG_LOOPBYPASSSTATE  20
 #define SAB_I2C_REG_LOOPBYPASSSTATE_LEN  3
+
+// #define SAB_I2C_REG_TUNER_DATA       25
+#define SAB_I2C_REG_TUNER_DATA_LEN     8
 
 
 // SIZE DEFINES
@@ -162,5 +166,14 @@ typedef union{
 		uint8_t   L34;
 	};
 }sab_loopbypass_tun;
+
+// TunerData ----------------------------------------------
+typedef union{
+	uint8_t all_u8[SAB_I2C_REG_TUNER_DATA_LEN];
+	struct{
+		float   freq_f32;
+		uint8_t active_u8;
+	};
+}sab_tuner_data_tun;
 
 #endif /* INC_SAB_I2C_PROTOCOL_TYPES_H */

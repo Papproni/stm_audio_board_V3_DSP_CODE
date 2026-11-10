@@ -194,7 +194,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
  * FSW HANDLING ----------------------------
  * Single press: FSW1->mode A, FSW2->B, FSW3->C, FSW4->D.
  * Chord (both pressed within FSW_CHORD_WINDOW_MS): FSW1+FSW2 = preset up,
- *                                                  FSW3+FSW4 = preset down.
+ *                                                  FSW3+FSW4 = preset down,
+ *                                                  FSW2+FSW3 = tuner toggle.
  */
 #define FSW_CHORD_WINDOW_MS 80U
 
@@ -214,16 +215,24 @@ static inline fx_active_modes_ten fsw_to_mode(uint8_t id_u8){
 
 static inline uint8_t fsw_is_chord_pair(uint8_t a_u8, uint8_t b_u8){
 	return ((a_u8 == 1 && b_u8 == 2) || (a_u8 == 2 && b_u8 == 1) ||
-	        (a_u8 == 3 && b_u8 == 4) || (a_u8 == 4 && b_u8 == 3));
+	        (a_u8 == 3 && b_u8 == 4) || (a_u8 == 4 && b_u8 == 3) ||
+	        (a_u8 == 2 && b_u8 == 3) || (a_u8 == 3 && b_u8 == 2)); // FS2+FS3 = tuner
 }
 
 // LEDs show the active mode. Physical LED order is A B C D but the pins are
 // wired reversed (FSW_LED1 drives the last physical LED), so the map is inverted.
-static inline void fsw_leds_update(fx_active_modes_ten mode_en){
-	HAL_GPIO_WritePin(FSW_LED1_GPIO_Port, FSW_LED1_Pin, (mode_en == PRESET_MODE_D) ? 1 : 0);
-	HAL_GPIO_WritePin(FSW_LED2_GPIO_Port, FSW_LED2_Pin, (mode_en == PRESET_MODE_C) ? 1 : 0);
-	HAL_GPIO_WritePin(FSW_LED3_GPIO_Port, FSW_LED3_Pin, (mode_en == PRESET_MODE_B) ? 1 : 0);
-	HAL_GPIO_WritePin(FSW_LED4_GPIO_Port, FSW_LED4_Pin, (mode_en == PRESET_MODE_A) ? 1 : 0);
+static inline void fsw_leds_update(fx_active_modes_ten mode_en, uint8_t tuner_on_u8){
+	if(tuner_on_u8){ // Tuner active -> light the SW2 + SW3 LEDs
+		HAL_GPIO_WritePin(FSW_LED1_GPIO_Port, FSW_LED1_Pin, 0);
+		HAL_GPIO_WritePin(FSW_LED2_GPIO_Port, FSW_LED2_Pin, 1);
+		HAL_GPIO_WritePin(FSW_LED3_GPIO_Port, FSW_LED3_Pin, 1);
+		HAL_GPIO_WritePin(FSW_LED4_GPIO_Port, FSW_LED4_Pin, 0);
+	} else {
+		HAL_GPIO_WritePin(FSW_LED1_GPIO_Port, FSW_LED1_Pin, (mode_en == PRESET_MODE_D) ? 1 : 0);
+		HAL_GPIO_WritePin(FSW_LED2_GPIO_Port, FSW_LED2_Pin, (mode_en == PRESET_MODE_C) ? 1 : 0);
+		HAL_GPIO_WritePin(FSW_LED3_GPIO_Port, FSW_LED3_Pin, (mode_en == PRESET_MODE_B) ? 1 : 0);
+		HAL_GPIO_WritePin(FSW_LED4_GPIO_Port, FSW_LED4_Pin, (mode_en == PRESET_MODE_A) ? 1 : 0);
+	}
 }
 
 static inline void fsw_process(SAB_fx_manager_tst* mgr_pst){
@@ -232,15 +241,17 @@ static inline void fsw_process(SAB_fx_manager_tst* mgr_pst){
 		fsw_btn_1_pressed = 0; fsw_btn_2_pressed = 0; fsw_btn_3_pressed = 0; fsw_btn_4_pressed = 0;
 		uint32_t now_u32 = HAL_GetTick();
 
-		if((p1 && p2) || (p3 && p4)){ // both seen in the same loop pass -> definite chord
+		if((p1 && p2) || (p3 && p4) || (p2 && p3)){ // both seen in the same loop pass -> definite chord
 			if(p1 && p2){ SAB_preset_up_pressed(mgr_pst); }
-			else         { SAB_preset_down_pressed(mgr_pst); }
+			else if(p3 && p4){ SAB_preset_down_pressed(mgr_pst); }
+			else             { SAB_tuner_toggle(mgr_pst); } // FS2+FS3 -> tuner
 			fsw_pending_id_u8 = 0;
 		} else {
 			uint8_t new_id_u8 = p1 ? 1 : (p2 ? 2 : (p3 ? 3 : 4));
 			if(fsw_pending_id_u8 != 0 && ((now_u32 - fsw_pending_tick_u32) <= FSW_CHORD_WINDOW_MS)){
 				if(fsw_is_chord_pair(fsw_pending_id_u8, new_id_u8)){ // completes a chord
 					if(fsw_pending_id_u8 == 1 || new_id_u8 == 1){ SAB_preset_up_pressed(mgr_pst); }
+					else if((fsw_pending_id_u8 == 2 && new_id_u8 == 3) || (fsw_pending_id_u8 == 3 && new_id_u8 == 2)){ SAB_tuner_toggle(mgr_pst); } // FS2+FS3 -> tuner
 					else                                        { SAB_preset_down_pressed(mgr_pst); }
 					fsw_pending_id_u8 = 0;
 				} else { // not a chord pair: apply the old press, start pending on the new one
@@ -259,7 +270,7 @@ static inline void fsw_process(SAB_fx_manager_tst* mgr_pst){
 		SAB_set_preset_mode(mgr_pst, fsw_to_mode(fsw_pending_id_u8));
 		fsw_pending_id_u8 = 0;
 	}
-	fsw_leds_update(mgr_pst->preset_mode_st.preset_mode_en);
+	fsw_leds_update(mgr_pst->preset_mode_st.preset_mode_en, mgr_pst->tuner_active_u8);
 }
 
 

@@ -33,15 +33,15 @@ typedef struct {
     float32_t param_11_value;
     float32_t param_12_value;
 	
-    float32_t input_raw_af32[PITCH_DETECTOR_BUFFER_SIZE];
-    float32_t centered_f32[PITCH_DETECTOR_BUFFER_SIZE];
+    float32_t* input_raw_af32;   // SDRAM pool: one float/sample (allocated in SAB_pitchdetector_init)
+    float32_t* centered_f32;     // unused in active path - left NULL to conserve SDRAM
     // float32_t input_fltrd_af32[PITCH_DETECTOR_BUFFER_SIZE];
     // float32_t autocorr_af32[PITCH_DETECTOR_BUFFER_SIZE][2];
 
     float32_t average_f32;
     int input_raw_cntr_u32;
 	float32_t detected_freq_f32;
-    uint8_t   sign_bits[PITCH_DETECTOR_BUFFER_SIZE];
+    uint8_t*   sign_bits;        // SDRAM pool: one byte/sample (allocated in SAB_pitchdetector_init)
 
 
 } SAB_pitchdetector_tst;

@@ -198,6 +198,9 @@ uint32_t sab_intercom_get_reg_data_ptr(struct sab_intercom_st *self)
 	case SAB_I2C_REG_DSP_FW_UPDATE:
 		return (uint32_t)&self->dsp_fw_update_flg;
 
+	case SAB_I2C_REG_TUNER_DATA:
+		return (uint32_t)&self->tuner_data_un;
+
 	default:
 		return 0; // Return NULL if the register enum is out of bounds
 	}
@@ -250,6 +253,9 @@ uint8_t sab_intercom_get_reg_data_size(struct sab_intercom_st *self)
 		
 	case SAB_I2C_REG_DSP_FW_UPDATE:
 		return sizeof(uint8_t);
+
+	case SAB_I2C_REG_TUNER_DATA:
+		return sizeof(sab_tuner_data_tun);
 
 	default:
 		return 0; // Return NULL if the register enum is out of bounds

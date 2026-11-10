@@ -442,9 +442,72 @@ inline void  SAB_fx_manager_init( SAB_fx_manager_tst* self, sab_intercom_tst* in
 
 
 
+// ==================== TUNER MODE (FSW2+FSW3) ====================
+// Entry: place the pitch detector in Loop1 slot 0, forced ON, saving the
+// original slot-0 effect so it can be restored exactly on exit.
+inline void SAB_tuner_enter(SAB_fx_manager_tst* self){
+    if(self->tuner_active_u8) return;
+    fx_active_modes_ten mode = self->preset_mode_st.preset_mode_en;
+
+    // Save ALL 12 slot names so the user's chain is restored exactly on exit.
+    for(int i = 0; i < 12; ++i){
+        memcpy(self->tuner_saved_st.names[i], self->current_preset_config_st.fx_names[i], 10);
+    }
+    self->tuner_saved_st.state0_u8 = self->current_preset_config_st.bypass_states_st[mode].fx_states_aen[0];
+
+    // Place the pitch detector in slot 0, forced ON. Clear every other slot so its
+    // buffers are NOT allocated from the SDRAM pool - this frees room for the large
+    // (25000-sample) detection buffer the tuner needs to be accurate.
+    memcpy(self->current_preset_config_st.fx_names[0], "Ptchdtcr", sizeof("Ptchdtcr"));
+    self->current_preset_config_st.fx_names[0][9] = 0;
+    self->current_preset_config_st.bypass_states_st[mode].fx_states_aen[0] = FX_STATE_ON;
+    for(int i = 1; i < 12; ++i){
+        self->current_preset_config_st.fx_names[i][0] = 0;   // empty name -> no effect instantiated
+    }
+
+    // Rebuild the chain: cleanup() resets the SDRAM bump allocator (clear_sdram_memory),
+    // then load allocates ONLY the pitch detector's buffers into the fresh pool.
+    SAB_cleanup_effect_chain(self->fx_instances,12);
+    SAB_load_current_config(self);
+
+    // mark tuner active (main.c reads this to drive FSW_LED2/3)
+    self->tuner_active_u8 = 1;
+    if(self->intercom_pst) self->intercom_pst->tuner_data_un.active_u8 = 1;
+}
+
+// Exit: restore Loop1 slot 0 exactly as it was before entry, then rebuild.
+inline void SAB_tuner_exit(SAB_fx_manager_tst* self){
+    if(!self->tuner_active_u8) return;
+    fx_active_modes_ten mode = self->preset_mode_st.preset_mode_en;
+
+    // Restore ALL 12 slot names exactly as they were before entry, then bring the
+    // user's full chain back: cleanup() resets SDRAM, load re-allocates every effect.
+    for(int i = 0; i < 12; ++i){
+        memcpy(self->current_preset_config_st.fx_names[i], self->tuner_saved_st.names[i], 10);
+    }
+    self->current_preset_config_st.bypass_states_st[mode].fx_states_aen[0] = self->tuner_saved_st.state0_u8;
+
+    SAB_cleanup_effect_chain(self->fx_instances,12);
+    SAB_load_current_config(self);
+
+    // mark tuner inactive (main.c clears FSW_LED2/3)
+    self->tuner_active_u8 = 0;
+    if(self->intercom_pst) self->intercom_pst->tuner_data_un.active_u8 = 0;
+}
+
+// Toggle tuner mode (FSW2+FSW3 chord).
+inline void SAB_tuner_toggle(SAB_fx_manager_tst* self){
+    if(self->tuner_active_u8) SAB_tuner_exit(self);
+    else                      SAB_tuner_enter(self);
+}
+
+
 // Apply a preset mode: set it, sync the I2C mirror for the display, and push
 // the per-mode fx states + loop bypasses to the intercom.
 inline void  SAB_set_preset_mode(SAB_fx_manager_tst* self, fx_active_modes_ten mode_en){
+    // auto-exit tuner mode before changing modes (restores Loop1 slot 0)
+    if(self->tuner_active_u8) SAB_tuner_exit(self);
+
     if(mode_en >= NUM_OF_PRESET_MODES){
         mode_en = PRESET_MODE_A;
     }
@@ -464,7 +527,9 @@ inline void  SAB_set_preset_mode(SAB_fx_manager_tst* self, fx_active_modes_ten m
 }
 
 inline void  SAB_preset_up_pressed(SAB_fx_manager_tst* self){
-    
+    // auto-exit tuner mode before changing presets (restores Loop1 slot 0)
+    if(self->tuner_active_u8) SAB_tuner_exit(self);
+
     if (self->intercom_pst->preset_data_un.preset_Minor_u8 == 9 && self->intercom_pst->preset_data_un.preset_Major_u8 == 'Z')
 	{
 	}
@@ -496,6 +561,9 @@ inline void  SAB_preset_up_pressed(SAB_fx_manager_tst* self){
 	}
 }
 inline void  SAB_preset_down_pressed(SAB_fx_manager_tst* self){
+    // auto-exit tuner mode before changing presets (restores Loop1 slot 0)
+    if(self->tuner_active_u8) SAB_tuner_exit(self);
+
     if (self->intercom_pst->preset_data_un.preset_Minor_u8 == 1 && self->intercom_pst->preset_data_un.preset_Major_u8 == 'A')
 	{
 	}
@@ -537,4 +605,15 @@ inline void SAB_fx_manager_process( SAB_fx_manager_tst* self){
         }
     }
     SAB_process_effect_chain(self,self->fx_instances,12);
+
+    // TUNER DATA -> display (publish pitch detector output + active flag)
+    if(self->intercom_pst){
+        float32_t tuner_freq_f32 = 0.0f;
+        if(self->tuner_active_u8 && self->fx_instances[0] != NULL
+           && self->fx_types_chain[0] == PITCHDETECTOR){
+            tuner_freq_f32 = ((SAB_pitchdetector_tst*)self->fx_instances[0])->detected_freq_f32;
+        }
+        self->intercom_pst->tuner_data_un.freq_f32   = tuner_freq_f32;
+        self->intercom_pst->tuner_data_un.active_u8  = self->tuner_active_u8;
+    }
 }

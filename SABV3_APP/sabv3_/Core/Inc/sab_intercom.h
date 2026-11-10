@@ -27,6 +27,7 @@ typedef struct sab_intercom_st{
     sab_info_tun        info_un;
     sab_save_tun        save_un;
     sab_loopbypass_tun  loopbypass_un;
+    sab_tuner_data_tun  tuner_data_un;
     
     uint8_t current_fx_in_edit;
     uint8_t change_occured_flg; //contains the register where the change happened

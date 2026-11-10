@@ -2,6 +2,7 @@
 Generated on: 2024.11.29. */
 
 #include "SAB_pitchdetector.h"
+#include "sdram_memory_handler.h"
 
 // Convert uint8_t sign[] (0/1) -> q7_t +/-1
 static void convert_sign_to_q7(const uint8_t *sign, q7_t *out, int N)
@@ -88,43 +89,6 @@ static float32_t pitchdet_bitwise_autocorr_cmsis(
     if (bestScore < 0.10f) return 0.0f;
 
     return sample_rate / refinedLag;
-}
-
-static void compute_sign_bits_cmsis(const float32_t *in,
-                                    uint8_t *sign_out,
-                                    float32_t average,
-                                    uint32_t length)
-{
-    static float32_t temp[ PITCH_DETECTOR_BUFFER_SIZE ];
-
-    // ---------------------------------------------------------
-    // 1. Center signal: temp[i] = in[i] - average
-    // ---------------------------------------------------------
-    float32_t neg_avg = -average;
-    arm_offset_f32(in, neg_avg, temp, length);
-
-
-    // ---------------------------------------------------------
-    // 2. Vectorized sign extraction
-    //
-    // Trick:
-    // sign = (x >= 0) → 1
-    // sign = (x < 0)  → 0
-    //
-    // Equivalent to:
-    // sign = ( (x + |x|) > 0 )
-    //
-    // because:
-    //   x >= 0  → x+|x| = 2x > 0
-    //   x < 0   → x+|x| = 0
-    // ---------------------------------------------------------
-    float32_t absbuf, sum;
-    for (uint32_t i = 0; i < length; i++)
-    {
-        absbuf = fabsf(temp[i]);                // CMSIS uses hardware FABS
-        sum    = temp[i] + absbuf;              // ≥0 → positive, <0 → 0
-        sign_out[i] = (sum > 0.0f) ? 1U : 0U;    // no branch mispredict (constant condition)
-    }
 }
 
 static float32_t pitchdet_bitwise_autocorr(const uint8_t *sign, int N, float sample_rate)
@@ -272,6 +236,11 @@ void SAB_pitchdetector_init( SAB_pitchdetector_tst* self){
 	self->input_raw_cntr_u32 = 0;
 
 	arm_biquad_cascade_df1_init_f32(&lp500, 1, lpCoeffs, lpState);
+    // Allocate detection buffers from the shared SDRAM pool (sdram_memory_handler).
+    // input_raw: one float/sample. sign_bits: one byte/sample -> ceil(SIZE/4) floats.
+    self->input_raw_af32 = (float32_t*)sdram_malloc_float32_t_array(PITCH_DETECTOR_BUFFER_SIZE);
+    self->sign_bits      = (uint8_t*)  sdram_malloc_float32_t_array((PITCH_DETECTOR_BUFFER_SIZE + 3) / 4);
+    self->centered_f32   = NULL; // unused in active path; not allocated to conserve SDRAM
 };
 
 

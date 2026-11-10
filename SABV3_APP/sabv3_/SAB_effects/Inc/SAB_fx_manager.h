@@ -128,6 +128,13 @@ typedef struct {
     sab_intercom_tst *intercom_pst;
     
     preset_saves_tst current_preset_config_st;
+
+    // TUNER MODE state (FSW2+FSW3 chord)
+    uint8_t tuner_active_u8;
+    struct {
+        char    names[12][10]; // original 12 slot effect names, restored on exit
+        uint8_t state0_u8;     // original Loop1 slot-0 bypass state, restored on exit
+    } tuner_saved_st;
 } SAB_fx_manager_tst;
 
 
@@ -154,4 +161,9 @@ void SAB_load_preset_from_flash(SAB_fx_manager_tst* self);
 void SAB_set_preset_mode(SAB_fx_manager_tst* self, fx_active_modes_ten mode_en);
 void SAB_preset_up_pressed(SAB_fx_manager_tst* self);
 void SAB_preset_down_pressed(SAB_fx_manager_tst* self);
+
+// TUNER MODE entry/exit (FSW2+FSW3 chord)
+void SAB_tuner_enter(SAB_fx_manager_tst* self);
+void SAB_tuner_exit(SAB_fx_manager_tst* self);
+void SAB_tuner_toggle(SAB_fx_manager_tst* self);
 #endif
