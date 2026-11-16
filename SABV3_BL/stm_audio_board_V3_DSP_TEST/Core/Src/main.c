@@ -103,6 +103,17 @@ static void JumpToApplication(void)
     uint32_t app_stack = vector_table[0];
     uint32_t app_reset = vector_table[1];
 
+    /* Clean USB disconnect BEFORE tearing anything down: release the D+
+     * pull-up so the host sees a REAL disconnect. The app re-connects under
+     * the SAME VID:PID (0x2FBE) right after boot; without this the host keeps
+     * a stale COM binding and the app's CDC never comes up. 100 ms is well
+     * inside the IWDG window (~8 s). */
+    /* DCTL (soft-disconnect) lives in the OTG 0x800 device block - a SEPARATE
+     * struct from the global block that USB_OTG_HS is typed as - so reach it
+     * by byte offset. SDIS releases the D+ pull-up -> host sees a real
+     * disconnect (same thing the HAL's USBD_DevDisconnect does). */
+    *(volatile uint32_t *)((uintptr_t)USB_OTG_HS + 0x804U) |= USB_OTG_DCTL_SDIS;
+    HAL_Delay(100);
 
     /* Disable interrupts */
     __disable_irq();
