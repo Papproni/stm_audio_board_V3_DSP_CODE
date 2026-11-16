@@ -22,7 +22,7 @@
 #include "usbd_cdc_if.h"
 
 /* USER CODE BEGIN INCLUDE */
-//#include "usb_cdc_handler.h"
+#include "sab_cdc_handler.h"
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -438,6 +438,10 @@ static int8_t CDC_Receive_HS(uint8_t* Buf, uint32_t *Len)
     sabu_ring[sabu_head] = Buf[i];
     sabu_head = next;
   }
+  /* Feed the same byte stream to the SABQ GUI-protocol ring as well. Each
+   * parser resyncs on its own magic (SABU vs SABQ), so the two rings never
+   * cross-react - the updater and the GUI can share one CDC port. */
+  sab_cdc_feed(Buf, *Len);
 
   // Prepare for next reception
   USBD_CDC_SetRxBuffer(&hUsbDeviceHS, &Buf[0]);

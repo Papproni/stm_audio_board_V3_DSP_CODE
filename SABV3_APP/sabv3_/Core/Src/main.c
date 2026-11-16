@@ -51,6 +51,7 @@
 #include "SAB_custom_fx.h"
 #include "SAB_fx_manager.h"
 #include "sdram_memory_handler.h"
+#include "sab_cdc_handler.h"
 
 // SAB specifics------END----
 /* USER CODE END Includes */
@@ -463,6 +464,7 @@ int main(void)
         last_blink_tick = HAL_GetTick();
       }
       FW_Update_Process();
+      sab_cdc_process();
       if (FW_Update_ResetRequested() != 0U)
       {
 //        HAL_Delay(20);
