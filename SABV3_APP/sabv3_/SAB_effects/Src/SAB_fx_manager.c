@@ -477,6 +477,12 @@ inline void  SAB_fx_manager_init( SAB_fx_manager_tst* self, sab_intercom_tst* in
     	self->current_preset_config_st.bypass_states_st[self->preset_mode_st.preset_mode_en].loop_bypass_un.L12 = 1;
     }
 
+    // Apply MODE A at boot: set the active mode, sync the display mirror
+    // (fx_active_mode_u8), push this mode's fx states, AND copy the preset's
+    // mode-A loop bypass into the intercom. Without this the intercom keeps
+    // init_intercom's hardcoded default bypass (L12=1,L23=0,L34=1), the mode
+    // mirror is never set, and the display/CDC report stale values.
+    SAB_set_preset_mode(self, PRESET_MODE_A);
 }
 
 

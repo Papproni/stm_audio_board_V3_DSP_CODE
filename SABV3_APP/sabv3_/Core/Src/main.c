@@ -470,6 +470,11 @@ int main(void)
 	HAL_I2C_EnableListen_IT(&hi2c4);
 
 	SAB_fx_manager_init(&SAB_fx_manager_st, &intercom_st, &effects_io_port, &fsw_btn_1_pressed, &fsw_btn_2_pressed);
+
+	// Light the footswitch LEDs for the loaded mode right away. fsw_leds_update
+	// normally runs from fsw_process(), which is gated on ADC_READY_FLAG (first
+	// audio callback) -- without this the LEDs stay dark until audio starts.
+	fsw_leds_update(SAB_fx_manager_st.preset_mode_st.preset_mode_en, SAB_fx_manager_st.tuner_active_u8);
 	
     /* Enable the TRC (Trace) */
     CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
