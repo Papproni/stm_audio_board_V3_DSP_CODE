@@ -19,4 +19,13 @@ typedef struct sdram_handler_st{
 void clear_sdram_memory();
 uint32_t* sdram_malloc_float32_t_array(uint32_t size);
 
+/* ---- memory telemetry for SABQ_CMD_GET_MEMSTATS (APP CDC) ----------- */
+/* Sample bump-pool usage, in float32 slots (sdram_memory_handler.c).   */
+uint32_t sdram_pool_used_floats(void);
+uint32_t sdram_pool_total_floats(void);
+/* C-heap (malloc) usage, in bytes (implemented in sysmem.c).           */
+uint32_t sab_heap_used_bytes(void);
+uint32_t sab_heap_free_bytes(void);
+uint32_t sab_heap_total_bytes(void);
+
 #endif /* INC_SDRAM_MEMORY_HANDLER_H */

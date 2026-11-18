@@ -57,6 +57,8 @@ enum {
     SABQ_CMD_GET_EFFECTS      = 0x15,  /* implemented effect table         */
     SABQ_CMD_GET_CURRENT_FX   = 0x16,  /* fx being edited (1 byte)         */
     SABQ_CMD_GET_FXPTR        = 0x17,  /* DIAG: req [start,count] -> ptrs  */
+    SABQ_CMD_GET_MEMSTATS     = 0x18,  /* mem telemetry: 5 LE u32 (pool+)  */
+    SABQ_CMD_GET_CPULOAD      = 0x19,  /* cpu telemetry: 4 LE u32 cyc/block*/
 
     /* Writes (host -> device state, I2C register semantics) */
     SABQ_CMD_SET_PARAM        = 0x20,  /* req: [fx_idx, slot 1..12, value] */
@@ -72,6 +74,11 @@ enum {
     SABQ_CMD_PRESET_DOWN      = 0x27,  /* req: empty -> previous preset    */
     SABQ_CMD_SET_MODE         = 0x28,  /* req: [mode 0..3 = A..D]          */
 };
+
+/* CPU budget per sample: 1/48000 s @ 550 MHz = 11458 cycles (one SAI sample per
+ * DMA completion; the FX pass computes all four inputs for that single sample).
+ * GET_CPULOAD reports it so the host can turn measured cycles into a % of CPU. */
+#define SABQ_CPU_BLOCK_BUDGET   11458U
 
 /* Response command = request command | 0x80 */
 #define SABQ_RESP(cmd)        ((uint8_t)((cmd) | 0x80U))

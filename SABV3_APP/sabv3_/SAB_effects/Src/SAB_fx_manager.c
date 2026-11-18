@@ -16,6 +16,45 @@ const GuitarEffect DEFAULT_EMPTY_SLOT_FOR_FX_CHAIN = {
  };
 
 
+/* Per-slot allocation telemetry: how many bytes this slot's effect struct
+   occupies on the C heap. A slot with no effect assigned reports 0. The
+   sizeof() values mirror the malloc() calls in init_effect_chain() exactly,
+   so this is the true footprint the FX manager allocated for that slot
+   (octave ~41 KB — invisible to the SDRAM sample-buffer pool). */
+uint32_t SAB_fx_slot_size_bytes(const SAB_fx_manager_tst *m, int slot)
+{
+    if ((m == NULL) || (slot < 0) || (slot >= 12)) {
+        return 0;
+    }
+    const GuitarEffect *p = m->fx_instances[slot];
+    if ((p == NULL) || (p == &DEFAULT_EMPTY_SLOT_FOR_FX_CHAIN)) {
+        return 0;
+    }
+    switch (m->fx_types_chain[slot]) {
+        case DELAY:         return (uint32_t)sizeof(SAB_delay_tst);
+        case OVERDRIVE:     return (uint32_t)sizeof(SAB_overdrive_tst);
+        case DISTORTION:    return (uint32_t)sizeof(SAB_distortion_tst);
+        case OCTAVE:        return (uint32_t)sizeof(octave_effects_tst);
+        case FLANGER:       return (uint32_t)sizeof(SAB_flanger_tst);
+        case CHORUS:        return (uint32_t)sizeof(SAB_chorus_tst);
+        case BOOST:         return (uint32_t)sizeof(SAB_boost_tst);
+        case PITCHSHIFT:    return (uint32_t)sizeof(SAB_pitchshift_tst);
+        case FUZZ:          return (uint32_t)sizeof(SAB_fuzz_tst);
+        case TREMOLO:       return (uint32_t)sizeof(SAB_tremolo_tst);
+        case REVERB:        return (uint32_t)sizeof(SAB_reverb_tst);
+        case BANDPASS:      return (uint32_t)sizeof(SAB_bandpass_tst);
+        case ENVELOPE:      return (uint32_t)sizeof(SAB_envelope_tst);
+        case CUSTOM_FX:     return (uint32_t)sizeof(SAB_custom_fx_tst);
+        case PITCHDETECTOR: return (uint32_t)sizeof(SAB_pitchdetector_tst);
+        case SIG_GEN:       return (uint32_t)sizeof(SAB_generator_tst);
+        case LPF:           return (uint32_t)sizeof(SAB_lpf_tst);
+        case HPF:           return (uint32_t)sizeof(SAB_hpf_tst);
+        case MARK2C:        return (uint32_t)sizeof(SAB_mark2c_tst);
+        case IMRE:          return (uint32_t)sizeof(SAB_step_response_tst);
+        default:            return 0U;
+    }
+}
+
 inline void init_effect_chain(GuitarEffect** chain, EffectType* fx_chain, int chain_length) {
     for (int i = 0; i < chain_length; ++i) {
         switch (fx_chain[i]) {

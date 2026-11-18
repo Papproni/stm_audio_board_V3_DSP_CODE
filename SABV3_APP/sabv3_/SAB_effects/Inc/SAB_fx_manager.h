@@ -149,7 +149,18 @@ void SAB_fx_manager_deinit( SAB_fx_manager_tst* self);
 // Process Function for SAB_fx_manager_tst
 void SAB_fx_manager_process( SAB_fx_manager_tst* self);
 
+/* Per-block CPU cycle accounting for SAB_fx_manager_process. The DWT CYCCNT
+ * bracket lives in main.c (it wraps the process call); this getter reports
+ * *avg_out = mean cycles/block since boot, *peak_out = max, *last_out = most
+ * recent. Implemented in main.c; used by the CDC handler for GET_CPULOAD. */
+void SAB_fx_get_cpu_cycles(uint32_t *avg_out, uint32_t *peak_out, uint32_t *last_out);
+
 void init_effect_chain(GuitarEffect** chain, EffectType* fx_chain, int chain_length);
+
+/* Bytes this slot's effect struct occupies on the C heap (0 if the slot is
+   empty). Index = fx_idx (0..11). Mirrors the malloc sizes in
+   init_effect_chain() so the PC can report each effect's real footprint. */
+uint32_t SAB_fx_slot_size_bytes(const SAB_fx_manager_tst *m, int slot);
 
 void process_effect_chain(GuitarEffect** chain, int chain_length);
 

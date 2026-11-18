@@ -161,6 +161,40 @@ void JumpToBootloader(void)
 sab_intercom_tst 	 intercom_st __attribute__((section(".noncacheable_data")));
 SAB_fx_manager_tst SAB_fx_manager_st;
 
+/* Per-sample CPU cycle accounting for SAB_fx_manager_process (DWT CYCCNT @
+ * SystemCoreClock). Written each audio sample by the main loop's bracket around
+ * the process call; read by the CDC handler via SAB_fx_get_cpu_cycles() for
+ * GET_CPULOAD so the PC GUI can show a live CPU-load bar. */
+static volatile uint32_t fx_start_cycles;
+static volatile uint32_t fx_end_cycles;
+static volatile uint32_t fx_last_cycles;
+static volatile uint32_t fx_min_cycles = 0xFFFFFFFFu;
+static volatile uint32_t fx_max_cycles = 0u;
+
+/* Headroom gauge, updated once per sample in the main loop. Each sample has a
+ * cycle budget (FX_BLOCK_BUDGET_CYCLES = 11458: 1/48000 s @ 550 MHz). One SAI
+ * sample arrives per DMA completion and the FX pass computes all four input
+ * channels for that single sample, so its real-time ceiling is one sample period.
+ * tc is the cycles that per-sample FX pass used. fx_ema_cycles is a short moving
+ * average of tc (integer EMA, ~FX_EMA_DIV samples of smoothing); cpu_headroom is
+ * the budget minus that average, so it reads as a live gauge:
+ *   - CPU unused   -> tc small -> ema small -> headroom counts higher
+ *   - CPU overused -> tc large -> ema large -> headroom counts lower (0 when the
+ *                     average cost reaches the budget, i.e. sustained overrun)
+ * GET_CPULOAD returns it in the "avg" slot; the host divides by the budget for a
+ * 0..100% bar (full = lots of headroom, empty = pegged/overloaded). */
+#define FX_BLOCK_BUDGET_CYCLES 11458u
+#define FX_EMA_DIV 8u
+static volatile uint32_t fx_ema_cycles = 0;   /* smoothed per-sample cost */
+static volatile int32_t  cpu_headroom = 0;    /* budget - ema, clamped [0, budget] */
+
+void SAB_fx_get_cpu_cycles(uint32_t *avg_out, uint32_t *peak_out, uint32_t *last_out)
+{
+    *avg_out  = (uint32_t)cpu_headroom;   /* 0..budget headroom level */
+    *peak_out = (uint32_t)fx_max_cycles;
+    *last_out = (uint32_t)fx_last_cycles;
+}
+
 /*
  * HW BTN INTERRUPT FUNCTIONS ----------------------------
  */
@@ -337,9 +371,7 @@ void I2C_Slave_Listen(void) {
 	HAL_I2C_Slave_Receive_IT(&hi2c4, RX_Buffer, sizeof(RX_Buffer));
 }
 
-// Variables to store cycle counts
-uint32_t startCycles, endCycles, totalCycles;
-float32_t time_to_process_f32;
+/* Per-sample CPU-cycle timing lives in main() as the fx_* statics (DWT CYCCNT). */
 
 typedef struct {
     uint8_t  pressed_u8;          // 0 = OFF, 1 = ON (latched)
@@ -440,17 +472,18 @@ int main(void)
 	SAB_fx_manager_init(&SAB_fx_manager_st, &intercom_st, &effects_io_port, &fsw_btn_1_pressed, &fsw_btn_2_pressed);
 	
     /* Enable the TRC (Trace) */
-    // CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
 
-    // /* Unlock the DWT if it is locked (LAR register) */
-    // // Some Cortex-M7 MCUs (including STM32H7) require this unlock sequence:
-    // DWT->LAR = 0xC5ACCE55;
+    /* Unlock the DWT (LAR register) - required on Cortex-M7/STM32H7 */
+    DWT->LAR = 0xC5ACCE55;
 
-    // /* Reset the cycle counter */
-    // DWT->CYCCNT = 0;
+    /* Reset the cycle counter */
+    DWT->CYCCNT = 0;
 
-    // /* Enable the cycle counter */
-    // DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+    /* Enable the cycle counter (CYCCNT freezes automatically on debugger halt,
+       so it can be read live over ST-Link with a full-width read) */
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+
     clear_sdram_memory();
     uint32_t last_blink_tick = 0;
   while (1)
@@ -480,13 +513,27 @@ int main(void)
 	 }
 
 	   if(ADC_READY_FLAG){
-	 	  ADC_READY_FLAG = 0;
-	 	  // // Reset the counter to ensure a clean start
-	 	  //     DWT->CYCCNT = 0;
-
-	 	  //     // Record the starting cycle count
-	 	  //     startCycles = DWT->CYCCNT;
-	 	SAB_fx_manager_process(&SAB_fx_manager_st);
+	 	  		  ADC_READY_FLAG = 0;
+	 	  	 	    fx_start_cycles = DWT->CYCCNT;
+    SAB_fx_manager_process(&SAB_fx_manager_st);
+    fx_end_cycles = DWT->CYCCNT;
+    {
+        uint32_t tc = fx_end_cycles - fx_start_cycles;
+        fx_last_cycles = tc;
+        if (tc < fx_min_cycles) { fx_min_cycles = tc; }
+        if (tc > fx_max_cycles) { fx_max_cycles = tc; }
+        /* Headroom gauge: keep a short moving average of the per-sample cost,
+         * then report the budget minus that average. Counts higher while the FX
+         * pass is cheap (CPU unused) and lower while it's expensive (CPU
+         * overused); hits 0 only when the average cost reaches the budget.
+         * Integer EMA -- a zero step just holds the value when tc is steady. */
+        int32_t diff = (int32_t)tc - (int32_t)fx_ema_cycles;
+        int32_t step = diff / (int32_t)FX_EMA_DIV;
+        if (step != 0) { fx_ema_cycles = (uint32_t)((int32_t)fx_ema_cycles + step); }
+        int32_t hr = (int32_t)FX_BLOCK_BUDGET_CYCLES - (int32_t)fx_ema_cycles;
+        if (hr < 0) hr = 0;
+        cpu_headroom = hr;
+    }
 	 	 // Record the ending cycle count
 	 	    // endCycles = DWT->CYCCNT;
 

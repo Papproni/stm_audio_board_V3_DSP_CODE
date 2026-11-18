@@ -22,6 +22,7 @@
 #include "sab_intercom.h"
 #include "SAB_fx_manager.h"
 #include "usbd_cdc_if.h"
+#include "sdram_memory_handler.h"
 #include <string.h>
 
 /* The intercom instance, defined in main.c (noncacheable section). */
@@ -265,6 +266,19 @@ static void q_dispatch_frame(const uint8_t *frame)
         break;
     }
 
+    /* ---- CPU load: FX cycle cost per sample (DWT CYCCNT) ---------------- */
+    case SABQ_CMD_GET_CPULOAD: {
+        uint8_t  cbuf[16U];
+        uint32_t avg, peak, last;
+        SAB_fx_get_cpu_cycles(&avg, &peak, &last);
+        q_put_u32(&cbuf[ 0U], avg);
+        q_put_u32(&cbuf[ 4U], peak);
+        q_put_u32(&cbuf[ 8U], last);
+        q_put_u32(&cbuf[12U], SABQ_CPU_BLOCK_BUDGET);
+        q_send_response(cmd, SABQ_STATUS_OK, seq, cbuf, sizeof(cbuf));
+        break;
+    }
+
     /* ---- reads ----------------------------------------------------- */
     case SABQ_CMD_GET_INFO:
         q_send_response(cmd, SABQ_STATUS_OK, seq,
@@ -368,6 +382,25 @@ static void q_dispatch_frame(const uint8_t *frame)
         q_send_response(cmd, SABQ_STATUS_OK, seq,
                         &intercom_st.current_fx_in_edit, 1U);
         break;
+
+    /* ---- mem telemetry: pool (float slots) + C-heap (bytes) -------- */
+    case SABQ_CMD_GET_MEMSTATS: {
+        uint8_t mbuf[68U];
+        uint32_t i;
+        q_put_u32(&mbuf[ 0U], sdram_pool_used_floats());
+        q_put_u32(&mbuf[ 4U], sdram_pool_total_floats());
+        q_put_u32(&mbuf[ 8U], sab_heap_used_bytes());
+        q_put_u32(&mbuf[12U], sab_heap_free_bytes());
+        q_put_u32(&mbuf[16U], sab_heap_total_bytes());
+        /* per-slot effect struct bytes (index = fx_idx) so the PC can show
+         * exactly how much memory each allocated effect occupies */
+        for (i = 0U; i < 12U; i++) {
+            q_put_u32(&mbuf[(uint16_t)(20U + (i * 4U))],
+                      SAB_fx_slot_size_bytes(&SAB_fx_manager_st, (int)i));
+        }
+        q_send_response(cmd, SABQ_STATUS_OK, seq, mbuf, sizeof(mbuf));
+        break;
+    }
 
     /* ---- writes (I2C register semantics) --------------------------- */
     case SABQ_CMD_SET_PARAM: {

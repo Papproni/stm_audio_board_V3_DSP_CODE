@@ -77,3 +77,38 @@ void *_sbrk(ptrdiff_t incr)
 
   return (void *)prev_heap_end;
 }
+
+/* -----------------------------------------------------------------------
+ * Memory telemetry for SABQ_CMD_GET_MEMSTATS (APP CDC).
+ * Mirrors the _sbrk() symbols above: floor = _end, ceiling =
+ * _estack - _Min_Stack_Size, live top = __sbrk_heap_end.
+ * --------------------------------------------------------------------- */
+uint32_t sab_heap_total_bytes(void)
+{
+  extern uint8_t _end;     /* Symbol defined in the linker script */
+  extern uint8_t _estack;  /* Symbol defined in the linker script */
+  extern uint32_t _Min_Stack_Size; /* Symbol defined in the linker script */
+  const uint32_t stack_limit = (uint32_t)&_estack - (uint32_t)&_Min_Stack_Size;
+  return stack_limit - (uint32_t)&_end;
+}
+
+uint32_t sab_heap_used_bytes(void)
+{
+  extern uint8_t _end; /* Symbol defined in the linker script */
+  if (NULL == __sbrk_heap_end)
+  {
+    return 0U;
+  }
+  return (uint32_t)__sbrk_heap_end - (uint32_t)&_end;
+}
+
+uint32_t sab_heap_free_bytes(void)
+{
+  extern uint8_t _end;     /* Symbol defined in the linker script */
+  extern uint8_t _estack;  /* Symbol defined in the linker script */
+  extern uint32_t _Min_Stack_Size; /* Symbol defined in the linker script */
+  const uint32_t stack_limit = (uint32_t)&_estack - (uint32_t)&_Min_Stack_Size;
+  const uint32_t top = (NULL == __sbrk_heap_end)
+                         ? (uint32_t)&_end : (uint32_t)__sbrk_heap_end;
+  return stack_limit - top;
+}
