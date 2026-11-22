@@ -23,6 +23,8 @@
 #include "usb_device.h"
 #include "usbd_core.h"
 #include "usbd_desc.h"
+#include "usbd_audio.h"
+#include "usbd_audio_if.h"
 #include "usbd_cdc.h"
 #include "usbd_cdc_if.h"
 
@@ -42,6 +44,8 @@
 
 /* USB Device Core handle declaration. */
 USBD_HandleTypeDef hUsbDeviceHS;
+static uint8_t cdc_endpoints[] = {0x81U, 0x01U, 0x82U};
+static uint8_t audio_endpoints[] = {0x83U};
 
 /*
  * -- Insert your variables declaration here --
@@ -67,16 +71,33 @@ void MX_USB_DEVICE_Init(void)
 
   /* USER CODE END USB_DEVICE_Init_PreTreatment */
 
-  /* Init Device Library, add supported class and start the library. */
+  /* Power the USB PHY before the low-level driver starts. */
+  HAL_PWREx_EnableUSBVoltageDetector();
+  /* CDC (IF0/1) and UAC1 microphone (IF2/3) on one device. */
   if (USBD_Init(&hUsbDeviceHS, &HS_Desc, DEVICE_HS) != USBD_OK)
   {
     Error_Handler();
   }
-  if (USBD_RegisterClass(&hUsbDeviceHS, &USBD_CDC) != USBD_OK)
+  if (USBD_RegisterClassComposite(&hUsbDeviceHS, &USBD_CDC,
+                                  CLASS_TYPE_CDC, cdc_endpoints) != USBD_OK)
   {
     Error_Handler();
   }
+  hUsbDeviceHS.classId = 0U;
   if (USBD_CDC_RegisterInterface(&hUsbDeviceHS, &USBD_Interface_fops_HS) != USBD_OK)
+  {
+    Error_Handler();
+  }
+  /* RegisterClassComposite advances classId; restore the next free slot
+   * after associating CDC's interface callbacks with class zero. */
+  hUsbDeviceHS.classId = 1U;
+  if (USBD_RegisterClassComposite(&hUsbDeviceHS, &USBD_AUDIO,
+                                  CLASS_TYPE_AUDIO, audio_endpoints) != USBD_OK)
+  {
+    Error_Handler();
+  }
+  hUsbDeviceHS.classId = 1U;
+  if (USBD_AUDIO_RegisterInterface(&hUsbDeviceHS, &USBD_AUDIO_fops) != USBD_OK)
   {
     Error_Handler();
   }
@@ -86,7 +107,6 @@ void MX_USB_DEVICE_Init(void)
   }
 
   /* USER CODE BEGIN USB_DEVICE_Init_PostTreatment */
-  HAL_PWREx_EnableUSBVoltageDetector();
 
   /* USER CODE END USB_DEVICE_Init_PostTreatment */
 }

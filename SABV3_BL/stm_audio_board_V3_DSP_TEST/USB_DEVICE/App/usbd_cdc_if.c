@@ -106,7 +106,8 @@ enum SABU_COMMANDS {
   SABU_HELLO = 1,
   SABU_ERASE = 2,
   SABU_WRITE = 3,
-  SABU_RESET = 4
+  SABU_RESET = 4,
+  SABU_VERIFY = 5
 };
 
 static volatile uint8_t sabu_ring[SABU_RING_SIZE];
@@ -118,6 +119,7 @@ static uint16_t sabu_frame_expected;
 static uint8_t sabu_response[16];
 static uint8_t sabu_response_pending;
 static uint8_t sabu_reset_requested;
+static uint8_t sabu_session_active;
 
 static uint32_t sabu_u32(const uint8_t *p)
 {
@@ -160,15 +162,16 @@ static uint8_t sabu_erase_application_sector(uint32_t sector)
     uint32_t sector_error = 0;
     HAL_StatusTypeDef status;
 
-    if (sector > 7U)
+    if ((sector < START_SECTOR_DELETE) ||
+        (sector >= START_SECTOR_DELETE + NUM_OF_DELETED_SECTORS))
         return 2U;
 
     memset(&erase, 0, sizeof(erase));
 
-      erase.TypeErase    = FLASH_TYPEERASE_SECTORS;
+    erase.TypeErase    = FLASH_TYPEERASE_SECTORS;
     erase.Banks        = FLASH_BANK_1;
-    erase.Sector       = START_SECTOR_DELETE;
-    erase.NbSectors    = NUM_OF_DELETED_SECTORS;
+    erase.Sector       = sector;
+    erase.NbSectors    = 1U;
     erase.VoltageRange = FLASH_VOLTAGE_RANGE_3;
 
     __disable_irq();
@@ -526,6 +529,7 @@ void FW_Update_Process(void)
       if (received_crc != sabu_crc32(sabu_frame, 12U + length)) {
         status = 10U;
       } else if (command == SABU_HELLO) {
+        sabu_session_active = 1U;
         detail = SABU_APP_END - SABU_APP_BASE;
       } else if (command == SABU_ERASE) {
         if (length != 1U) {
@@ -536,6 +540,19 @@ void FW_Update_Process(void)
         }
       } else if (command == SABU_WRITE) {
         status = sabu_write_application(&sabu_frame[12], length);
+      } else if (command == SABU_VERIFY) {
+        if (length != 8U) {
+          status = 12U;
+        } else {
+          const uint32_t offset = sabu_u32(&sabu_frame[12]);
+          const uint32_t bytes = sabu_u32(&sabu_frame[16]);
+          if ((bytes == 0U) || (offset > (SABU_APP_END - SABU_APP_BASE)) ||
+              (bytes > (SABU_APP_END - SABU_APP_BASE) - offset)) {
+            status = 12U;
+          } else {
+            detail = sabu_crc32((const uint8_t *)(SABU_APP_BASE + offset), bytes);
+          }
+        }
       } else if (command == SABU_RESET) {
           sabu_reset_requested = 1U;
       } else {
@@ -553,6 +570,11 @@ void FW_Update_Process(void)
 uint8_t FW_Update_ResetRequested(void)
 {
   return sabu_reset_requested;
+}
+
+uint8_t FW_Update_SessionActive(void)
+{
+  return sabu_session_active;
 }
 
 /* USER CODE END PRIVATE_FUNCTIONS_IMPLEMENTATION */

@@ -65,10 +65,10 @@
 #define USBD_VID     1155
 #define USBD_LANGID_STRING     1033
 #define USBD_MANUFACTURER_STRING     "SABeffects"
-#define USBD_PID_HS     12222
-#define USBD_PRODUCT_STRING_HS     "SAB_DSP_APP"
-#define USBD_CONFIGURATION_STRING_HS     "CDC Config"
-#define USBD_INTERFACE_STRING_HS     "CDC Interface"
+#define USBD_PID_HS     12228
+#define USBD_PRODUCT_STRING_HS     "SAB DSP Audio + CDC"
+#define USBD_CONFIGURATION_STRING_HS     "Audio Input and Serial Control"
+#define USBD_INTERFACE_STRING_HS     "Audio Capture"
 
 #define USB_SIZ_BOS_DESC            0x0C
 
@@ -153,9 +153,9 @@ __ALIGN_BEGIN uint8_t USBD_HS_DeviceDesc[USB_LEN_DEV_DESC] __ALIGN_END =
   0x00,                       /*bcdUSB */
 
   0x02,
-  0x02,                       /*bDeviceClass*/
-  0x02,                       /*bDeviceSubClass*/
-  0x00,                       /*bDeviceProtocol*/
+  0xEF,                       /* bDeviceClass: composite with IADs */
+  0x02,                       /* bDeviceSubClass */
+  0x01,                       /* bDeviceProtocol */
   USB_MAX_EP0_SIZE,           /*bMaxPacketSize*/
   LOBYTE(USBD_VID),           /*idVendor*/
   HIBYTE(USBD_VID),           /*idVendor*/

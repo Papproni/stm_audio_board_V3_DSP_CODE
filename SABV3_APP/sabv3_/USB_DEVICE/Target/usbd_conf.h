@@ -63,7 +63,11 @@
   */
 
 /*---------- -----------*/
-#define USBD_MAX_NUM_INTERFACES     1U
+#define USBD_MAX_NUM_INTERFACES     4U
+#define USE_USBD_COMPOSITE
+#define USBD_CMPSIT_ACTIVATE_CDC    1U
+#define USBD_CMPSIT_ACTIVATE_AUDIO  1U
+#define USBD_COMPOSITE_USE_IAD      1U
 /*---------- -----------*/
 #define USBD_MAX_NUM_CONFIGURATION     1U
 /*---------- -----------*/

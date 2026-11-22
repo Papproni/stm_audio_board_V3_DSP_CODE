@@ -11,49 +11,55 @@ import serial
 from serial.tools import list_ports
 
 MAGIC = 0x55424153  # b"SABU" in little-endian memory
-CMD_HELLO, CMD_ERASE, CMD_WRITE, CMD_RESET = 1, 2, 3, 4
+CMD_HELLO, CMD_ERASE, CMD_WRITE, CMD_RESET, CMD_VERIFY = 1, 2, 3, 4, 5
 CHUNK = 256  # Must be a multiple of the STM32H723 32-byte flash word.
+APP_AREA_SIZE = 0x080E0000 - 0x08020000  # Never erase the preset sector at 0x080E0000.
+APP_HELLO_SIZE = 0x08100000 - 0x08020000
+
+
+class ApplicationDetected(RuntimeError):
+    """The selected CDC port is the running DSP application, not its bootloader."""
 
 
 class Updater:
     def __init__(self, port: str, log, progress):
         self.port, self.log, self.progress, self.seq = port, log, progress, 1
+        self.bootloader_verified = False
         self.serial = serial.Serial(port, 115200, timeout=1, write_timeout=3)
         time.sleep(0.15)
 
     def _attempt_reconnect(self, timeout_s: float):
-        """Try to reopen the serial port within timeout_s seconds.
-        Prefer the same port name, otherwise search for the known VID/PID.
-        On success replace self.serial and reset sequence counter.
-        """
+        """Reopen only a CDC port that proves it is the DSP bootloader."""
         deadline = time.monotonic() + max(0.0, timeout_s or 0)
+        self.bootloader_verified = False
         try:
             self.serial.close()
         except Exception:
             pass
 
         while time.monotonic() < deadline:
-            # First try same port name
-            try:
-                self.serial = serial.Serial(self.port, 115200, timeout=1, write_timeout=3)
-                time.sleep(0.15)
-                self.seq = 1
-                return
-            except (serial.SerialException, OSError):
-                # search for device by VID/PID
-                for p in list_ports.comports():
-                    if getattr(p, "vid", None) == 1155 and getattr(p, "pid", None) == 12222:
-                        try:
-                            self.port = p.device
-                            self.serial = serial.Serial(self.port, 115200, timeout=1, write_timeout=3)
-                            time.sleep(0.15)
-                            self.seq = 1
-                            return
-                        except (serial.SerialException, OSError):
-                            continue
-                time.sleep(0.2)
-
-        raise serial.SerialException("Failed to reconnect to device within timeout")
+            for p in list_ports.comports():
+                if (getattr(p, "vid", None), getattr(p, "pid", None)) != (0x0483, 0x2FBE):
+                    continue
+                candidate = None
+                try:
+                    candidate = serial.Serial(p.device, 115200, timeout=0.2, write_timeout=3)
+                    self.serial = candidate
+                    self.seq = 1
+                    if self.command(CMD_HELLO, timeout=1.0) == APP_AREA_SIZE:
+                        self.port = p.device
+                        self.bootloader_verified = True
+                        self.log(f"Verified DSP bootloader on {self.port}")
+                        return
+                except (serial.SerialException, OSError, RuntimeError):
+                    pass
+                if candidate is not None:
+                    try:
+                        candidate.close()
+                    except (serial.SerialException, OSError):
+                        pass
+            time.sleep(0.2)
+        raise RuntimeError("DSP bootloader did not re-enumerate or failed HELLO")
 
     def close(self):
         self.serial.close()
@@ -87,70 +93,108 @@ class Updater:
     
     def wait_for_bootloader(self):
         # First try the already-open port (device may have booted directly into BL).
+        identity = next(((p.vid, p.pid) for p in list_ports.comports()
+                         if p.device == self.port), None)
+        if identity not in ((0x0483, 0x2FC4), (0x0483, 0x2FBE)):
+            raise RuntimeError("Selected port is not the DSP application or bootloader")
         for _ in range(15):
             try:
                 size = self.command(CMD_HELLO, timeout=1.5)
+                if size == APP_HELLO_SIZE:
+                    if identity != (0x0483, 0x2FC4):
+                        raise RuntimeError("Unexpected SABU identity on bootloader port")
+                    raise ApplicationDetected("Running application; requesting bootloader")
+                if size != APP_AREA_SIZE or identity != (0x0483, 0x2FBE):
+                    raise RuntimeError(f"Not the DSP bootloader (app area {size // 1024} KiB)")
+                self.bootloader_verified = True
                 self.log(f"Bootloader ready; app area: {size // 1024} KiB")
                 return
+            except ApplicationDetected:
+                raise
             except (RuntimeError, serial.SerialException):
                 time.sleep(0.3)
         raise RuntimeError("SAB bootloader was not found on the selected COM port")
 
     def enter_from_app(self):
-        self.serial.reset_input_buffer()
-        self.serial.write(b"SABU")
+        reset_frame, _ = self.packet(CMD_RESET)
+        self.serial.write(reset_frame)
         self.serial.flush()
-        time.sleep(1.5)
+        self.serial.close()
+        self.bootloader_verified = False
+
+    @staticmethod
+    def _application_hello(port):
+        """Confirm the restarted CDC port speaks the running DSP's SABQ protocol."""
+        request = b"SABQ\x01\x01" + struct.pack("<HH", 1, 0)
+        request += struct.pack("<I", zlib.crc32(request) & 0xFFFFFFFF)
+        with serial.Serial(port, 115200, timeout=0.5, write_timeout=2) as device:
+            device.reset_input_buffer()
+            device.write(request)
+            header = device.read(10)
+            if len(header) != 10 or header[:6] != b"SABQ\x81\x01":
+                return False
+            sequence, length = struct.unpack_from("<HH", header, 6)
+            if sequence != 1 or not 5 <= length <= 512:
+                return False
+            body = device.read(length + 4)
+            if len(body) != length + 4 or body[0] != 0:
+                return False
+            crc = struct.unpack_from("<I", body, length)[0]
+            return (crc == zlib.crc32(header + body[:length]) & 0xFFFFFFFF and
+                    struct.unpack_from("<I", body, 1)[0] == 0x51424153)
+
+    def wait_for_application(self, timeout_s=20):
+        try:
+            self.serial.close()
+        except (serial.SerialException, OSError):
+            pass
+        deadline = time.monotonic() + timeout_s
+        while time.monotonic() < deadline:
+            for port in list_ports.comports():
+                if (port.vid, port.pid) != (0x0483, 0x2FC4):
+                    continue
+                try:
+                    if self._application_hello(port.device):
+                        self.port = port.device
+                        self.log(f"Updated application answered SABQ HELLO on {self.port}")
+                        return
+                except (serial.SerialException, OSError):
+                    pass
+            time.sleep(0.3)
+        raise RuntimeError("Flash verified, but updated application did not answer USB HELLO")
 
     def upload(self, firmware: Path):
+        if not getattr(self, "bootloader_verified", False):
+            raise RuntimeError("Upload blocked: bootloader identity not verified")
         image = firmware.read_bytes()
         if len(image) < 8:
             raise RuntimeError("Selected file is not an application binary")
-        if len(image) > 896 * 1024:
-            raise RuntimeError("Firmware is larger than the 896 KiB application partition")
+        if len(image) > APP_AREA_SIZE:
+            raise RuntimeError("Firmware exceeds the DSP application area (preset sector is protected)")
+        stack, reset = struct.unpack_from("<II", image)
+        if not (0x24000000 <= stack <= 0x24080000 and stack % 8 == 0 and
+                reset & 1 and 0x08020000 <= (reset & ~1) < 0x08020000 + len(image)):
+            raise RuntimeError("Invalid DSP application vector table; nothing was erased")
         image += b"\xFF" * ((-len(image)) % 32)
         self.progress(0, len(image))
-        # Ask the device to reset into bootloader without blocking for a reply.
-        # Write the reset packet, close the connection and wait for the device
-        # to re-enumerate (it will briefly disconnect from USB).
-        # try:
-        #     # ensure sequence counter starts fresh for the bootloader
-        #     self.seq = 1
-        #     reset_packet, _ = self.packet(CMD_RESET)
-        #     try:
-        #         self.serial.write(reset_packet)
-        #         self.serial.flush()
-        #     except serial.SerialException:
-        #         # ignore — device likely disconnected immediately after reset
-        #         pass
-        #     try:
-        #         self.serial.close()
-        #     except Exception:
-        #         pass
-        #     # wait up to 8 seconds for the bootloader to reappear
-        #     self._attempt_reconnect(8.0)
-        # except Exception as exc:
-        #     # If reconnect failed, surface the error so the caller can handle it
-        #     raise RuntimeError(f"Failed to reset/reconnect device: {exc}")
-        
-        self.command(CMD_RESET, reply=False)
-        time.sleep(0.5)  # give the bootloader a moment to finish initializing
-        
-        # Find com port again and reconnect
-        self._attempt_reconnect(8.0)
-        
-        self.log(f"Erasing application area for {len(image):,} bytes…")
-        for sector in range(7, 8):
-            self.log(f"Erasing flash sector {sector}/7…")
-            self.command(CMD_ERASE, bytes([sector]), timeout=30)
-        self.log("Application area erased (sectors 1–7)")
+        sectors = (len(image) + 0x1FFFF) // 0x20000
+        self.log(f"Erasing {sectors} application sector(s) for {len(image):,} bytes…")
+        for sector in range(1, sectors + 1):
+            self.command(CMD_ERASE, bytes([sector]), timeout=15)
+        self.log(f"Erased sectors 1–{sectors}; preset sector 7 untouched")
         for offset in range(0, len(image), CHUNK):
             self.command(CMD_WRITE, struct.pack("<I", offset) + image[offset:offset + CHUNK])
             written = min(offset + CHUNK, len(image))
             self.progress(written, len(image))
             self.log(f"Written {written:,}/{len(image):,} bytes ({written * 100 // len(image)}%)")
-        self.command(CMD_RESET)
-        self.log("Update complete; device is restarting the application")
+        device_crc = self.command(CMD_VERIFY, struct.pack("<II", 0, len(image)), timeout=20)
+        expected_crc = zlib.crc32(image) & 0xFFFFFFFF
+        if device_crc != expected_crc:
+            raise RuntimeError(f"Flash CRC mismatch: expected {expected_crc:08X}, got {device_crc:08X}")
+        self.log("Bootloader verified application flash CRC")
+        self.command(CMD_RESET, reply=False)
+        self.wait_for_application()
+        self.log("Update complete; application restarted")
 
 
 class Window(tk.Tk):
@@ -185,10 +229,13 @@ class Window(tk.Tk):
         self.scan_for_bootloader()
 
     def refresh(self):
-        values = [p.device for p in list_ports.comports()]
+        available = list(list_ports.comports())
+        values = [p.device for p in available]
         self.ports["values"] = values
         if values and self.port.get() not in values:
-            self.port.set(values[0])
+            dsp = next((p.device for p in available
+                        if (p.vid, p.pid) in ((0x0483, 0x2FC4), (0x0483, 0x2FBE))), None)
+            self.port.set(dsp or values[0])
 
     def scan_for_bootloader(self):
         current_ports = list_ports.comports()
@@ -205,11 +252,7 @@ class Window(tk.Tk):
             product = port.product or ""
             description = port.description or ""
 
-            # Match either by VID/PID or by the product/manufacturer/description string.
-            if (vid == 1155 and pid == 12222) or \
-               ("SAB_bootloader" in manufacturer) or \
-               ("SAB_bootloader" in product) or \
-               ("SAB_bootloader" in description):
+            if (vid, pid) == (0x0483, 0x2FBE):
                 new_bootloader_ports.add(port.device)
 
             # Always prepare the details string and only log if it changed.
@@ -273,24 +316,20 @@ class Window(tk.Tk):
             return
         self.go.configure(state="disabled")
         self.set_progress(0, 0)
-        threading.Thread(target=self.worker, daemon=True).start()
+        threading.Thread(target=self.worker, args=(self.port.get(), self.firmware.get()), daemon=True).start()
 
-    def worker(self):
+    def worker(self, port, firmware):
         updater = None
         try:
-            path = Path(self.firmware.get())
+            path = Path(firmware)
             progress = lambda done, total: self.after(0, self.set_progress, done, total)
-            updater = Updater(self.port.get(), lambda text: self.after(0, self.log, text), progress)
+            updater = Updater(port, lambda text: self.after(0, self.log, text), progress)
             try:
                 updater.wait_for_bootloader()
-            except RuntimeError:
+            except ApplicationDetected:
                 self.after(0, self.log, "Requesting update mode from running application…")
                 updater.enter_from_app()
-                updater.close()
-                updater = None
-                time.sleep(2)
-                updater = Updater(self.port.get(), lambda text: self.after(0, self.log, text), progress)
-                updater.wait_for_bootloader()
+                updater._attempt_reconnect(20)
             updater.upload(path)
             self.after(0, messagebox.showinfo, "SAB updater", "Firmware update completed.")
         except Exception as exc:

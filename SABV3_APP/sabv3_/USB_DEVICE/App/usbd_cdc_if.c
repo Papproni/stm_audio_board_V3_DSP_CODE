@@ -20,6 +20,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_cdc_if.h"
+#include <string.h>
 
 /* USER CODE BEGIN INCLUDE */
 #include "sab_cdc_handler.h"
@@ -318,7 +319,7 @@ static int8_t CDC_Init_HS(void)
 {
   /* USER CODE BEGIN 8 */
   /* Set Application Buffers */
-  USBD_CDC_SetTxBuffer(&hUsbDeviceHS, UserTxBufferHS, 0);
+  USBD_CDC_SetTxBuffer(&hUsbDeviceHS, UserTxBufferHS, 0, 0U);
   USBD_CDC_SetRxBuffer(&hUsbDeviceHS, UserRxBufferHS);
   return (USBD_OK);
   /* USER CODE END 8 */
@@ -461,12 +462,14 @@ uint8_t CDC_Transmit_HS(uint8_t* Buf, uint16_t Len)
 {
   uint8_t result = USBD_OK;
   /* USER CODE BEGIN 12 */
-  USBD_CDC_HandleTypeDef *hcdc = (USBD_CDC_HandleTypeDef*)hUsbDeviceHS.pClassData;
+  USBD_CDC_HandleTypeDef *hcdc = (USBD_CDC_HandleTypeDef*)hUsbDeviceHS.pClassDataCmsit[0];
+  if (hcdc == NULL) return USBD_FAIL;
   if (hcdc->TxState != 0){
     return USBD_BUSY;
   }
-  USBD_CDC_SetTxBuffer(&hUsbDeviceHS, Buf, Len);
-  result = USBD_CDC_TransmitPacket(&hUsbDeviceHS);
+  if (USBD_CDC_SetTxBuffer(&hUsbDeviceHS, Buf, Len, 0U) != USBD_OK)
+    return USBD_FAIL;
+  result = USBD_CDC_TransmitPacket(&hUsbDeviceHS, 0U);
   /* USER CODE END 12 */
   return result;
 }
@@ -510,8 +513,19 @@ void FW_Update_Process(void)
 
     if (sabu_frame_used < sizeof(sabu_frame))
       sabu_frame[sabu_frame_used++] = byte;
-    else
+    else {
       sabu_frame_used = 0U;
+      sabu_frame_expected = 0U;
+    }
+
+    /* The CDC stream carries SABQ frames too. Discard unrelated bytes one
+     * at a time, so the following SABU magic is not lost on a 12-byte reset. */
+    if ((sabu_frame_used == 4U) && (sabu_u32(sabu_frame) != SABU_MAGIC)) {
+      memmove(sabu_frame, &sabu_frame[1], 3U);
+      sabu_frame_used = 3U;
+      sabu_frame_expected = 0U;
+      continue;
+    }
 
     if (sabu_frame_used == 12U) {
       const uint16_t payload_length = (uint16_t)sabu_frame[6] |
@@ -519,6 +533,7 @@ void FW_Update_Process(void)
       if ((sabu_u32(sabu_frame) != SABU_MAGIC) ||
           (payload_length > SABU_MAX_PAYLOAD)) {
         sabu_frame_used = 0U;
+        sabu_frame_expected = 0U;
         continue;
       }
       sabu_frame_expected = (uint16_t)(12U + payload_length + 4U);

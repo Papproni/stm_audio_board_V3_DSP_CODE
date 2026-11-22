@@ -249,6 +249,12 @@ USBD_StatusTypeDef USBD_RegisterClassComposite(USBD_HandleTypeDef *pdev, USBD_Cl
   USBD_StatusTypeDef ret = USBD_OK;
   uint16_t len = 0U;
 
+  if ((pclass == NULL) || (pdev->classId >= USBD_MAX_SUPPORTED_CLASS) ||
+      (pdev->NumClasses >= USBD_MAX_SUPPORTED_CLASS) ||
+      (pdev->tclasslist[pdev->classId].Active != 0U))
+  {
+    return USBD_FAIL;
+  }
   if ((pdev->classId < USBD_MAX_SUPPORTED_CLASS) && (pdev->NumClasses < USBD_MAX_SUPPORTED_CLASS))
   {
     if ((uint32_t)pclass != 0U)
@@ -260,7 +266,11 @@ USBD_StatusTypeDef USBD_RegisterClassComposite(USBD_HandleTypeDef *pdev, USBD_Cl
       pdev->tclasslist[pdev->classId].EpAdd = EpAddr;
 
       /* Call the composite class builder */
-      (void)USBD_CMPSIT_AddClass(pdev, pclass, classtype, 0);
+      if (USBD_CMPSIT_AddClass(pdev, pclass, classtype, 0) != USBD_OK)
+      {
+        pdev->pClass[pdev->classId] = NULL;
+        return USBD_FAIL;
+      }
 
       /* Increment the ClassId for the next occurrence */
       pdev->classId ++;
@@ -936,6 +946,12 @@ USBD_StatusTypeDef USBD_LL_SOF(USBD_HandleTypeDef *pdev)
 USBD_StatusTypeDef USBD_LL_IsoINIncomplete(USBD_HandleTypeDef *pdev,
                                            uint8_t epnum)
 {
+#ifdef USE_USBD_COMPOSITE
+  uint8_t idx = USBD_CoreFindEP(pdev, (uint8_t)(epnum | 0x80U));
+  if (idx >= USBD_MAX_SUPPORTED_CLASS)
+    return USBD_FAIL;
+  pdev->classId = idx;
+#endif
   if (pdev->pClass[pdev->classId] == NULL)
   {
     return USBD_FAIL;
@@ -962,6 +978,12 @@ USBD_StatusTypeDef USBD_LL_IsoINIncomplete(USBD_HandleTypeDef *pdev,
 USBD_StatusTypeDef USBD_LL_IsoOUTIncomplete(USBD_HandleTypeDef *pdev,
                                             uint8_t epnum)
 {
+#ifdef USE_USBD_COMPOSITE
+  uint8_t idx = USBD_CoreFindEP(pdev, (uint8_t)(epnum & 0x7FU));
+  if (idx >= USBD_MAX_SUPPORTED_CLASS)
+    return USBD_FAIL;
+  pdev->classId = idx;
+#endif
   if (pdev->pClass[pdev->classId] == NULL)
   {
     return USBD_FAIL;

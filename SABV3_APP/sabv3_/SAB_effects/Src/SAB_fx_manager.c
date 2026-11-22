@@ -599,6 +599,7 @@ inline void  SAB_preset_up_pressed(SAB_fx_manager_tst* self){
         self->intercom_pst->preset_data_un.fx_active_mode_u8 = PRESET_MODE_A;
         // INIT NEW PRESET
         SAB_load_current_config(self);
+        SAB_set_preset_mode(self, PRESET_MODE_A);
         HAL_GPIO_WritePin(FSW_LED1_GPIO_Port, FSW_LED1_Pin, 0);
 		HAL_GPIO_WritePin(FSW_LED2_GPIO_Port, FSW_LED2_Pin, 0);
 
@@ -631,6 +632,7 @@ inline void  SAB_preset_down_pressed(SAB_fx_manager_tst* self){
         self->intercom_pst->preset_data_un.fx_active_mode_u8 = PRESET_MODE_A;
         // INIT NEW PRESET
         SAB_load_current_config(self);
+        SAB_set_preset_mode(self, PRESET_MODE_A);
         HAL_GPIO_WritePin(FSW_LED1_GPIO_Port, FSW_LED1_Pin, 0);
 		HAL_GPIO_WritePin(FSW_LED2_GPIO_Port, FSW_LED2_Pin, 0);
 	}

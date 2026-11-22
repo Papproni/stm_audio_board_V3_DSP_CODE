@@ -24,6 +24,7 @@
 #include "usbd_def.h"
 #include "usbd_core.h"
 #include "usbd_cdc.h"
+#include "usbd_audio.h"
 
 /* USER CODE BEGIN Includes */
 
@@ -329,7 +330,7 @@ USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
   hpcd_USB_OTG_HS.Init.speed = PCD_SPEED_FULL;
   hpcd_USB_OTG_HS.Init.dma_enable = DISABLE;
   hpcd_USB_OTG_HS.Init.phy_itface = USB_OTG_EMBEDDED_PHY;
-  hpcd_USB_OTG_HS.Init.Sof_enable = DISABLE;
+  hpcd_USB_OTG_HS.Init.Sof_enable = ENABLE;
   hpcd_USB_OTG_HS.Init.low_power_enable = DISABLE;
   hpcd_USB_OTG_HS.Init.lpm_enable = DISABLE;
   hpcd_USB_OTG_HS.Init.vbus_sensing_enable = DISABLE;
@@ -356,9 +357,11 @@ USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
   HAL_PCD_RegisterIsoInIncpltCallback(&hpcd_USB_OTG_HS, PCD_ISOINIncompleteCallback);
 #endif /* USE_HAL_PCD_REGISTER_CALLBACKS */
   /* USER CODE BEGIN TxRx_HS_Configuration */
-  HAL_PCDEx_SetRxFiFo(&hpcd_USB_OTG_HS, 0x200);
-  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_HS, 0, 0x80);
-  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_HS, 1, 0x174);
+  HAL_PCDEx_SetRxFiFo(&hpcd_USB_OTG_HS, 0x100);
+  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_HS, 0, 0x40);
+  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_HS, 1, 0x10);
+  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_HS, 2, 0x10);
+  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_HS, 3, 0x40); /* EP3 ISO IN, 144-byte packets */
   /* USER CODE END TxRx_HS_Configuration */
   }
   return USBD_OK;
@@ -611,16 +614,26 @@ USBD_StatusTypeDef USBD_LL_SetTestMode(USBD_HandleTypeDef *pdev, uint8_t testmod
   return USBD_OK;
 }
 #endif /* USBD_HS_TESTMODE_ENABLE */
-/**
-  * @brief  Static single allocation.
-  * @param  size: Size of allocated memory
-  * @retval None
-  */
+/* Both classes remain live at once; never hand the same memory to each. */
+static uint32_t usb_class_mem[2][
+  ((sizeof(USBD_CDC_HandleTypeDef) > sizeof(USBD_AUDIO_HandleTypeDef) ?
+    sizeof(USBD_CDC_HandleTypeDef) : sizeof(USBD_AUDIO_HandleTypeDef)) + 3U) / 4U];
+static uint8_t usb_class_mem_used[2];
+
+/** @brief Allocate a separate, word-aligned static block for each USB class. */
 void *USBD_static_malloc(uint32_t size)
 {
-  UNUSED(size);
-  static uint32_t mem[(sizeof(USBD_CDC_HandleTypeDef)/4)+1];/* On 32-bit boundary */
-  return mem;
+  if (size > sizeof(usb_class_mem[0]))
+    return NULL;
+  for (uint32_t i = 0U; i < 2U; ++i)
+  {
+    if (!usb_class_mem_used[i])
+    {
+      usb_class_mem_used[i] = 1U;
+      return usb_class_mem[i];
+    }
+  }
+  return NULL;
 }
 
 /**
@@ -630,7 +643,14 @@ void *USBD_static_malloc(uint32_t size)
   */
 void USBD_static_free(void *p)
 {
-  UNUSED(p);
+  for (uint32_t i = 0U; i < 2U; ++i)
+  {
+    if (p == usb_class_mem[i])
+    {
+      usb_class_mem_used[i] = 0U;
+      return;
+    }
+  }
 }
 
 /**

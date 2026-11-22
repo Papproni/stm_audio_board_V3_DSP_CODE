@@ -52,6 +52,7 @@
 #include "SAB_fx_manager.h"
 #include "sdram_memory_handler.h"
 #include "sab_cdc_handler.h"
+#include "usbd_audio_if.h"
 
 // SAB specifics------END----
 /* USER CODE END Includes */
@@ -501,14 +502,6 @@ int main(void)
         HAL_GPIO_TogglePin(DSP_OK_GPIO_Port, DSP_OK_Pin);
         last_blink_tick = HAL_GetTick();
       }
-      FW_Update_Process();
-      sab_cdc_process();
-      if (FW_Update_ResetRequested() != 0U)
-      {
-//        HAL_Delay(20);
-        NVIC_SystemReset();
-      }
-
 	 if(intercom_st.save_un.save_command>0){
 	 	SAB_save_preset_to_flash(&SAB_fx_manager_st);
 	 	intercom_st.save_un.save_command = 0;
@@ -521,6 +514,8 @@ int main(void)
 	 	  		  ADC_READY_FLAG = 0;
 	 	  	 	    fx_start_cycles = DWT->CYCCNT;
     SAB_fx_manager_process(&SAB_fx_manager_st);
+    /* Record the guitar ADC input before the effects-chain routing. */
+    USBD_AudioIF_CaptureTick(effects_io_port.in1_i32);
     fx_end_cycles = DWT->CYCCNT;
     {
         uint32_t tc = fx_end_cycles - fx_start_cycles;
@@ -551,6 +546,16 @@ int main(void)
 
 
 	  }
+      /* Handle serial commands when no audio sample is awaiting processing. */
+      if (!ADC_READY_FLAG)
+      {
+        sab_cdc_process();
+        FW_Update_Process();
+        if (FW_Update_ResetRequested() != 0U)
+        {
+          JumpToBootloader();
+        }
+      }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
