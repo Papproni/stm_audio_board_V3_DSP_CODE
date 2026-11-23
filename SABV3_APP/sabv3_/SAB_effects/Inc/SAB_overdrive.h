@@ -5,16 +5,12 @@ Generated on: 2024.11.28. */
 #define SAB_OVERDRIVE_H
 
 #include "sab_intercom.h"
+#include "SAB_biquad.h"
 #include "stdint.h"
 #define float32_t float
 
 #define SAB_PI 3.14159265359f
 
-typedef struct {
-    float b0, b1, b2;
-    float a1, a2;
-    float z1, z2;
-} sab_biquad_tst;
 
 // Effect: overdrive
 typedef struct {
@@ -40,23 +36,23 @@ typedef struct {
 
 
     //----------------------------------------------------------------
-    sab_biquad_tst input_lpf_16k;
-    sab_biquad_tst tight_hpf;
-    sab_biquad_tst pre_lpf;
+    SAB_biquad_tst input_lpf_16k;
+    SAB_biquad_tst tight_hpf;
+    SAB_biquad_tst pre_lpf;
 
-    sab_biquad_tst stage1_lpf;
-    sab_biquad_tst inter_hpf;
-    sab_biquad_tst inter_mid;
-    sab_biquad_tst stage2_lpf;
+    SAB_biquad_tst stage1_lpf;
+    SAB_biquad_tst inter_hpf;
+    SAB_biquad_tst inter_mid;
+    SAB_biquad_tst stage2_lpf;
 
-    sab_biquad_tst bass;
-    sab_biquad_tst mid;
-    sab_biquad_tst treble;
-    sab_biquad_tst presence;
+    SAB_biquad_tst bass;
+    SAB_biquad_tst mid;
+    SAB_biquad_tst treble;
+    SAB_biquad_tst presence;
 
-    sab_biquad_tst cab_hpf;
-    sab_biquad_tst cab_lpf;
-    sab_biquad_tst fizz_notch;
+    SAB_biquad_tst cab_hpf;
+    SAB_biquad_tst cab_lpf;
+    SAB_biquad_tst fizz_notch;
 
     float env;
     float fs;

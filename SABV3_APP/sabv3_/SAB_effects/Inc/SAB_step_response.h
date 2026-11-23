@@ -5,6 +5,7 @@ Generated on: 2024.11.28. */
 #define SAB_STEP_RESPONSE_H
 
 #include "sab_intercom.h"
+#include "SAB_biquad.h"
 #include "stdint.h"
 #define float32_t float
 
@@ -12,12 +13,6 @@ Generated on: 2024.11.28. */
 #define M_PI 3.14159265358979323846f
 #endif
 
-typedef struct
-{
-    float b0, b1, b2;
-    float a1, a2;
-    float z1, z2;
-} cab_biquad_t;
 
 typedef enum
 {
@@ -40,10 +35,10 @@ typedef struct {
 
     float sample_rate_f32;
 
-    cab_biquad_t hpf;
-    cab_biquad_t low_res_peak;
-    cab_biquad_t mid_peak;
-    cab_biquad_t lpf;
+    SAB_biquad_tst hpf;
+    SAB_biquad_tst low_res_peak;
+    SAB_biquad_tst mid_peak;
+    SAB_biquad_tst lpf;
 
     float input_gain_f32;
     float output_gain_f32;

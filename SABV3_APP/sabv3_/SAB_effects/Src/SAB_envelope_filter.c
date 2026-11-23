@@ -2,75 +2,10 @@
 Generated on: 2024.11.29. */
 
 #include "SAB_envelope_filter.h"
+#include "SAB_biquad.h"
 #include <math.h> // Required for the log() function
 
-typedef enum {
-    LPF,
-    HPF,
-    BANDPASS,
-    NOTCH
-} FilterType;
 
-typedef struct {
-    float b0, b1, b2; // Numerator coefficients
-    float a1, a2;     // Denominator coefficients
-} BiquadCoeffs;
-
-static void calculate_biquad_coeffs(float32_t* coeffs_af32,FilterType type, float freq, float Q, float sample_rate) {
-    float omega = 2.0f * 3.14 * freq / sample_rate;
-    float alpha = sinf(omega) / (2.0f * Q);
-    float cos_omega = cosf(omega);
-
-    BiquadCoeffs coeffs;
-
-    switch (type) {
-        case LPF:
-            coeffs.b0 = (1.0f - cos_omega) / 2.0f;
-            coeffs.b1 = 1.0f - cos_omega;
-            coeffs.b2 = (1.0f - cos_omega) / 2.0f;
-            coeffs.a1 = -2.0f * cos_omega;
-            coeffs.a2 = 1.0f - alpha;
-            break;
-
-        case HPF:
-            coeffs.b0 = (1.0f + cos_omega) / 2.0f;
-            coeffs.b1 = -(1.0f + cos_omega);
-            coeffs.b2 = (1.0f + cos_omega) / 2.0f;
-            coeffs.a1 = -2.0f * cos_omega;
-            coeffs.a2 = 1.0f - alpha;
-            break;
-
-        case BANDPASS:
-            coeffs.b0 = alpha;
-            coeffs.b1 = 0.0f;
-            coeffs.b2 = -alpha;
-            coeffs.a1 = -2.0f * cos_omega;
-            coeffs.a2 = 1.0f - alpha;
-            break;
-
-        case NOTCH:
-            coeffs.b0 = 1.0f;
-            coeffs.b1 = -2.0f * cos_omega;
-            coeffs.b2 = 1.0f;
-            coeffs.a1 = -2.0f * cos_omega;
-            coeffs.a2 = 1.0f - alpha;
-            break;
-    }
-
-    // Normalize coefficients
-    float a0 = 1.0f + alpha;
-    coeffs.b0 /= a0;
-    coeffs.b1 /= a0;
-    coeffs.b2 /= a0;
-    coeffs.a1 /= a0;
-    coeffs.a2 /= a0;
-
-    coeffs_af32[0]=coeffs.b0;
-    coeffs_af32[1]=coeffs.b1;
-    coeffs_af32[2]=coeffs.b2;
-    coeffs_af32[3]=-coeffs.a1;
-    coeffs_af32[4]=-coeffs.a2;
-}
 
 
 
@@ -141,7 +76,7 @@ float32_t SAB_envelope_process( SAB_envelope_tst* self, float input_f32){
     if (self->cutoff_f32 < 200.0f) self->cutoff_f32 = 200.0f;                  // Set minimum cutoff frequency
     if (self->cutoff_f32 > 3000.0f) self->cutoff_f32 = 3000.0f;              // Set maximum cutoff frequency
 
-    calculate_biquad_coeffs((float32_t*)&self->biquad_filter_coeffs_af32,LPF, self->cutoff_f32, self->Q_f32, 48000);
+    SAB_biquad_coeffs_legacy(self->biquad_filter_coeffs_af32, SAB_BIQUAD_LPF, 48000.0f, self->cutoff_f32, self->Q_f32);
     arm_biquad_cascade_df2T_f32(&self->biquad_filter, &input_f32, &self->biquad_filter_output_f32, 1);
 
     return self->biquad_filter_output_f32*self->vol_f32;

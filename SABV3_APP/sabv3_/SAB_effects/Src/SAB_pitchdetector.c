@@ -2,6 +2,7 @@
 Generated on: 2024.11.29. */
 
 #include "SAB_pitchdetector.h"
+#include "SAB_biquad.h"
 #include "sdram_memory_handler.h"
 
 // Convert uint8_t sign[] (0/1) -> q7_t +/-1
@@ -198,15 +199,7 @@ void SAB_pitchdetector_delete( SAB_pitchdetector_tst* self){
 arm_biquad_casd_df1_inst_f32 lp500;
 float32_t lpState[4];  // 4 floats for 1 biquad stage
 
-// Coeffs for 500 Hz LPF @ 48 kHz
-static const float32_t lpCoeffs[5] =
-{
-    -0.0010257f,   // b0
-    -0.0020514f,   // b1
-    -0.0010257f,   // b2
-   1.9021130f,   // a1
-    -0.9070295f    // a2
-};
+// Preserve the existing tuned coefficient table in the shared library.
 
 
 
@@ -236,7 +229,7 @@ void SAB_pitchdetector_init( SAB_pitchdetector_tst* self){
 	self->input_raw_cntr_u32 = 0;
 	self->update_cntr_u32    = 0;
 
-	arm_biquad_cascade_df1_init_f32(&lp500, 1, lpCoeffs, lpState);
+	arm_biquad_cascade_df1_init_f32(&lp500, 1, SAB_biquad_pitch_lp500, lpState);
     // Allocate detection buffers from the shared SDRAM pool (sdram_memory_handler).
     // input_raw: one float/sample. sign_bits: one byte/sample -> ceil(SIZE/4) floats.
     self->input_raw_af32 = (float32_t*)sdram_malloc_float32_t_array(PITCH_DETECTOR_BUFFER_SIZE);

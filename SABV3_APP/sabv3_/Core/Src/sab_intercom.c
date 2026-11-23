@@ -280,13 +280,13 @@ void add_parameter(sab_fx_param_tun *param_ptr, char *name, param_type_ten type,
     const fx_data_tst IMPLEMENTED_FX_DATA[] = { __VA_ARGS__ }; \
     const size_t IMPLEMENTED_FX_DATA_COUNT = sizeof(IMPLEMENTED_FX_DATA) / sizeof(IMPLEMENTED_FX_DATA[0]);
 
-// Use the macro to define your FX data
+// Catalogue RGB must match SAB_effects initializers (test_effect_catalog_colors.py).
 DEFINE_FX_DATA(
-	{.name = "Flanger",    .color = { 0, 255, 0 } },
+	{.name = "Flanger",    .color = { 255, 0, 0 } },
 	{.name = "MarkIIc",    .color = { 0, 255, 0 } },
-	{.name = "ImRe",    .color = { 150, 75, 0 } },
-	{.name = "hpf",    .color = { 75, 0, 130 } },
-	{.name = "bandpass",    .color = { 75, 0, 130 } },
+	{.name = "ImRe",    .color = { 0, 200, 100 } },
+	{.name = "hpf",    .color = { 255, 0, 0 } },
+	{.name = "bandpass",    .color = { 255, 0, 0 } },
 	{.name = "SIG_GEN", .color = { 10,50,50}},
 	{.name = "Ptchdtcr", .color = { 100,100,100}},
 	{.name = "Reverb",    .color = { 0, 0, 255 } },

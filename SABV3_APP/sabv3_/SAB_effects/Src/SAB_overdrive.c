@@ -7,199 +7,6 @@ void SAB_overdrive_delete( SAB_overdrive_tst* self){
     // TODO
 }
 
-typedef enum {
-    LPF,
-    HPF,
-    BANDPASS,
-    NOTCH
-} FilterType;
-typedef struct {
-    float b0, b1, b2; // Numerator coefficients
-    float a1, a2;     // Denominator coefficients
-} BiquadCoeffs;
-
-static void calculate_biquad_coeffs(float32_t* coeffs_af32,FilterType type, float freq, float Q, float sample_rate) {
-    float omega = 2.0f * 3.14159265358979323846 * freq / sample_rate;
-    float alpha = sinf(omega) / (2.0f * Q);
-    float cos_omega = cosf(omega);
-
-    BiquadCoeffs coeffs;
-
-    switch (type) {
-        case LPF:
-            coeffs.b0 = (1.0f - cos_omega) / 2.0f;
-            coeffs.b1 = 1.0f - cos_omega;
-            coeffs.b2 = (1.0f - cos_omega) / 2.0f;
-            coeffs.a1 = -2.0f * cos_omega;
-            coeffs.a2 = 1.0f - alpha;
-            break;
-
-        case HPF:
-            coeffs.b0 = (1.0f + cos_omega) / 2.0f;
-            coeffs.b1 = -(1.0f + cos_omega);
-            coeffs.b2 = (1.0f + cos_omega) / 2.0f;
-            coeffs.a1 = -2.0f * cos_omega;
-            coeffs.a2 = 1.0f - alpha;
-            break;
-
-        case BANDPASS:
-            coeffs.b0 = alpha;
-            coeffs.b1 = 0.0f;
-            coeffs.b2 = -alpha;
-            coeffs.a1 = -2.0f * cos_omega;
-            coeffs.a2 = 1.0f - alpha;
-            break;
-
-        case NOTCH:
-            coeffs.b0 = 1.0f;
-            coeffs.b1 = -2.0f * cos_omega;
-            coeffs.b2 = 1.0f;
-            coeffs.a1 = -2.0f * cos_omega;
-            coeffs.a2 = 1.0f - alpha;
-            break;
-    }
-
-    // Normalize coefficients
-    float a0 = 1.0f + alpha;
-    coeffs.b0 /= a0;
-    coeffs.b1 /= a0;
-    coeffs.b2 /= a0;
-    coeffs.a1 /= a0;
-    coeffs.a2 /= a0;
-
-    coeffs_af32[0]=coeffs.b0;
-    coeffs_af32[1]=coeffs.b1;
-    coeffs_af32[2]=coeffs.b2;
-    coeffs_af32[3]=-coeffs.a1;
-    coeffs_af32[4]=-coeffs.a2;
-}
-
-// GENERATED
-
-static float sab_biquad_process(sab_biquad_tst *f, float x)
-{
-    float y = f->b0 * x + f->z1;
-    f->z1 = f->b1 * x - f->a1 * y + f->z2;
-    f->z2 = f->b2 * x - f->a2 * y;
-    return y;
-}
-
-static void sab_biquad_set_lpf(sab_biquad_tst *f, float fs, float fc, float q)
-{
-    float w0 = 2.0f * SAB_PI * fc / fs;
-    float c = cosf(w0);
-    float s = sinf(w0);
-    float alpha = s / (2.0f * q);
-
-    float b0 = (1.0f - c) * 0.5f;
-    float b1 = 1.0f - c;
-    float b2 = (1.0f - c) * 0.5f;
-    float a0 = 1.0f + alpha;
-    float a1 = -2.0f * c;
-    float a2 = 1.0f - alpha;
-
-    f->b0 = b0 / a0;
-    f->b1 = b1 / a0;
-    f->b2 = b2 / a0;
-    f->a1 = a1 / a0;
-    f->a2 = a2 / a0;
-}
-
-static void sab_biquad_set_hpf(sab_biquad_tst *f, float fs, float fc, float q)
-{
-    float w0 = 2.0f * SAB_PI * fc / fs;
-    float c = cosf(w0);
-    float s = sinf(w0);
-    float alpha = s / (2.0f * q);
-
-    float b0 = (1.0f + c) * 0.5f;
-    float b1 = -(1.0f + c);
-    float b2 = (1.0f + c) * 0.5f;
-    float a0 = 1.0f + alpha;
-    float a1 = -2.0f * c;
-    float a2 = 1.0f - alpha;
-
-    f->b0 = b0 / a0;
-    f->b1 = b1 / a0;
-    f->b2 = b2 / a0;
-    f->a1 = a1 / a0;
-    f->a2 = a2 / a0;
-}
-
-static void sab_biquad_set_peak(sab_biquad_tst *f, float fs, float fc, float q, float gain_db)
-{
-    float A = powf(10.0f, gain_db / 40.0f);
-    float w0 = 2.0f * SAB_PI * fc / fs;
-    float c = cosf(w0);
-    float s = sinf(w0);
-    float alpha = s / (2.0f * q);
-
-    float b0 = 1.0f + alpha * A;
-    float b1 = -2.0f * c;
-    float b2 = 1.0f - alpha * A;
-    float a0 = 1.0f + alpha / A;
-    float a1 = -2.0f * c;
-    float a2 = 1.0f - alpha / A;
-
-    f->b0 = b0 / a0;
-    f->b1 = b1 / a0;
-    f->b2 = b2 / a0;
-    f->a1 = a1 / a0;
-    f->a2 = a2 / a0;
-}
-
-static void sab_biquad_set_highshelf(sab_biquad_tst *f, float fs, float fc, float gain_db)
-{
-    float A = powf(10.0f, gain_db / 40.0f);
-    float w0 = 2.0f * SAB_PI * fc / fs;
-    float c = cosf(w0);
-    float s = sinf(w0);
-    float alpha = s / (2.0f * 0.7071f);
-    float beta = 2.0f * sqrtf(A) * alpha;
-
-    float b0 = A * ((A + 1.0f) + (A - 1.0f) * c + beta);
-    float b1 = -2.0f * A * ((A - 1.0f) + (A + 1.0f) * c);
-    float b2 = A * ((A + 1.0f) + (A - 1.0f) * c - beta);
-    float a0 = (A + 1.0f) - (A - 1.0f) * c + beta;
-    float a1 = 2.0f * ((A - 1.0f) - (A + 1.0f) * c);
-    float a2 = (A + 1.0f) - (A - 1.0f) * c - beta;
-
-    f->b0 = b0 / a0;
-    f->b1 = b1 / a0;
-    f->b2 = b2 / a0;
-    f->a1 = a1 / a0;
-    f->a2 = a2 / a0;
-}
-
-static void sab_biquad_set_lowshelf(sab_biquad_tst *f, float fs, float fc, float gain_db)
-{
-    float A = powf(10.0f, gain_db / 40.0f);
-    float w0 = 2.0f * SAB_PI * fc / fs;
-    float c = cosf(w0);
-    float s = sinf(w0);
-    float alpha = s / (2.0f * 0.7071f);
-    float beta = 2.0f * sqrtf(A) * alpha;
-
-    float b0 = A * ((A + 1.0f) - (A - 1.0f) * c + beta);
-    float b1 = 2.0f * A * ((A - 1.0f) - (A + 1.0f) * c);
-    float b2 = A * ((A + 1.0f) - (A - 1.0f) * c - beta);
-    float a0 = (A + 1.0f) + (A - 1.0f) * c + beta;
-    float a1 = -2.0f * ((A - 1.0f) + (A + 1.0f) * c);
-    float a2 = (A + 1.0f) + (A - 1.0f) * c - beta;
-
-    f->b0 = b0 / a0;
-    f->b1 = b1 / a0;
-    f->b2 = b2 / a0;
-    f->a1 = a1 / a0;
-    f->a2 = a2 / a0;
-}
-
-static void sab_biquad_reset(sab_biquad_tst *f)
-{
-    f->z1 = 0.0f;
-    f->z2 = 0.0f;
-}
-
 static float sab_red_led_clip(float x)
 {
     const float vf_pos = 0.62f;
@@ -265,21 +72,21 @@ void sab_beod_update(SAB_overdrive_tst *fx)
     float treble_db   = (fx->treble_knob   - 0.5f) * 16.0f;
     float presence_db = (fx->presence_knob - 0.5f) * 14.0f;
 
-    sab_biquad_set_hpf(&fx->tight_hpf, fs, tight_fc, 0.707f);
-    sab_biquad_set_lpf(&fx->pre_lpf, fs, 16000.0f, 0.707f);
+    SAB_biquad_set_hpf(&fx->tight_hpf, fs, tight_fc, 0.707f);
+    SAB_biquad_set_lpf(&fx->pre_lpf, fs, 16000.0f, 0.707f);
 
-    sab_biquad_set_lpf(&fx->stage1_lpf, fs, 7500.0f, 0.707f);
-    sab_biquad_set_hpf(&fx->inter_hpf, fs, 140.0f, 0.707f);
+    SAB_biquad_set_lpf(&fx->stage1_lpf, fs, 7500.0f, 0.707f);
+    SAB_biquad_set_hpf(&fx->inter_hpf, fs, 140.0f, 0.707f);
 
     // BE-OD-ish growl: reduce low-mid mud, push upper mids
-    sab_biquad_set_peak(&fx->inter_mid, fs, 850.0f, 0.8f, -3.0f + fx->gain * 2.0f);
+    SAB_biquad_set_peak(&fx->inter_mid, fs, 850.0f, 0.8f, -3.0f + fx->gain * 2.0f);
 
-    sab_biquad_set_lpf(&fx->stage2_lpf, fs, 10000.0f, 0.707f);
+    SAB_biquad_set_lpf(&fx->stage2_lpf, fs, 10000.0f, 0.707f);
 
-    sab_biquad_set_lowshelf(&fx->bass, fs, 120.0f, bass_db);
-    sab_biquad_set_peak(&fx->mid, fs, 750.0f, 0.8f, mid_db);
-    sab_biquad_set_highshelf(&fx->treble, fs, 2500.0f, treble_db);
-    sab_biquad_set_highshelf(&fx->presence, fs, 4200.0f, presence_db);
+    SAB_biquad_set_lowshelf(&fx->bass, fs, 120.0f, bass_db);
+    SAB_biquad_set_peak(&fx->mid, fs, 750.0f, 0.8f, mid_db);
+    SAB_biquad_set_highshelf(&fx->treble, fs, 2500.0f, treble_db);
+    SAB_biquad_set_highshelf(&fx->presence, fs, 4200.0f, presence_db);
 
     // (void)gain_db;
 }
@@ -326,25 +133,25 @@ void SAB_overdrive_init( SAB_overdrive_tst* self){
     self->presence_knob = 0.5f;
     self->volume = 0.5f;
 
-    sab_biquad_reset(&self->tight_hpf);
-    sab_biquad_reset(&self->pre_lpf);
-    sab_biquad_reset(&self->stage1_lpf);
-    sab_biquad_reset(&self->inter_hpf);
-    sab_biquad_reset(&self->inter_mid);
-    sab_biquad_reset(&self->stage2_lpf);
-    sab_biquad_reset(&self->bass);
-    sab_biquad_reset(&self->mid);
-    sab_biquad_reset(&self->treble);
-    sab_biquad_reset(&self->presence);
-    sab_biquad_reset(&self->cab_hpf);
-    sab_biquad_reset(&self->cab_lpf);
-    sab_biquad_reset(&self->fizz_notch);
+    SAB_biquad_reset(&self->tight_hpf);
+    SAB_biquad_reset(&self->pre_lpf);
+    SAB_biquad_reset(&self->stage1_lpf);
+    SAB_biquad_reset(&self->inter_hpf);
+    SAB_biquad_reset(&self->inter_mid);
+    SAB_biquad_reset(&self->stage2_lpf);
+    SAB_biquad_reset(&self->bass);
+    SAB_biquad_reset(&self->mid);
+    SAB_biquad_reset(&self->treble);
+    SAB_biquad_reset(&self->presence);
+    SAB_biquad_reset(&self->cab_hpf);
+    SAB_biquad_reset(&self->cab_lpf);
+    SAB_biquad_reset(&self->fizz_notch);
 
     // fixed cab / safety filters
-    sab_biquad_set_hpf(&self->cab_hpf, 48000, 80.0f, 0.707f);
-    sab_biquad_set_lpf(&self->cab_lpf, 48000, 6200.0f, 0.707f);
-    sab_biquad_set_peak(&self->fizz_notch, 48000, 4200.0f, 2.5f, -5.0f);
-    sab_biquad_set_lpf(&self->input_lpf_16k, 48000, 16000.0f, 0.707f);
+    SAB_biquad_set_hpf(&self->cab_hpf, 48000, 80.0f, 0.707f);
+    SAB_biquad_set_lpf(&self->cab_lpf, 48000, 6200.0f, 0.707f);
+    SAB_biquad_set_peak(&self->fizz_notch, 48000, 4200.0f, 2.5f, -5.0f);
+    SAB_biquad_set_lpf(&self->input_lpf_16k, 48000, 16000.0f, 0.707f);
 };
 
 static float32_t limit(float32_t in, float32_t min, float32_t max){
@@ -376,22 +183,21 @@ float32_t SAB_overdrive_process( SAB_overdrive_tst* self, float x){
     // // Clip
     // output_f32 = limit(input_f32*self->gain_f32, self->ths_f32,self->ths_f32);
     // // LPF
-    // calculate_biquad_coeffs((float32_t*)&self->biquad_filter_coeffs_af32,LPF, self->tone_f32, Q_f32, 48000);
-    // arm_biquad_cascade_df2T_f32(&self->biquad_filter, &output_f32, &self->biquad_filter_output_f32, 1);
+
     // output_f32 = (self->biquad_filter_output_f32)*self->volume_f32;
     // return output_f32;
     x = x/563647235.0;
     // input protection
 //    if (x > 1.0f)  x = 1.0f;
 //    if (x < -1.0f) x = -1.0f;
-    x = sab_biquad_process(&self->input_lpf_16k, x);
+    x = SAB_biquad_process(&self->input_lpf_16k, x);
 
     // input trim
     // x *= 0.8f;
     x = sab_tl072_stage(x, 2.0f);
     // // tight / bass control before distortion
-    x = sab_biquad_process(&self->tight_hpf, x);
-    x = sab_biquad_process(&self->pre_lpf, x);
+    x = SAB_biquad_process(&self->tight_hpf, x);
+    x = SAB_biquad_process(&self->pre_lpf, x);
 
     // // gain mapping
     float drive1 = 2.0f + self->gain * 18.0f;
@@ -400,11 +206,11 @@ float32_t SAB_overdrive_process( SAB_overdrive_tst* self, float x){
     // // TL072 gain stage 1 + red LED clip
     x = sab_tl072_stage(x, drive1);
     x = sab_red_led_clip(x);
-    x = sab_biquad_process(&self->stage1_lpf, x);
+    x = SAB_biquad_process(&self->stage1_lpf, x);
 
     // // interstage shaping
-    x = sab_biquad_process(&self->inter_hpf, x);
-    x = sab_biquad_process(&self->inter_mid, x);
+    x = SAB_biquad_process(&self->inter_hpf, x);
+    x = SAB_biquad_process(&self->inter_mid, x);
 
     // // // TL072 gain stage 2 + red LED clip
     // x = sab_tl072_stage(x, drive2);
@@ -413,7 +219,7 @@ float32_t SAB_overdrive_process( SAB_overdrive_tst* self, float x){
 
     x = -sab_tl072_stage(x, 4.0f);
     x = sab_dual_red_led_clip(x);
-    x = sab_biquad_process(&self->stage2_lpf, x);
+    x = SAB_biquad_process(&self->stage2_lpf, x);
     // x = -sab_tl072_stage(x, 1.0f);
 
     // // // sag / analog feel
@@ -421,17 +227,17 @@ float32_t SAB_overdrive_process( SAB_overdrive_tst* self, float x){
 
     // // // tone stack
 
-    x = sab_biquad_process(&self->mid, x);
+    x = SAB_biquad_process(&self->mid, x);
 
-    x = sab_biquad_process(&self->presence, x);
+    x = SAB_biquad_process(&self->presence, x);
     x = sab_red_led_clip(x);
-    x = sab_biquad_process(&self->treble, x);
-    x = sab_biquad_process(&self->bass, x);
+    x = SAB_biquad_process(&self->treble, x);
+    x = SAB_biquad_process(&self->bass, x);
 
     // // // simple cab sim
-    x = sab_biquad_process(&self->cab_hpf, x);
-    x = sab_biquad_process(&self->fizz_notch, x);
-    x = sab_biquad_process(&self->cab_lpf, x);
+    x = SAB_biquad_process(&self->cab_hpf, x);
+    x = SAB_biquad_process(&self->fizz_notch, x);
+    x = SAB_biquad_process(&self->cab_lpf, x);
 
     // // output level
     x *= self->volume * 1.8f;

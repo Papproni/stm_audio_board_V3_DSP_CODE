@@ -4,86 +4,6 @@ Generated on: 2024.11.29. */
 #include "SAB_step_response.h"
 #include <math.h> // Required for the log() function
 
-static inline void cab_biquad_reset(cab_biquad_t *f)
-{
-    f->z1 = 0.0f;
-    f->z2 = 0.0f;
-}
-
-static inline float cab_biquad_process(cab_biquad_t *f, float x)
-{
-    float y = f->b0 * x + f->z1;
-    f->z1 = f->b1 * x - f->a1 * y + f->z2;
-    f->z2 = f->b2 * x - f->a2 * y;
-    return y;
-}
-
-static void cab_biquad_set_lowpass(cab_biquad_t *f, float fs, float fc, float q)
-{
-    float w0 = 2.0f * M_PI * fc / fs;
-    float cw = cosf(w0);
-    float sw = sinf(w0);
-    float alpha = sw / (2.0f * q);
-
-    float b0 = (1.0f - cw) * 0.5f;
-    float b1 = 1.0f - cw;
-    float b2 = (1.0f - cw) * 0.5f;
-    float a0 = 1.0f + alpha;
-    float a1 = -2.0f * cw;
-    float a2 = 1.0f - alpha;
-
-    f->b0 = b0 / a0;
-    f->b1 = b1 / a0;
-    f->b2 = b2 / a0;
-    f->a1 = a1 / a0;
-    f->a2 = a2 / a0;
-}
-
-static void cab_biquad_set_highpass(cab_biquad_t *f, float fs, float fc, float q)
-{
-    float w0 = 2.0f * M_PI * fc / fs;
-    float cw = cosf(w0);
-    float sw = sinf(w0);
-    float alpha = sw / (2.0f * q);
-
-    float b0 = (1.0f + cw) * 0.5f;
-    float b1 = -(1.0f + cw);
-    float b2 = (1.0f + cw) * 0.5f;
-    float a0 = 1.0f + alpha;
-    float a1 = -2.0f * cw;
-    float a2 = 1.0f - alpha;
-
-    f->b0 = b0 / a0;
-    f->b1 = b1 / a0;
-    f->b2 = b2 / a0;
-    f->a1 = a1 / a0;
-    f->a2 = a2 / a0;
-}
-
-static void cab_biquad_set_peak(cab_biquad_t *f, float fs, float fc, float q, float gain_db)
-{
-    float A = powf(10.0f, gain_db / 40.0f);
-    float w0 = 2.0f * M_PI * fc / fs;
-    float cw = cosf(w0);
-    float sw = sinf(w0);
-    float alpha = sw / (2.0f * q);
-
-    float b0 = 1.0f + alpha * A;
-    float b1 = -2.0f * cw;
-    float b2 = 1.0f - alpha * A;
-    float a0 = 1.0f + alpha / A;
-    float a1 = -2.0f * cw;
-    float a2 = 1.0f - alpha / A;
-
-    f->b0 = b0 / a0;
-    f->b1 = b1 / a0;
-    f->b2 = b2 / a0;
-    f->a1 = a1 / a0;
-    f->a2 = a2 / a0;
-}
-
-
-
 void SAB_step_response_delete( SAB_step_response_tst* self){
     // TODO
 }
@@ -135,10 +55,10 @@ void SAB_step_response_init( SAB_step_response_tst* self){
     self->input_gain_f32  = 1.0f;
     self->output_gain_f32 = 0.8f;
 
-    cab_biquad_set_highpass(&self->hpf,          fs, 75.0f,   0.707f);
-    cab_biquad_set_peak(    &self->low_res_peak, fs, 110.0f,  1.00f,  3.5f);
-    cab_biquad_set_peak(    &self->mid_peak,     fs, 1600.0f, 0.80f, -2.5f);
-    cab_biquad_set_lowpass( &self->lpf,          fs, 4400.0f, 0.707f);
+    SAB_biquad_set_hpf(&self->hpf,          fs, 75.0f,   0.707f);
+    SAB_biquad_set_peak(    &self->low_res_peak, fs, 110.0f,  1.00f,  3.5f);
+    SAB_biquad_set_peak(    &self->mid_peak,     fs, 1600.0f, 0.80f, -2.5f);
+    SAB_biquad_set_lpf( &self->lpf,          fs, 4400.0f, 0.707f);
 };
 static inline float cab_soft_sat(float x)
 {
@@ -152,21 +72,21 @@ static void load_new_preset(SAB_step_response_tst* self){
     switch (self->cab_preset_en)
         {
         case CAB_PRESET_4X12:
-                cab_biquad_set_highpass(&self->hpf,          self->sample_rate_f32, 70.0f,   0.707f);
-                cab_biquad_set_peak(    &self->low_res_peak, self->sample_rate_f32, 110.0f,  0.95f,  3.5f);
-                cab_biquad_set_peak(    &self->mid_peak,     self->sample_rate_f32, 1700.0f, 0.80f, -2.5f);
-                cab_biquad_set_lowpass( &self->lpf,          self->sample_rate_f32, 4300.0f, 0.707f);
+                SAB_biquad_set_hpf(&self->hpf,          self->sample_rate_f32, 70.0f,   0.707f);
+                SAB_biquad_set_peak(    &self->low_res_peak, self->sample_rate_f32, 110.0f,  0.95f,  3.5f);
+                SAB_biquad_set_peak(    &self->mid_peak,     self->sample_rate_f32, 1700.0f, 0.80f, -2.5f);
+                SAB_biquad_set_lpf( &self->lpf,          self->sample_rate_f32, 4300.0f, 0.707f);
             break;
          case CAB_PRESET_4X10:
-                cab_biquad_set_highpass(&self->hpf,          self->sample_rate_f32, 85.0f,   0.707f);
-                cab_biquad_set_peak(    &self->low_res_peak, self->sample_rate_f32, 125.0f,  0.95f,  3.0f);
-                cab_biquad_set_peak(    &self->mid_peak,     self->sample_rate_f32, 2100.0f, 0.85f, -1.5f);
-                cab_biquad_set_lowpass( &self->lpf,          self->sample_rate_f32, 5000.0f, 0.707f);
+                SAB_biquad_set_hpf(&self->hpf,          self->sample_rate_f32, 85.0f,   0.707f);
+                SAB_biquad_set_peak(    &self->low_res_peak, self->sample_rate_f32, 125.0f,  0.95f,  3.0f);
+                SAB_biquad_set_peak(    &self->mid_peak,     self->sample_rate_f32, 2100.0f, 0.85f, -1.5f);
+                SAB_biquad_set_lpf( &self->lpf,          self->sample_rate_f32, 5000.0f, 0.707f);
 
-                cab_biquad_set_highpass(&self->hpf,          self->sample_rate_f32, 95.0f,   0.707f);
-                cab_biquad_set_peak(    &self->low_res_peak, self->sample_rate_f32, 120.0f,  0.90f, 2.2f);
-                cab_biquad_set_peak(    &self->mid_peak,     self->sample_rate_f32, 1900.0f, 0.85f, -1.0f);
-                cab_biquad_set_lowpass( &self->lpf,          self->sample_rate_f32, 5000.0f, 0.707f);
+                SAB_biquad_set_hpf(&self->hpf,          self->sample_rate_f32, 95.0f,   0.707f);
+                SAB_biquad_set_peak(    &self->low_res_peak, self->sample_rate_f32, 120.0f,  0.90f, 2.2f);
+                SAB_biquad_set_peak(    &self->mid_peak,     self->sample_rate_f32, 1900.0f, 0.85f, -1.0f);
+                SAB_biquad_set_lpf( &self->lpf,          self->sample_rate_f32, 5000.0f, 0.707f);
             break;
         
         default:
@@ -200,10 +120,10 @@ float32_t SAB_step_response_process( SAB_step_response_tst* self, float input_f3
     }
     float y = input_f32 * self->input_gain_f32;
 
-    y = cab_biquad_process(&self->hpf, y);
-    y = cab_biquad_process(&self->low_res_peak, y);
-    y = cab_biquad_process(&self->mid_peak, y);
-    y = cab_biquad_process(&self->lpf, y);
+    y = SAB_biquad_process(&self->hpf, y);
+    y = SAB_biquad_process(&self->low_res_peak, y);
+    y = SAB_biquad_process(&self->mid_peak, y);
+    y = SAB_biquad_process(&self->lpf, y);
 
     /* Optional: tiny speaker-like softening */
     // y = cab_soft_sat(0.9f * y);

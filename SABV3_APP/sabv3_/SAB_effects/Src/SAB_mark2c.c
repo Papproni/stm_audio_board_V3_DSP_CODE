@@ -2,11 +2,13 @@
 Generated on: 2024.11.29. */
 
 #include "SAB_mark2c.h"
+#include "SAB_biquad.h"
 #include <math.h>
 #include "arm_math.h"
 
 #define MARK2C_FS 48000.0f
-#define MARK2C_PI 3.14159265358979323846f
+#define MARK2C_PI 3.14159265358979323846f  /* First-order HPF/cathode LPF. */
+
 
 void SAB_mark2c_delete( SAB_mark2c_tst* self){
     // TODO
@@ -17,70 +19,6 @@ static inline float32_t dB_to_linear(float32_t db)
     return powf(10.0f, db / 20.0f);
 }
 
-/* RBJ peaking EQ biquad, CMSIS format: {b0,b1,b2,a1,a2} with a0=1 */
-static void make_peaking_coeffs(float32_t *c,
-                                float32_t freq,
-                                float32_t Q,
-                                float32_t gain_db)
-{
-    float32_t A   = powf(10.0f, gain_db / 40.0f);
-    float32_t w0  = 2.0f * MARK2C_PI * freq / MARK2C_FS;
-    float32_t cs  = cosf(w0);
-    float32_t sn  = sinf(w0);
-    float32_t alpha = sn / (2.0f * Q);
-
-    float32_t b0 = 1.0f + alpha * A;
-    float32_t b1 = -2.0f * cs;
-    float32_t b2 = 1.0f - alpha * A;
-    float32_t a0 = 1.0f + alpha / A;
-    float32_t a1 = -2.0f * cs;
-    float32_t a2 = 1.0f - alpha / A;
-
-    b0 /= a0;
-    b1 /= a0;
-    b2 /= a0;
-    a1 /= a0;
-    a2 /= a0;
-
-    c[0] = b0;
-    c[1] = b1;
-    c[2] = b2;
-    c[3] = -a1;   // CMSIS expects -a1, -a2
-    c[4] = -a2;
-}
-
-/* RBJ high-shelf */
-static void make_highshelf_coeffs(float32_t *c,
-                                  float32_t freq,
-                                  float32_t Q,
-                                  float32_t gain_db)
-{
-    float32_t A   = powf(10.0f, gain_db / 40.0f);
-    float32_t w0  = 2.0f * MARK2C_PI * freq / MARK2C_FS;
-    float32_t cs  = cosf(w0);
-    float32_t sn  = sinf(w0);
-    float32_t alpha = sn / (2.0f * Q);
-    float32_t sqrtA = sqrtf(A);
-
-    float32_t b0 =    A * ((A + 1.0f) + (A - 1.0f) * cs + 2.0f * sqrtA * alpha);
-    float32_t b1 = -2*A * ((A - 1.0f) + (A + 1.0f) * cs);
-    float32_t b2 =    A * ((A + 1.0f) + (A - 1.0f) * cs - 2.0f * sqrtA * alpha);
-    float32_t a0 =        (A + 1.0f) - (A - 1.0f) * cs + 2.0f * sqrtA * alpha;
-    float32_t a1 =  2.0f*((A - 1.0f) - (A + 1.0f) * cs);
-    float32_t a2 =        (A + 1.0f) - (A - 1.0f) * cs - 2.0f * sqrtA * alpha;
-
-    b0 /= a0;
-    b1 /= a0;
-    b2 /= a0;
-    a1 /= a0;
-    a2 /= a0;
-
-    c[0] = b0;
-    c[1] = b1;
-    c[2] = b2;
-    c[3] = -a1;
-    c[4] = -a2;
-}
 
 static inline float32_t fast_tanh_f32(float32_t x)
 {
@@ -105,15 +43,15 @@ static void mark2c_update_tonestack_coeffs(SAB_mark2c_tst* self)
     self->last_bass_raw_u8 = bass_raw;
 
     // BASS: low shelf ~100 Hz
-    make_peaking_coeffs(&self->tonestack_coeffs_af32[0],
+    SAB_biquad_coeffs(&self->tonestack_coeffs_af32[0], SAB_BIQUAD_PEAK, MARK2C_FS,
                         100.0f, 0.7f, self->bass_db_f32);
 
     // MID: peaking ~750 Hz
-    make_peaking_coeffs(&self->tonestack_coeffs_af32[5],
+    SAB_biquad_coeffs(&self->tonestack_coeffs_af32[5], SAB_BIQUAD_PEAK, MARK2C_FS,
                         750.0f, 1.0f, self->mid_db_f32);
 
     // TREB: high shelf ~3.5 kHz (approximated as peaking with wide Q)
-    make_peaking_coeffs(&self->tonestack_coeffs_af32[10],
+    SAB_biquad_coeffs(&self->tonestack_coeffs_af32[10], SAB_BIQUAD_PEAK, MARK2C_FS,
                         3500.0f, 0.5f, self->treb_db_f32);
 }
 
@@ -141,15 +79,15 @@ static void mark2c_update_geq_coeffs(SAB_mark2c_tst* self)
     self->last_geq_raw_u8[4] = raw6600;
 
     // Use Q ≈ 1.0 for all GEQ bands
-    make_peaking_coeffs(&self->geq_coeffs_af32[0],
+    SAB_biquad_coeffs(&self->geq_coeffs_af32[0], SAB_BIQUAD_PEAK, MARK2C_FS,
                         80.0f, 1.0f, self->geq_80_db_f32);
-    make_peaking_coeffs(&self->geq_coeffs_af32[5],
+    SAB_biquad_coeffs(&self->geq_coeffs_af32[5], SAB_BIQUAD_PEAK, MARK2C_FS,
                         240.0f, 1.0f, self->geq_240_db_f32);
-    make_peaking_coeffs(&self->geq_coeffs_af32[10],
+    SAB_biquad_coeffs(&self->geq_coeffs_af32[10], SAB_BIQUAD_PEAK, MARK2C_FS,
                         750.0f, 1.0f, self->geq_750_db_f32);
-    make_peaking_coeffs(&self->geq_coeffs_af32[15],
+    SAB_biquad_coeffs(&self->geq_coeffs_af32[15], SAB_BIQUAD_PEAK, MARK2C_FS,
                         2200.0f, 1.0f, self->geq_2200_db_f32);
-    make_peaking_coeffs(&self->geq_coeffs_af32[20],
+    SAB_biquad_coeffs(&self->geq_coeffs_af32[20], SAB_BIQUAD_PEAK, MARK2C_FS,
                         6600.0f, 1.0f, self->geq_6600_db_f32);
 }
 
@@ -163,7 +101,7 @@ static void mark2c_update_presence_coeffs(SAB_mark2c_tst* self)
     self->last_presence_raw_u8 = pres_raw;
 
     // Presence: high-shelf around 4 kHz
-    make_highshelf_coeffs(self->presence_coeffs_af32,
+    SAB_biquad_coeffs(self->presence_coeffs_af32, SAB_BIQUAD_HIGHSHELF, MARK2C_FS,
                           4000.0f, 0.7f, self->presence_db_f32);
 }
 

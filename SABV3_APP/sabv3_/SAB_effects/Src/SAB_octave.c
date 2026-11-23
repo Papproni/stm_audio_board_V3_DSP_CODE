@@ -6,6 +6,7 @@
  */
 
 #include "SAB_octave.h"
+#include "SAB_biquad.h"
 // FILTER values are from audiotest4_ERB_PS2_naive2 matlab script
  // filter coefficients fs=48000khz
 
@@ -459,8 +460,7 @@ void SAB_octave_init(octave_effects_tst* self){
     add_parameter(&self->intercom_parameters_aun[11],"NONE",PARAM_TYPE_UNUSED,69);
 	
 	// SETUP DATA FOR GUI END ------------------------------
-	float32_t local_50hz_coeffs[] = {0.99538200, -1.99076399, 0.99538200, 1.99074267, -0.99078531};
-	memcpy(self->highpass_iir_50hz_coeffs,local_50hz_coeffs,sizeof(float32_t)*5);
+	memcpy(self->highpass_iir_50hz_coeffs, SAB_biquad_octave_hp50, sizeof(self->highpass_iir_50hz_coeffs));
 	arm_biquad_cascade_df2T_init_f32(&self->highpass_iir_50hz, 1, (float32_t*)self->highpass_iir_50hz_coeffs, (float32_t*)self->highpass_state);
 	arm_biquad_cascade_df2T_init_f32(&self->highpass_iir_50hz_octave2, 1, (float32_t*)self->highpass_iir_50hz_coeffs, (float32_t*)self->highpass_state_octave2);
 	// assign function pointers
@@ -481,26 +481,13 @@ void SAB_octave_init(octave_effects_tst* self){
 	self->subbandfilter_dn2[0]		=	0;
 	self->subbandfilter_dn1[0]		=	0;
 	self->subbandfilter_dn[0]		=	0;
-	// 1kkhz LPF
-	float Q = 3;
-	float Freq = 3000;
-	float omega = 2.0f * 3.14 * Freq / 48000;
-    float alpha = sinf(omega) / (2.0f * Q);
-    float cos_omega = cosf(omega);
-	self->biquad_filter_for_sub_coeffs_af32[0]= (1.0f - cos_omega) / 2.0f 	/ (1.0 + alpha);
-	self->biquad_filter_for_sub_coeffs_af32[1]= 1.0f - cos_omega	/ (1.0 + alpha);
-	self->biquad_filter_for_sub_coeffs_af32[2]= (1.0f - cos_omega) / 2.0f 	/ (1.0 + alpha);
-	self->biquad_filter_for_sub_coeffs_af32[3]= -2.0f * cos_omega	/ (1.0 + alpha);
-	self->biquad_filter_for_sub_coeffs_af32[4]= (1.0f - alpha)	/ (1.0 + alpha);
-	self->biquad_filter_for_sub_coeffs_af32[3]=-self->biquad_filter_for_sub_coeffs_af32[3];
-	self->biquad_filter_for_sub_coeffs_af32[4]=-self->biquad_filter_for_sub_coeffs_af32[4];
+	// Preserve the existing octave voicing, including its legacy b1 formula.
+	SAB_biquad_octave_sub_coeffs(self->biquad_filter_for_sub_coeffs_af32);
 	
 	// SUB
 	arm_biquad_cascade_df2T_init_f32(&self->biquad_filter_for_sub, 1, (float32_t*)&self->biquad_filter_for_sub_coeffs_af32, (float32_t*)&self->biquad_filter_for_sub_states_af32);
 
-	for(int i=0 ;i<5;i++){
-		self->biquad_filter_for_sub_states_af32[i] = 0;
-	}
+	memset(self->biquad_filter_for_sub_states_af32, 0, sizeof(self->biquad_filter_for_sub_states_af32));
 	self->Shift = 0.5;
 	self->BufSize = 5000;
 	self->Overlap = 2500;
