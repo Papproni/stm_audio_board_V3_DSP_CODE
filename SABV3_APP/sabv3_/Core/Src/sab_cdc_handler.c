@@ -279,7 +279,83 @@ static void q_dispatch_frame(const uint8_t *frame)
         break;
     }
 
-    /* ---- reads ----------------------------------------------------- */
+    case SABQ_CMD_GET_PRESET_SAVEFILE: {
+        if (plen != 4U) {
+            q_send_response(cmd, SABQ_STATUS_BAD_ARG, seq, Q_NULL_DATA, 0U);
+            break;
+        }
+        uint32_t offset = q_le32(payload);
+        uint32_t total_size = SAB_preset_savefile_size();
+        if (offset >= total_size) {
+            q_send_response(cmd, SABQ_STATUS_BAD_ARG, seq, Q_NULL_DATA, 0U);
+            break;
+        }
+        uint16_t chunk_size = (uint16_t)(total_size - offset);
+        if (chunk_size > SABQ_PRESET_SAVEFILE_CHUNK_SIZE) {
+            chunk_size = SABQ_PRESET_SAVEFILE_CHUNK_SIZE;
+        }
+        uint8_t data[4U + SABQ_PRESET_SAVEFILE_CHUNK_SIZE];
+        q_put_u32(data, total_size);
+        if (!SAB_read_preset_savefile(offset, &data[4], chunk_size)) {
+            q_send_response(cmd, SABQ_STATUS_INTERNAL, seq, Q_NULL_DATA, 0U);
+            break;
+        }
+        q_send_response(cmd, SABQ_STATUS_OK, seq, data,
+                        (uint16_t)(4U + chunk_size));
+        break;
+    }
+
+    /* ---- full-store preset restore (RAM-staged, CRC-gated commit) ----- */
+    case SABQ_CMD_PRESET_RESTORE_BEGIN: {
+        if (plen != 8U) {
+            q_send_response(cmd, SABQ_STATUS_BAD_ARG, seq, Q_NULL_DATA, 0U);
+            break;
+        }
+        uint32_t size = q_le32(&payload[0]);
+        uint32_t crc  = q_le32(&payload[4]);
+        if (!SAB_preset_restore_begin(size, crc)) {
+            q_send_response(cmd, SABQ_STATUS_BAD_ARG, seq, Q_NULL_DATA, 0U);
+            break;
+        }
+        q_send_response(cmd, SABQ_STATUS_OK, seq, Q_NULL_DATA, 0U);
+        break;
+    }
+
+    case SABQ_CMD_PRESET_RESTORE_CHUNK: {
+        if (plen < 5U || plen > 4U + SABQ_PRESET_SAVEFILE_CHUNK_SIZE) {
+            q_send_response(cmd, SABQ_STATUS_BAD_ARG, seq, Q_NULL_DATA, 0U);
+            break;
+        }
+        uint32_t offset = q_le32(payload);
+        if (!SAB_preset_restore_chunk(offset, &payload[4],
+                                      (uint16_t)(plen - 4U))) {
+            q_send_response(cmd, SABQ_STATUS_BAD_ARG, seq, Q_NULL_DATA, 0U);
+            break;
+        }
+        q_send_response(cmd, SABQ_STATUS_OK, seq, Q_NULL_DATA, 0U);
+        break;
+    }
+
+    case SABQ_CMD_PRESET_RESTORE_COMMIT: {
+        if (plen != 0U) {
+            q_send_response(cmd, SABQ_STATUS_BAD_ARG, seq, Q_NULL_DATA, 0U);
+            break;
+        }
+        /* BAD_ARG: either an invalid image (incomplete / CRC mismatch ->
+         * existing flash kept) or the flash write itself failed. */
+        if (SAB_preset_restore_commit(&SAB_fx_manager_st)) {
+            q_send_response(cmd, SABQ_STATUS_OK, seq, Q_NULL_DATA, 0U);
+        } else {
+            q_send_response(cmd, SABQ_STATUS_BAD_ARG, seq, Q_NULL_DATA, 0U);
+        }
+        break;
+    }
+
+    case SABQ_CMD_PRESET_RESTORE_ABORT:
+        SAB_preset_restore_abort();
+        q_send_response(cmd, SABQ_STATUS_OK, seq, Q_NULL_DATA, 0U);
+        break;
+
     case SABQ_CMD_GET_INFO:
         q_send_response(cmd, SABQ_STATUS_OK, seq,
                         (const uint8_t *)&intercom_st.info_un.all_u8,
@@ -463,10 +539,15 @@ static void q_dispatch_frame(const uint8_t *frame)
     }
 
     case SABQ_CMD_SAVE_PRESET: {
-        uint8_t save_cmd = 1U;
-        intercom_st.register_addr_u8 = SAB_I2C_REG_SAVEPRESET;
-        intercom_st.process_rx_buffer(&intercom_st, &save_cmd, 1U);
-        q_send_response(cmd, SABQ_STATUS_OK, seq, Q_NULL_DATA, 0U);
+        uint32_t flash_error = SAB_save_preset_to_flash(&SAB_fx_manager_st);
+        if(flash_error != 0U){
+            uint8_t error_data[4];
+            q_put_u32(error_data, flash_error);
+            q_send_response(cmd, SABQ_STATUS_INTERNAL, seq, error_data,
+                            sizeof(error_data));
+        }else{
+            q_send_response(cmd, SABQ_STATUS_OK, seq, Q_NULL_DATA, 0U);
+        }
         break;
     }
 

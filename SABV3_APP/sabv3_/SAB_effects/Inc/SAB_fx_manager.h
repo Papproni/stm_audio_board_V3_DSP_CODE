@@ -166,8 +166,20 @@ void process_effect_chain(GuitarEffect** chain, int chain_length);
 
 void cleanup_effect_chain(GuitarEffect** chain, int chain_length);
 
-void SAB_save_preset_to_flash(SAB_fx_manager_tst* self);
+uint32_t SAB_save_preset_to_flash(SAB_fx_manager_tst* self);
 void SAB_load_preset_from_flash(SAB_fx_manager_tst* self);
+uint32_t SAB_preset_savefile_size(void);
+uint8_t SAB_read_preset_savefile(uint32_t offset, uint8_t *dst, uint16_t length);
+
+/* Full-store restore over CDC. The host stages a complete backup image in
+   RAM (BEGIN + sequential CHUNKs) and COMMIT validates the whole-image
+   CRC-32 before the preset sector is erased and reprogrammed. Every call
+   returns 1 on success / 0 on invalid state or argument; flash is never
+   touched until a CRC-verified COMMIT. */
+uint8_t SAB_preset_restore_begin(uint32_t size, uint32_t expected_crc32);
+uint8_t SAB_preset_restore_chunk(uint32_t offset, const uint8_t *data, uint16_t length);
+uint8_t SAB_preset_restore_commit(SAB_fx_manager_tst *self);
+uint8_t SAB_preset_restore_abort(void);
 
 void SAB_set_preset_mode(SAB_fx_manager_tst* self, fx_active_modes_ten mode_en);
 void SAB_preset_up_pressed(SAB_fx_manager_tst* self);

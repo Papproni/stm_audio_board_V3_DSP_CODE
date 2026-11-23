@@ -59,12 +59,13 @@ enum {
     SABQ_CMD_GET_FXPTR        = 0x17,  /* DIAG: req [start,count] -> ptrs  */
     SABQ_CMD_GET_MEMSTATS     = 0x18,  /* mem telemetry: 5 LE u32 (pool+)  */
     SABQ_CMD_GET_CPULOAD      = 0x19,  /* cpu telemetry: 4 LE u32 cyc/block*/
+    SABQ_CMD_GET_PRESET_SAVEFILE = 0x1A, /* req [offset:u32] -> size + bytes */
 
     /* Writes (host -> device state, I2C register semantics) */
     SABQ_CMD_SET_PARAM        = 0x20,  /* req: [fx_idx, slot 1..12, value] */
     SABQ_CMD_SET_LOOP         = 0x21,  /* req: [loop 1..4] + 42 bytes      */
     SABQ_CMD_SET_BYPASS       = 0x22,  /* req: [3 bytes]                   */
-    SABQ_CMD_SAVE_PRESET      = 0x23,  /* req: empty -> save_command = 1   */
+    SABQ_CMD_SAVE_PRESET      = 0x23,  /* req: empty -> commit active preset to flash */
     SABQ_CMD_FW_UPDATE_REQ    = 0x24,  /* req: empty -> dsp_fw_update_flg  */
     SABQ_CMD_SET_CURRENT_FX   = 0x25,  /* req: [fx_idx 0..11]              */
     /* Preset / mode control - the same code path the FSW buttons use
@@ -73,12 +74,20 @@ enum {
     SABQ_CMD_PRESET_UP        = 0x26,  /* req: empty -> next preset        */
     SABQ_CMD_PRESET_DOWN      = 0x27,  /* req: empty -> previous preset    */
     SABQ_CMD_SET_MODE         = 0x28,  /* req: [mode 0..3 = A..D]          */
+    /* Full-store restore: stage a backup image in RAM; the preset sector is
+     * erased + reprogrammed only at COMMIT, and only when the whole-image
+     * CRC-32 matches. A corrupt/truncated backup never touches flash. */
+    SABQ_CMD_PRESET_RESTORE_BEGIN  = 0x29, /* req: [size:u32, crc32:u32]   */
+    SABQ_CMD_PRESET_RESTORE_CHUNK  = 0x2A, /* req: [offset:u32, <=480 bytes]*/
+    SABQ_CMD_PRESET_RESTORE_COMMIT = 0x2B, /* req: empty -> verify + write */
+    SABQ_CMD_PRESET_RESTORE_ABORT  = 0x2C, /* req: empty -> discard staged */
 };
 
 /* CPU budget per sample: 1/48000 s @ 550 MHz = 11458 cycles (one SAI sample per
  * DMA completion; the FX pass computes all four inputs for that single sample).
  * GET_CPULOAD reports it so the host can turn measured cycles into a % of CPU. */
 #define SABQ_CPU_BLOCK_BUDGET   11458U
+#define SABQ_PRESET_SAVEFILE_CHUNK_SIZE 480U
 
 /* Response command = request command | 0x80 */
 #define SABQ_RESP(cmd)        ((uint8_t)((cmd) | 0x80U))

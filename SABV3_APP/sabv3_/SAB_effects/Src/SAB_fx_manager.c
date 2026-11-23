@@ -325,6 +325,7 @@ static uint8_t SAB_handle_intercom_change(SAB_fx_manager_tst* self){
                 if(0 != strcmp(slot_ptr[i].name, self->fx_instances[i]->intercom_fx_data.name)){
                     reinit_needed_flg|=1;
                     strcpy(self->current_preset_config_st.fx_names[i],slot_ptr[i].name);
+                    current_bypass->fx_states_aen[i] = slot_ptr[i].fx_state_en;
                 }else{
                      // update fx_state
                 	if( self->fx_instances[i]->init){
@@ -366,35 +367,60 @@ void SAB_fx_manager_deinit( SAB_fx_manager_tst* self){
 #define NUM_OF_PRESETS 45
 preset_saves_tst 	 SAB_PRESET_SAVE_FLASH_DATA[NUM_OF_PRESETS] __attribute__((section(".user_data")));
 preset_saves_tst 	 SAB_PRESET_SAVE_RAM_DATA[NUM_OF_PRESETS] __attribute__((section(".preset_save_ram")));
-void inline SAB_save_preset_to_flash(SAB_fx_manager_tst* self){
-	// preset_saves_tst preset_flash_st;
-	// 1. Calculate data addr
-	uint32_t preset_save_size_in_byte_u32 = 	sizeof(preset_saves_tst);
-	uint32_t preset_save_size_in_word_u32 = 	(preset_save_size_in_byte_u32+3) / 4;
-	uint32_t preset_num_u32 = (self->intercom_pst->preset_data_un.preset_Major_u8-'A')*9+self->intercom_pst->preset_data_un.preset_Minor_u8-1;
-	uint32_t save_location_addr_u32 = preset_save_size_in_byte_u32*preset_num_u32+USER_FLASH_ADDRESS;
-    // 2.1. fx names [NEW]
-    for(int i=0;i<12;i++){
-        memcpy(&self->current_preset_config_st.fx_names[i],&self->fx_instances[i]->intercom_fx_data.name,sizeof(char[10]));
-    }
-	// 2.2. fx params values
-	// choose fx
-    for(int i = 0; i<12;i++){
-        // choose params
-        for(int j=0;j<12;j++){
-            self->current_preset_config_st.fx_params_value[i][j] = self->fx_instances[i]->intercom_parameters_aun[j].value_u8;
-        }
+#define SAB_PRESET_SAVE_STAGE_WORDS \
+    (((sizeof(SAB_PRESET_SAVE_RAM_DATA) / 4U) + 7U) & ~7U)
+static uint32_t SAB_PRESET_SAVE_STAGE[SAB_PRESET_SAVE_STAGE_WORDS]
+    __attribute__((aligned(32)));
+uint32_t SAB_preset_savefile_size(void){
+    return (uint32_t)sizeof(SAB_PRESET_SAVE_FLASH_DATA);
+}
 
-	}
-    // save the current preset
-    memcpy(&SAB_PRESET_SAVE_RAM_DATA[preset_num_u32],&self->current_preset_config_st,sizeof(preset_saves_tst));
-	// 3. save to flash
-    __disable_irq();  // Disable interrupts
-	// Single attempt: a failing write must NOT spin here (IRQs are off, so a retry loop
-	// freezes SysTick + USB forever and only the IWDG can recover). Surface err via LED/intercom if needed.
-	uint32_t flash_save_err_u32 = Flash_Write_Data((uint32_t)USER_FLASH_ADDRESS,(uint32_t*)SAB_PRESET_SAVE_RAM_DATA,sizeof(preset_saves_tst)*NUM_OF_PRESETS/4);
-	(void)flash_save_err_u32;
-	__enable_irq();   // Re-enable interrupts
+uint8_t SAB_read_preset_savefile(uint32_t offset, uint8_t *dst, uint16_t length){
+    uint32_t total_size = SAB_preset_savefile_size();
+    if(dst == 0 || offset > total_size || (uint32_t)length > total_size - offset){
+        return 0U;
+    }
+    memcpy(dst, ((const uint8_t *)SAB_PRESET_SAVE_FLASH_DATA) + offset, length);
+    return 1U;
+}
+
+uint32_t SAB_save_preset_to_flash(SAB_fx_manager_tst* self){
+    uint32_t preset_num_u32 =
+        (self->intercom_pst->preset_data_un.preset_Major_u8 - 'A') * 9U +
+        self->intercom_pst->preset_data_un.preset_Minor_u8 - 1U;
+    fx_active_modes_ten current_mode = self->preset_mode_st.preset_mode_en;
+    if(preset_num_u32 >= NUM_OF_PRESETS || current_mode >= NUM_OF_PRESET_MODES){
+        return UINT32_MAX;
+    }
+
+    /* Snapshot the current live chain and this mode's state before committing. */
+    fx_data_tst *slot_ptr = &self->intercom_pst->loop_data[0].slot1;
+    preset_fx_bypasses_tst *current_bypass =
+        &self->current_preset_config_st.bypass_states_st[current_mode];
+    for(int i = 0; i < 12; i++){
+        memcpy(self->current_preset_config_st.fx_names[i], slot_ptr[i].name,
+               sizeof(self->current_preset_config_st.fx_names[i]));
+        current_bypass->fx_states_aen[i] = slot_ptr[i].fx_state_en;
+        for(int j = 0; j < 12; j++){
+            self->current_preset_config_st.fx_params_value[i][j] =
+                self->fx_instances[i]->intercom_parameters_aun[j].value_u8;
+        }
+    }
+    memcpy(&current_bypass->loop_bypass_un,
+           &self->intercom_pst->loopbypass_un, sizeof(sab_loopbypass_tun));
+
+    memcpy(&SAB_PRESET_SAVE_RAM_DATA[preset_num_u32],
+           &self->current_preset_config_st, sizeof(preset_saves_tst));
+    memset(SAB_PRESET_SAVE_STAGE, 0xFF, sizeof(SAB_PRESET_SAVE_STAGE));
+    memcpy(SAB_PRESET_SAVE_STAGE, SAB_PRESET_SAVE_RAM_DATA,
+           sizeof(SAB_PRESET_SAVE_RAM_DATA));
+
+    __disable_irq();
+    uint32_t flash_save_err_u32 = Flash_Write_Data(
+        (uint32_t)USER_FLASH_ADDRESS, SAB_PRESET_SAVE_STAGE,
+        (uint16_t)SAB_PRESET_SAVE_STAGE_WORDS);
+    __enable_irq();
+    return flash_save_err_u32;
 }
 
 int32_t prev_preset_num_u32 = -1;
@@ -483,6 +509,135 @@ inline void  SAB_fx_manager_init( SAB_fx_manager_tst* self, sab_intercom_tst* in
     // init_intercom's hardcoded default bypass (L12=1,L23=0,L34=1), the mode
     // mirror is never set, and the display/CDC report stale values.
     SAB_set_preset_mode(self, PRESET_MODE_A);
+}
+
+// ==================== FULL-STORE PRESET RESTORE (USB CDC) ====================
+// The host stages a complete backup image in RAM (BEGIN + sequential CHUNKs);
+// COMMIT validates the whole-image CRC-32 and only then erases + reprograms
+// the preset sector. A corrupt or truncated backup never touches flash.
+
+// Stage buffer rounded up to FLASHWORD (8 word = 32 byte) blocks so the final
+// partial block of Flash_Write_Data never reads past the end of the buffer.
+#define SAB_PRESET_RESTORE_STAGE_WORDS \
+    (((sizeof(SAB_PRESET_SAVE_FLASH_DATA) / 4U) + 7U) & ~7U)
+
+static uint8_t SAB_preset_restore_stage[SAB_PRESET_RESTORE_STAGE_WORDS * 4U]
+    __attribute__((aligned(32)));
+
+static struct {
+    uint8_t  active_u8;
+    uint32_t size_u32;
+    uint32_t filled_u32;
+    uint32_t expected_crc_u32;
+    uint32_t running_crc_u32;   /* unfinalized value; init 0xFFFFFFFF */
+} SAB_preset_restore_st;
+
+// Incremental CRC-32 (IEEE, reflected, poly 0xEDB88320) - same family as the
+// SABQ frame CRC (zlib.crc32): init 0xFFFFFFFF, final = state ^ 0xFFFFFFFF.
+static uint32_t SAB_crc32_step(uint32_t state_u32, const uint8_t *data_p, uint32_t len_u32){
+    while(len_u32-- > 0U){
+        uint8_t byte_u8 = *data_p++;
+        state_u32 ^= byte_u8;
+        for(int i = 0; i < 8; i++){
+            state_u32 = (state_u32 >> 1) ^ (0xEDB88320U * (uint32_t)(state_u32 & 1U));
+        }
+    }
+    return state_u32;
+}
+
+uint8_t SAB_preset_restore_begin(uint32_t size_u32, uint32_t expected_crc_u32){
+    if(size_u32 != SAB_preset_savefile_size()){
+        return 0U;  // only a complete store image is accepted
+    }
+    memset(SAB_preset_restore_stage, 0xFF, sizeof(SAB_preset_restore_stage));
+    SAB_preset_restore_st.active_u8        = 1U;
+    SAB_preset_restore_st.size_u32         = size_u32;
+    SAB_preset_restore_st.filled_u32       = 0U;
+    SAB_preset_restore_st.expected_crc_u32 = expected_crc_u32;
+    SAB_preset_restore_st.running_crc_u32  = 0xFFFFFFFFU;
+    return 1U;
+}
+
+uint8_t SAB_preset_restore_chunk(uint32_t offset_u32, const uint8_t *data_p, uint16_t length_u16){
+    if(!SAB_preset_restore_st.active_u8 || data_p == 0 || length_u16 == 0U){
+        return 0U;
+    }
+    // Strictly sequential: the host sends contiguous chunks; out-of-order or
+    // retried data must be rejected, not silently mis-staged.
+    if(offset_u32 != SAB_preset_restore_st.filled_u32){
+        return 0U;
+    }
+    if(offset_u32 + (uint32_t)length_u16 > SAB_preset_restore_st.size_u32){
+        return 0U;
+    }
+    memcpy(&SAB_preset_restore_stage[offset_u32], data_p, length_u16);
+    SAB_preset_restore_st.running_crc_u32 =
+        SAB_crc32_step(SAB_preset_restore_st.running_crc_u32, data_p, (uint32_t)length_u16);
+    SAB_preset_restore_st.filled_u32 = offset_u32 + (uint32_t)length_u16;
+    return 1U;
+}
+
+uint8_t SAB_preset_restore_abort(void){
+    SAB_preset_restore_st.active_u8 = 0U;
+    return 1U;
+}
+
+uint8_t SAB_preset_restore_commit(SAB_fx_manager_tst* self){
+    uint32_t final_crc_u32;
+    uint32_t flash_err_u32;
+    uint32_t preset_num_u32;
+
+    if(self == 0 || !SAB_preset_restore_st.active_u8){
+        return 0U;
+    }
+    if(SAB_preset_restore_st.filled_u32 != SAB_preset_restore_st.size_u32){
+        return 0U;  // incomplete image -> nothing changes
+    }
+    final_crc_u32 = SAB_preset_restore_st.running_crc_u32 ^ 0xFFFFFFFFU;
+    SAB_preset_restore_st.active_u8 = 0U;
+
+    if(final_crc_u32 != SAB_preset_restore_st.expected_crc_u32){
+        return 0U;  // CRC mismatch -> existing flash image preserved
+    }
+
+    // Auto-exit tuner first (it rebuilds from its pre-tuner snapshot), so the
+    // stale snapshot cannot leak into the restored chain.
+    if(self->tuner_active_u8){
+        SAB_tuner_exit(self);
+    }
+
+    // CRC verified: erase the preset sector + reprogram from the staged image.
+    // Same single-attempt discipline as SAB_save_preset_to_flash: IRQs off so a
+    // failed write cannot spin here (only IWDG recovery is possible).
+    __disable_irq();
+    flash_err_u32 = Flash_Write_Data((uint32_t)USER_FLASH_ADDRESS,
+                                     (uint32_t *)SAB_preset_restore_stage,
+                                     (uint16_t)SAB_PRESET_RESTORE_STAGE_WORDS);
+    if(flash_err_u32 == 0U){
+        // Mirror the restored image into the RAM copy preset switching reads.
+        memcpy(SAB_PRESET_SAVE_RAM_DATA, SAB_preset_restore_stage,
+               SAB_preset_restore_st.size_u32);
+    }
+    __enable_irq();
+
+    if(flash_err_u32 != 0U){
+        return 0U;  // runtime RAM image untouched -> live preset unchanged
+    }
+
+    // Reload the current preset record straight from the restored RAM image
+    // (NOT via SAB_load_preset_from_flash: its pre-save side effect would
+    // write the pre-restore live state back over the fresh image first).
+    preset_num_u32 = (uint32_t)((self->intercom_pst->preset_data_un.preset_Major_u8 - 'A') * 9
+                             + self->intercom_pst->preset_data_un.preset_Minor_u8 - 1);
+    if(preset_num_u32 < NUM_OF_PRESETS){
+        memcpy(&self->current_preset_config_st,
+               &SAB_PRESET_SAVE_RAM_DATA[preset_num_u32], sizeof(preset_saves_tst));
+        prev_preset_num_u32 = (int32_t)preset_num_u32;
+    }
+    SAB_cleanup_effect_chain(self->fx_instances, 12);
+    SAB_load_current_config(self);
+    SAB_set_preset_mode(self, self->preset_mode_st.preset_mode_en);
+    return 1U;
 }
 
 
@@ -574,6 +729,7 @@ inline void  SAB_set_preset_mode(SAB_fx_manager_tst* self, fx_active_modes_ten m
 inline void  SAB_preset_up_pressed(SAB_fx_manager_tst* self){
     // auto-exit tuner mode before changing presets (restores Loop1 slot 0)
     if(self->tuner_active_u8) SAB_tuner_exit(self);
+    fx_active_modes_ten mode_en = self->preset_mode_st.preset_mode_en;
 
     if (self->intercom_pst->preset_data_un.preset_Minor_u8 == 9 && self->intercom_pst->preset_data_un.preset_Major_u8 == 'Z')
 	{
@@ -595,11 +751,9 @@ inline void  SAB_preset_up_pressed(SAB_fx_manager_tst* self){
         SAB_load_preset_from_flash(self);
         // DELETE CURRENT PRESET
         SAB_cleanup_effect_chain((GuitarEffect**)self,12);
-        self->preset_mode_st.preset_mode_en = PRESET_MODE_A;
-        self->intercom_pst->preset_data_un.fx_active_mode_u8 = PRESET_MODE_A;
         // INIT NEW PRESET
         SAB_load_current_config(self);
-        SAB_set_preset_mode(self, PRESET_MODE_A);
+        SAB_set_preset_mode(self, mode_en);
         HAL_GPIO_WritePin(FSW_LED1_GPIO_Port, FSW_LED1_Pin, 0);
 		HAL_GPIO_WritePin(FSW_LED2_GPIO_Port, FSW_LED2_Pin, 0);
 
@@ -609,6 +763,7 @@ inline void  SAB_preset_up_pressed(SAB_fx_manager_tst* self){
 inline void  SAB_preset_down_pressed(SAB_fx_manager_tst* self){
     // auto-exit tuner mode before changing presets (restores Loop1 slot 0)
     if(self->tuner_active_u8) SAB_tuner_exit(self);
+    fx_active_modes_ten mode_en = self->preset_mode_st.preset_mode_en;
 
     if (self->intercom_pst->preset_data_un.preset_Minor_u8 == 1 && self->intercom_pst->preset_data_un.preset_Major_u8 == 'A')
 	{
@@ -628,11 +783,9 @@ inline void  SAB_preset_down_pressed(SAB_fx_manager_tst* self){
         SAB_load_preset_from_flash(self);
         // DELETE CURRENT PRESET
         SAB_cleanup_effect_chain((GuitarEffect**)self,12);
-        self->preset_mode_st.preset_mode_en = PRESET_MODE_A;
-        self->intercom_pst->preset_data_un.fx_active_mode_u8 = PRESET_MODE_A;
         // INIT NEW PRESET
         SAB_load_current_config(self);
-        SAB_set_preset_mode(self, PRESET_MODE_A);
+        SAB_set_preset_mode(self, mode_en);
         HAL_GPIO_WritePin(FSW_LED1_GPIO_Port, FSW_LED1_Pin, 0);
 		HAL_GPIO_WritePin(FSW_LED2_GPIO_Port, FSW_LED2_Pin, 0);
 	}
