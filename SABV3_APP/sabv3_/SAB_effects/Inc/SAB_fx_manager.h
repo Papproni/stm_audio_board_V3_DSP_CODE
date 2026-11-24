@@ -1,0 +1,194 @@
+/*THIS FILE IS GENERATED! DO NOT MODIFY!
+Generated on: 2024.11.28. */
+
+#ifndef SAB_FX_MANAGER_H
+#define SAB_FX_MANAGER_H
+
+
+#include "stdint.h"
+#include "sab_intercom.h"
+#include "main.h"
+
+// Generated effect libs
+#include "SAB_delay.h"
+#include "SAB_overdrive.h"
+#include "SAB_distortion.h"
+//#include "SAB_octave.h"
+#include "SAB_flanger.h"
+#include "SAB_chorus.h"
+#include "SAB_boost.h"
+#include "SAB_pitchshift.h"
+#include "SAB_fuzz.h"
+#include "SAB_tremolo.h"
+#include "SAB_equalizer.h"
+#include "SAB_CUSTOM.h"
+#include "SAB_envelope_filter.h"
+#include "SAB_reverb.h"
+#include "SAB_custom_fx.h"
+#include "SAB_octave.h"
+#include "SAB_pitchdetector.h"
+#include "SAB_generator.h"
+#include "SAB_lpf.h"
+#include "SAB_hpf.h"
+#include "SAB_bandpass.h"
+#include "SAB_mark2c.h"
+#include "SAB_step_response.h"
+#include "SAB_harmonizer.h"
+#include "stdint.h"
+#include "arm_math.h"
+
+
+#include "FLASH_SECTOR_H7.h"
+
+
+// Enum representing different effect types
+typedef enum {
+    REVERB,
+    DELAY,
+    OVERDRIVE,
+    DISTORTION,
+    OCTAVE,
+    FLANGER,
+    CHORUS,
+    BOOST,
+    PITCHSHIFT,
+    FUZZ,
+    TREMOLO,
+    EQUALIZER,
+    CUSTOM,
+    CUSTOM_FX,
+    ENVELOPE,
+    PITCHDETECTOR,
+    SIG_GEN,
+    LPF,
+    HPF,
+    BANDPASS,
+    MARK2C,
+    IMRE,
+    HARMONIZER
+} EffectType;
+
+volatile typedef struct{
+	int32_t in1_i32;
+	int32_t in2_i32;
+	int32_t in3_i32;
+	int32_t in4_i32;
+
+	int32_t out1_i32;
+	int32_t out2_i32;
+	int32_t out3_i32;
+	int32_t out4_i32;
+}SAB_IO_HADRWARE_BUFFERS;
+
+typedef struct preset_bypasses_st{
+	sab_loopbypass_tun 	loop_bypass_un;
+	fx_state_ten 	    fx_states_aen[NUM_OF_FX_SLOTS_IN_LOOP*NUM_OF_LOOPS];
+}preset_fx_bypasses_tst;
+
+#define NUM_OF_PRESET_MODES 4
+typedef enum {
+	PRESET_MODE_A,
+	PRESET_MODE_B,
+	PRESET_MODE_C,
+	PRESET_MODE_D
+}fx_active_modes_ten;
+
+typedef struct preset_saves_st{
+    // Store FX names used in preset
+	char 	                fx_names[NUM_OF_FX_SLOTS_IN_LOOP*NUM_OF_LOOPS][10];
+    // Store their parameters setting
+	uint8_t 	            fx_params_value[NUM_OF_FX_SLOTS_IN_LOOP*NUM_OF_LOOPS][NUM_OF_MAX_PARAMS];
+    preset_fx_bypasses_tst	bypass_states_st[NUM_OF_PRESET_MODES];
+}preset_saves_tst; 
+
+
+// Struct for a guitar effect with function pointers
+typedef struct {
+    void (*init)(void*);
+    float32_t (*process)(void*,float32_t input);
+    void (*delete)(void*);
+    fx_data_tst			intercom_fx_data;
+	sab_fx_param_tun 	intercom_parameters_aun[NUM_OF_MAX_PARAMS];
+} GuitarEffect;
+
+typedef struct{
+    uint8_t *fsw1_ptr;
+    uint8_t *fsw2_ptr;
+    fx_active_modes_ten preset_mode_en;
+}SAB_fsw_mode_tst;
+
+
+// Manager structure: fx_manager 
+typedef struct {
+	GuitarEffect*   fx_instances[12];
+    EffectType      fx_types_chain[12];
+    char          fx_chain_names[12][10];
+
+    SAB_fsw_mode_tst        preset_mode_st;
+    SAB_IO_HADRWARE_BUFFERS* hardware_IO_port;
+
+    sab_intercom_tst *intercom_pst;
+    
+    preset_saves_tst current_preset_config_st;
+
+    // TUNER MODE state (FSW2+FSW3 chord)
+    uint8_t tuner_active_u8;
+    struct {
+        char    names[12][10]; // original 12 slot effect names, restored on exit
+        uint8_t state0_u8;     // original Loop1 slot-0 bypass state, restored on exit
+    } tuner_saved_st;
+} SAB_fx_manager_tst;
+
+
+
+
+// INIT for SAB_fx_manager_tst
+void SAB_fx_manager_init( SAB_fx_manager_tst* self, sab_intercom_tst* intercom_pst, SAB_IO_HADRWARE_BUFFERS* hardware_IO_port_ptr, uint8_t* fsw1_ptr, uint8_t* fsw2_ptr);
+
+// INIT for SAB_fx_manager_tst
+void SAB_fx_manager_deinit( SAB_fx_manager_tst* self);
+
+// Process Function for SAB_fx_manager_tst
+void SAB_fx_manager_process( SAB_fx_manager_tst* self);
+
+/* Per-block CPU cycle accounting for SAB_fx_manager_process. The DWT CYCCNT
+ * bracket lives in main.c (it wraps the process call); this getter reports
+ * *avg_out = mean cycles/block since boot, *peak_out = max, *last_out = most
+ * recent. Implemented in main.c; used by the CDC handler for GET_CPULOAD. */
+void SAB_fx_get_cpu_cycles(uint32_t *avg_out, uint32_t *peak_out, uint32_t *last_out);
+
+void init_effect_chain(GuitarEffect** chain, EffectType* fx_chain, int chain_length);
+
+/* Bytes this slot's effect struct occupies on the C heap (0 if the slot is
+   empty). Index = fx_idx (0..11). Mirrors the malloc sizes in
+   init_effect_chain() so the PC can report each effect's real footprint. */
+uint32_t SAB_fx_slot_size_bytes(const SAB_fx_manager_tst *m, int slot);
+
+void process_effect_chain(GuitarEffect** chain, int chain_length);
+
+void cleanup_effect_chain(GuitarEffect** chain, int chain_length);
+
+uint32_t SAB_save_preset_to_flash(SAB_fx_manager_tst* self);
+void SAB_load_preset_from_flash(SAB_fx_manager_tst* self);
+uint32_t SAB_preset_savefile_size(void);
+uint8_t SAB_read_preset_savefile(uint32_t offset, uint8_t *dst, uint16_t length);
+
+/* Full-store restore over CDC. The host stages a complete backup image in
+   RAM (BEGIN + sequential CHUNKs) and COMMIT validates the whole-image
+   CRC-32 before the preset sector is erased and reprogrammed. Every call
+   returns 1 on success / 0 on invalid state or argument; flash is never
+   touched until a CRC-verified COMMIT. */
+uint8_t SAB_preset_restore_begin(uint32_t size, uint32_t expected_crc32);
+uint8_t SAB_preset_restore_chunk(uint32_t offset, const uint8_t *data, uint16_t length);
+uint8_t SAB_preset_restore_commit(SAB_fx_manager_tst *self);
+uint8_t SAB_preset_restore_abort(void);
+
+void SAB_set_preset_mode(SAB_fx_manager_tst* self, fx_active_modes_ten mode_en);
+void SAB_preset_up_pressed(SAB_fx_manager_tst* self);
+void SAB_preset_down_pressed(SAB_fx_manager_tst* self);
+
+// TUNER MODE entry/exit (FSW2+FSW3 chord)
+void SAB_tuner_enter(SAB_fx_manager_tst* self);
+void SAB_tuner_exit(SAB_fx_manager_tst* self);
+void SAB_tuner_toggle(SAB_fx_manager_tst* self);
+#endif

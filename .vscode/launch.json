@@ -8,8 +8,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": true,
-      "cwd": "c:/Projects/SDRAM_STUFF/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/SAB_effects/Src",
-      "program": "c:/Projects/SDRAM_STUFF/stm_audio_board_V3_DSP_CODE/app/stm_audio_board_V3_DSP_TEST/SAB_effects/Src/build/Debug/outDebug",
+      "cwd": "c:/Projects/_SABv4/Apps/mcu/SABv4-MCU/SABV3_BL/stm_audio_board_V3_DSP_TEST/USB_DEVICE/App",
+      "program": "c:/Projects/_SABv4/Apps/mcu/SABv4-MCU/SABV3_BL/stm_audio_board_V3_DSP_TEST/USB_DEVICE/App/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [
@@ -19,6 +19,18 @@
           "ignoreFailures": true
         }
       ]
+    },
+    {
+      "name": "Python: SAB Updater GUI",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/sab_updater_gui/sab_updater.py",
+      "cwd": "${workspaceFolder}/sab_updater_gui",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/sab_updater_gui"
+      }
     }
   ]
 }

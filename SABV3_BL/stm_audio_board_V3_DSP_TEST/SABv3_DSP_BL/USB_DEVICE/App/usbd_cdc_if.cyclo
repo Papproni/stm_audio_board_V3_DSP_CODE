@@ -1,0 +1,15 @@
+../USB_DEVICE/App/usbd_cdc_if.c:124:17:sabu_u32	1
+../USB_DEVICE/App/usbd_cdc_if.c:130:13:sabu_put_u32	1
+../USB_DEVICE/App/usbd_cdc_if.c:136:17:sabu_crc32	5
+../USB_DEVICE/App/usbd_cdc_if.c:147:13:sabu_reply	1
+../USB_DEVICE/App/usbd_cdc_if.c:330:15:CDC_DeInit_HS	1
+../USB_DEVICE/App/usbd_cdc_if.c:344:15:CDC_Control_HS	1
+../USB_DEVICE/App/usbd_cdc_if.c:480:15:CDC_TransmitCplt_HS	1
+../USB_DEVICE/App/usbd_cdc_if.c:425:15:CDC_Receive_HS	3
+../USB_DEVICE/App/usbd_cdc_if.c:315:15:CDC_Init_HS	1
+../USB_DEVICE/App/usbd_cdc_if.c:159:16:sabu_erase_application_sector	3
+../USB_DEVICE/App/usbd_cdc_if.c:209:16:sabu_write_application	9
+../USB_DEVICE/App/usbd_cdc_if.c:454:9:CDC_Transmit_HS	2
+../USB_DEVICE/App/usbd_cdc_if.c:493:6:FW_Update_Process	20
+../USB_DEVICE/App/usbd_cdc_if.c:570:9:FW_Update_ResetRequested	1
+../USB_DEVICE/App/usbd_cdc_if.c:575:9:FW_Update_SessionActive	1

@@ -55,18 +55,5 @@
   "C_Cpp_Runner.useLeakSanitizer": false,
   "C_Cpp_Runner.showCompilationTime": false,
   "C_Cpp_Runner.useLinkTimeOptimization": false,
-  "C_Cpp_Runner.msvcSecureNoWarnings": false,
-  "files.associations": {
-    "*.c": "c",
-    "stdint.h": "c",
-    "math.h": "c",
-    "sab_custom_fx.h": "c",
-    "sab_intercom.h": "c",
-    "sab_fx_manager.h": "c",
-    "sab_chorus.h": "c",
-    "sab_envelope_filter.h": "c",
-    "guitar_effect_delay.h": "c",
-    "sab_reverb.h": "c",
-    "sab_delay.h": "c"
-  }
+  "C_Cpp_Runner.msvcSecureNoWarnings": false
 }

@@ -1,0 +1,688 @@
+/* USER CODE BEGIN Header */
+/**
+  ******************************************************************************
+  * @file           : main.c
+  * @brief          : Main program body
+  ******************************************************************************
+  * @attention
+  *
+  * Copyright (c) 2024 STMicroelectronics.
+  * All rights reserved.
+  *
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
+  *
+  ******************************************************************************
+  */
+/* USER CODE END Header */
+/* Includes ------------------------------------------------------------------*/
+#include "main.h"
+#include "dma.h"
+#include "i2c.h"
+#include "iwdg.h"
+#include "octospi.h"
+#include "sai.h"
+#include "spi.h"
+#include "tim.h"
+#include "usb_device.h"
+#include "gpio.h"
+#include "fmc.h"
+
+/* Private includes ----------------------------------------------------------*/
+/* USER CODE BEGIN Includes */
+#include "stm32h7xx_hal.h"
+#include "AD1939_driver.h"
+#include "usbd_cdc_if.h"
+// #include "usbd_core.h"
+//#include "usbd_audio.h"
+// #include "usbd_desc.h"
+//#include "usbd_audio_if.h"
+// #include "usb_device.h"
+#include "string.h"
+#include <math.h>
+#include "arm_math.h"
+
+// SAB specifics------START----
+// Effects libs
+#include "sab_intercom.h"
+
+#include "FLASH_SECTOR_H7.h"
+#include "SAB_custom_fx.h"
+#include "SAB_fx_manager.h"
+#include "sdram_memory_handler.h"
+#include "sab_cdc_handler.h"
+#include "usbd_audio_if.h"
+
+// SAB specifics------END----
+/* USER CODE END Includes */
+
+/* Private typedef -----------------------------------------------------------*/
+/* USER CODE BEGIN PTD */
+
+/* USER CODE END PTD */
+
+/* Private define ------------------------------------------------------------*/
+/* USER CODE BEGIN PD */
+
+/* USER CODE END PD */
+
+/* Private macro -------------------------------------------------------------*/
+/* USER CODE BEGIN PM */
+
+/* USER CODE END PM */
+
+/* Private variables ---------------------------------------------------------*/
+
+/* USER CODE BEGIN PV */
+
+/* USER CODE END PV */
+
+/* Private function prototypes -----------------------------------------------*/
+void SystemClock_Config(void);
+void PeriphCommonClock_Config(void);
+/* USER CODE BEGIN PFP */
+
+/* USER CODE END PFP */
+
+/* Private user code ---------------------------------------------------------*/
+/* USER CODE BEGIN 0 */
+
+// IN2 - OUT1
+//
+
+// ADC4-ADC1 position in TDM I2S
+#define IN1_ADC_NUM 3
+#define IN2_ADC_NUM 2
+#define IN3_ADC_NUM 1
+#define IN4_ADC_NUM 0
+// DAC position in TDM I2S
+#define OUT1_DAC_NUM 7 // ok
+#define OUT2_DAC_NUM 6
+#define OUT3_DAC_NUM 4
+#define OUT4_DAC_NUM 5
+
+volatile uint8_t 			ADC_HALF_COMPLETE_FLAG = 0;
+volatile uint8_t 			DAC_HALF_COMPLETE_FLAG = 0;
+uint32_t input_i2s_buffer_au32[16];
+uint32_t output_i2s_buffer_au32[16];
+
+SAB_IO_HADRWARE_BUFFERS effects_io_port;
+
+void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai){
+	DAC_HALF_COMPLETE_FLAG = 0;
+	output_i2s_buffer_au32[8+OUT1_DAC_NUM] = effects_io_port.out1_i32>>8;
+	output_i2s_buffer_au32[8+OUT2_DAC_NUM] = effects_io_port.out2_i32>>8;
+	output_i2s_buffer_au32[8+OUT3_DAC_NUM] = effects_io_port.out3_i32>>8;
+	output_i2s_buffer_au32[8+OUT4_DAC_NUM] = effects_io_port.out4_i32>>8;
+  SCB_CleanDCache_by_Addr(output_i2s_buffer_au32, sizeof(output_i2s_buffer_au32)/2);
+}
+void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai){
+	DAC_HALF_COMPLETE_FLAG = 1;
+	output_i2s_buffer_au32[OUT1_DAC_NUM] = effects_io_port.out1_i32>>8;
+	output_i2s_buffer_au32[OUT2_DAC_NUM] = effects_io_port.out2_i32>>8;
+	output_i2s_buffer_au32[OUT3_DAC_NUM] = effects_io_port.out3_i32>>8;
+	output_i2s_buffer_au32[OUT4_DAC_NUM] = effects_io_port.out4_i32>>8;
+  SCB_CleanDCache_by_Addr(&output_i2s_buffer_au32[8], sizeof(output_i2s_buffer_au32)/2);
+}
+
+volatile uint8_t 			ADC_READY_FLAG = 0;
+
+void HAL_SAI_RxCpltCallback(SAI_HandleTypeDef *hsai){
+	ADC_HALF_COMPLETE_FLAG = 0;
+	ADC_READY_FLAG = 1;
+  SCB_InvalidateDCache_by_Addr(input_i2s_buffer_au32, sizeof(input_i2s_buffer_au32)/2);
+	effects_io_port.in1_i32 = input_i2s_buffer_au32[8+IN1_ADC_NUM]<<8;
+	effects_io_port.in2_i32 = input_i2s_buffer_au32[8+IN2_ADC_NUM]<<8;
+	effects_io_port.in3_i32 = input_i2s_buffer_au32[8+IN3_ADC_NUM]<<8;
+	effects_io_port.in4_i32 = input_i2s_buffer_au32[8+IN4_ADC_NUM]<<8;
+}
+void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai){
+	ADC_HALF_COMPLETE_FLAG = 1;
+	ADC_READY_FLAG = 1;
+
+  	SCB_InvalidateDCache_by_Addr(&input_i2s_buffer_au32[8], sizeof(input_i2s_buffer_au32)/2);
+	effects_io_port.in1_i32 = input_i2s_buffer_au32[IN1_ADC_NUM]<<8;
+	effects_io_port.in2_i32 = input_i2s_buffer_au32[IN2_ADC_NUM]<<8;
+	effects_io_port.in3_i32 = input_i2s_buffer_au32[IN3_ADC_NUM]<<8;
+	effects_io_port.in4_i32 = input_i2s_buffer_au32[IN4_ADC_NUM]<<8;
+}
+
+#define ARRAY_SIZE 96000
+
+/* Ask the resident bootloader to stay in CDC update mode after reset. */
+void JumpToBootloader(void)
+{
+	  HAL_PWR_EnableBkUpAccess();
+	  RTC->BKP0R = 0x53414255UL;
+	  NVIC_SystemReset();
+}
+
+
+sab_intercom_tst 	 intercom_st __attribute__((section(".noncacheable_data")));
+SAB_fx_manager_tst SAB_fx_manager_st;
+
+/* Per-sample CPU cycle accounting for SAB_fx_manager_process (DWT CYCCNT @
+ * SystemCoreClock). Written each audio sample by the main loop's bracket around
+ * the process call; read by the CDC handler via SAB_fx_get_cpu_cycles() for
+ * GET_CPULOAD so the PC GUI can show a live CPU-load bar. */
+static volatile uint32_t fx_start_cycles;
+static volatile uint32_t fx_end_cycles;
+static volatile uint32_t fx_last_cycles;
+static volatile uint32_t fx_min_cycles = 0xFFFFFFFFu;
+static volatile uint32_t fx_max_cycles = 0u;
+
+/* Headroom gauge, updated once per sample in the main loop. Each sample has a
+ * cycle budget (FX_BLOCK_BUDGET_CYCLES = 11458: 1/48000 s @ 550 MHz). One SAI
+ * sample arrives per DMA completion and the FX pass computes all four input
+ * channels for that single sample, so its real-time ceiling is one sample period.
+ * tc is the cycles that per-sample FX pass used. fx_ema_cycles is a short moving
+ * average of tc (integer EMA, ~FX_EMA_DIV samples of smoothing); cpu_headroom is
+ * the budget minus that average, so it reads as a live gauge:
+ *   - CPU unused   -> tc small -> ema small -> headroom counts higher
+ *   - CPU overused -> tc large -> ema large -> headroom counts lower (0 when the
+ *                     average cost reaches the budget, i.e. sustained overrun)
+ * GET_CPULOAD returns it in the "avg" slot; the host divides by the budget for a
+ * 0..100% bar (full = lots of headroom, empty = pegged/overloaded). */
+#define FX_BLOCK_BUDGET_CYCLES 11458u
+#define FX_EMA_DIV 8u
+static volatile uint32_t fx_ema_cycles = 0;   /* smoothed per-sample cost */
+static volatile int32_t  cpu_headroom = 0;    /* budget - ema, clamped [0, budget] */
+
+void SAB_fx_get_cpu_cycles(uint32_t *avg_out, uint32_t *peak_out, uint32_t *last_out)
+{
+    *avg_out  = (uint32_t)cpu_headroom;   /* 0..budget headroom level */
+    *peak_out = (uint32_t)fx_max_cycles;
+    *last_out = (uint32_t)fx_last_cycles;
+}
+
+/*
+ * HW BTN INTERRUPT FUNCTIONS ----------------------------
+ */
+
+//volatile uint8_t enable_effect = 1;
+volatile uint8_t fsw_btn_1_pressed __attribute__((section(".noncacheable_data"))) = 0;
+volatile uint8_t fsw_btn_2_pressed __attribute__((section(".noncacheable_data"))) = 0;
+volatile uint8_t fsw_btn_3_pressed __attribute__((section(".noncacheable_data"))) = 0;
+volatile uint8_t fsw_btn_4_pressed __attribute__((section(".noncacheable_data"))) = 0;
+// EXTI Line9 External Interrupt ISR Handler CallBackFun
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+    if(GPIO_Pin == FSW_BTN1_Pin) // If The INT Source Is EXTI Line9 (A9 Pin)
+    {
+    	fsw_btn_1_pressed = 1;
+    }
+    if(GPIO_Pin == FSW_BTN2_Pin) // If The INT Source Is EXTI Line9 (A9 Pin)
+	{
+		fsw_btn_2_pressed = 1;
+	}
+    if(GPIO_Pin == FSW_BTN3_Pin) // If The INT Source Is EXTI Line9 (A9 Pin)
+	{
+		fsw_btn_3_pressed = 1;
+	}
+    if(GPIO_Pin == FSW_BTN4_Pin) // If The INT Source Is EXTI Line9 (A9 Pin)
+	{
+		fsw_btn_4_pressed = 1;
+	}
+}
+
+/*
+ * FSW HANDLING ----------------------------
+ * Single press: FSW1->mode A, FSW2->B, FSW3->C, FSW4->D.
+ * Chord (both pressed within FSW_CHORD_WINDOW_MS): FSW1+FSW2 = preset up,
+ *                                                  FSW3+FSW4 = preset down,
+ *                                                  FSW2+FSW3 = tuner toggle.
+ */
+#define FSW_CHORD_WINDOW_MS 80U
+
+static uint8_t  fsw_pending_id_u8    = 0; // switch (1..4) waiting for chord check, 0 = none
+static uint32_t fsw_pending_tick_u32 = 0;
+
+static inline fx_active_modes_ten fsw_to_mode(uint8_t id_u8){
+	// Physical switch order is A B C D: pin FSW_BTN4 drives the first physical
+	// switch, so the pin->mode map is reversed relative to the pin numbers.
+	switch(id_u8){
+		case 1: return PRESET_MODE_D;
+		case 2: return PRESET_MODE_C;
+		case 3: return PRESET_MODE_B;
+		default: return PRESET_MODE_A;
+	}
+}
+
+static inline uint8_t fsw_is_chord_pair(uint8_t a_u8, uint8_t b_u8){
+	return ((a_u8 == 1 && b_u8 == 2) || (a_u8 == 2 && b_u8 == 1) ||
+	        (a_u8 == 3 && b_u8 == 4) || (a_u8 == 4 && b_u8 == 3) ||
+	        (a_u8 == 2 && b_u8 == 3) || (a_u8 == 3 && b_u8 == 2)); // FS2+FS3 = tuner
+}
+
+// LEDs show the active mode. Physical LED order is A B C D but the pins are
+// wired reversed (FSW_LED1 drives the last physical LED), so the map is inverted.
+static inline void fsw_leds_update(fx_active_modes_ten mode_en, uint8_t tuner_on_u8){
+	if(tuner_on_u8){ // Tuner active -> light the SW2 + SW3 LEDs
+		HAL_GPIO_WritePin(FSW_LED1_GPIO_Port, FSW_LED1_Pin, 0);
+		HAL_GPIO_WritePin(FSW_LED2_GPIO_Port, FSW_LED2_Pin, 1);
+		HAL_GPIO_WritePin(FSW_LED3_GPIO_Port, FSW_LED3_Pin, 1);
+		HAL_GPIO_WritePin(FSW_LED4_GPIO_Port, FSW_LED4_Pin, 0);
+	} else {
+		HAL_GPIO_WritePin(FSW_LED1_GPIO_Port, FSW_LED1_Pin, (mode_en == PRESET_MODE_D) ? 1 : 0);
+		HAL_GPIO_WritePin(FSW_LED2_GPIO_Port, FSW_LED2_Pin, (mode_en == PRESET_MODE_C) ? 1 : 0);
+		HAL_GPIO_WritePin(FSW_LED3_GPIO_Port, FSW_LED3_Pin, (mode_en == PRESET_MODE_B) ? 1 : 0);
+		HAL_GPIO_WritePin(FSW_LED4_GPIO_Port, FSW_LED4_Pin, (mode_en == PRESET_MODE_A) ? 1 : 0);
+	}
+}
+
+static inline void fsw_process(SAB_fx_manager_tst* mgr_pst){
+	uint8_t p1 = fsw_btn_1_pressed, p2 = fsw_btn_2_pressed, p3 = fsw_btn_3_pressed, p4 = fsw_btn_4_pressed;
+	if(p1 | p2 | p3 | p4){
+		fsw_btn_1_pressed = 0; fsw_btn_2_pressed = 0; fsw_btn_3_pressed = 0; fsw_btn_4_pressed = 0;
+		uint32_t now_u32 = HAL_GetTick();
+
+		if((p1 && p2) || (p3 && p4) || (p2 && p3)){ // both seen in the same loop pass -> definite chord
+			if(p1 && p2){ SAB_preset_up_pressed(mgr_pst); }
+			else if(p3 && p4){ SAB_preset_down_pressed(mgr_pst); }
+			else             { SAB_tuner_toggle(mgr_pst); } // FS2+FS3 -> tuner
+			fsw_pending_id_u8 = 0;
+		} else {
+			uint8_t new_id_u8 = p1 ? 1 : (p2 ? 2 : (p3 ? 3 : 4));
+			if(fsw_pending_id_u8 != 0 && ((now_u32 - fsw_pending_tick_u32) <= FSW_CHORD_WINDOW_MS)){
+				if(fsw_is_chord_pair(fsw_pending_id_u8, new_id_u8)){ // completes a chord
+					if(fsw_pending_id_u8 == 1 || new_id_u8 == 1){ SAB_preset_up_pressed(mgr_pst); }
+					else if((fsw_pending_id_u8 == 2 && new_id_u8 == 3) || (fsw_pending_id_u8 == 3 && new_id_u8 == 2)){ SAB_tuner_toggle(mgr_pst); } // FS2+FS3 -> tuner
+					else                                        { SAB_preset_down_pressed(mgr_pst); }
+					fsw_pending_id_u8 = 0;
+				} else { // not a chord pair: apply the old press, start pending on the new one
+					SAB_set_preset_mode(mgr_pst, fsw_to_mode(fsw_pending_id_u8));
+					fsw_pending_id_u8    = new_id_u8;
+					fsw_pending_tick_u32 = now_u32;
+				}
+			} else { // nothing pending (or stale): wait for a possible chord partner
+				fsw_pending_id_u8    = new_id_u8;
+				fsw_pending_tick_u32 = now_u32;
+			}
+		}
+	}
+	// pending single press expired without its chord partner -> apply as mode set
+	if(fsw_pending_id_u8 != 0 && ((HAL_GetTick() - fsw_pending_tick_u32) > FSW_CHORD_WINDOW_MS)){
+		SAB_set_preset_mode(mgr_pst, fsw_to_mode(fsw_pending_id_u8));
+		fsw_pending_id_u8 = 0;
+	}
+	fsw_leds_update(mgr_pst->preset_mode_st.preset_mode_en, mgr_pst->tuner_active_u8);
+}
+
+
+/*
+ * I2C INTERRUPT FUNCTIONS ----------------------------
+ */
+
+
+#define RX_LEN 255
+#define TX_LEN 255
+uint8_t TX_Buffer [TX_LEN] = "ABCDEF" ; // DATA to send
+volatile uint8_t RX_Buffer [RX_LEN] = "ABCDEF" ; // DATA to send
+uint8_t tx_counter = 0;
+uint8_t rx_counter = 0;
+uint8_t commando = 0;
+volatile uint8_t rx_reg = 0;
+
+extern void HAL_I2C_ListenCpltCallback (I2C_HandleTypeDef *hi2c)
+{
+	HAL_I2C_EnableListen_IT(hi2c);
+}
+
+void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c)
+{
+	if(rx_counter>0){
+		intercom_st.register_addr_u8 = rx_reg;
+		intercom_st.process_rx_buffer(&intercom_st, RX_Buffer, rx_counter-1);
+		rx_counter = 0;
+	}
+	HAL_I2C_EnableListen_IT(hi2c);
+}
+
+extern void HAL_I2C_AddrCallback(I2C_HandleTypeDef *hi2c, uint8_t TransferDirection, uint16_t AddrMatchCode)
+{
+	if(TransferDirection == I2C_DIRECTION_TRANSMIT)  
+	{
+		HAL_I2C_Slave_Sequential_Receive_IT(hi2c, &intercom_st.register_addr_buffer_u8, 1, I2C_FIRST_FRAME);
+		rx_counter = 0;
+	}
+	else
+	{
+		intercom_st.register_addr_u8 = rx_reg;
+		// if the master wants to READ the data
+		HAL_I2C_Slave_Seq_Transmit_IT(hi2c, (uint8_t*)intercom_st.get_reg_data_ptr(&intercom_st), intercom_st.get_reg_data_len(&intercom_st), I2C_FIRST_AND_LAST_FRAME);
+	}
+}
+
+void HAL_I2C_SlaveRxCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+	if(0 == rx_counter){
+		rx_reg = intercom_st.register_addr_buffer_u8;
+	}
+	HAL_I2C_Slave_Sequential_Receive_IT(hi2c, RX_Buffer+rx_counter, 1, I2C_NEXT_FRAME);
+	rx_counter++;
+}
+
+
+void HAL_I2C_SlaveTxCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+}
+
+void I2C_Slave_Listen(void) {
+	HAL_I2C_Slave_Receive_IT(&hi2c4, RX_Buffer, sizeof(RX_Buffer));
+}
+
+/* Per-sample CPU-cycle timing lives in main() as the fx_* statics (DWT CYCCNT). */
+
+typedef struct {
+    uint8_t  pressed_u8;          // 0 = OFF, 1 = ON (latched)
+    uint32_t counter_ms_u32;  // last time button toggled
+    uint32_t timeout_ms_u32;     // auto-off timeout (0 = disabled)
+} latch_btn_tst;
+
+// Button states
+latch_btn_tst btn1_st = {0,0,500};
+latch_btn_tst btn2_st = {0,0,500};
+latch_btn_tst btn3_st = {0,0,500};
+latch_btn_tst btn4_st = {0,0,500};
+
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
+{
+    // HAL_GPIO_TogglePin(DSP_OK_GPIO_Port, DSP_OK_Pin);
+}
+
+
+
+
+
+//#define APP_ADDRESS             0x08020000UL
+//#define VECT_TAB_OFFSET 0x00020000U
+/* USER CODE END 0 */
+
+/**
+  * @brief  The application entry point.
+  * @retval int
+  */
+int main(void)
+{
+
+  /* USER CODE BEGIN 1 */
+//	 SCB->VTOR = APP_ADDRESS;
+  /* USER CODE END 1 */
+
+  /* Enable the CPU Cache */
+
+  /* Enable I-Cache---------------------------------------------------------*/
+  SCB_EnableICache();
+
+  /* Enable D-Cache---------------------------------------------------------*/
+  SCB_EnableDCache();
+
+  /* MCU Configuration--------------------------------------------------------*/
+
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+  HAL_Init();
+
+  /* USER CODE BEGIN Init */
+
+  /* USER CODE END Init */
+
+  /* Configure the system clock */
+  SystemClock_Config();
+
+  /* Configure the peripherals common clocks */
+  PeriphCommonClock_Config();
+
+  /* USER CODE BEGIN SysInit */
+
+  /* USER CODE END SysInit */
+
+  /* Initialize all configured peripherals */
+  MX_GPIO_Init();
+  MX_DMA_Init();
+  MX_SAI1_Init();
+  MX_SPI1_Init();
+  MX_FMC_Init();
+  MX_OCTOSPI1_Init();
+  MX_I2C4_Init();
+  MX_TIM2_Init();
+  MX_USB_DEVICE_Init();
+  MX_IWDG1_Init();
+  /* USER CODE BEGIN 2 */
+  HAL_TIM_Base_Start_IT(&htim2);
+  // init SAI interface
+	HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t*)output_i2s_buffer_au32, 	16);
+	HAL_SAI_Receive_DMA(&hsai_BlockB1, (uint8_t*)input_i2s_buffer_au32, 	16);
+
+  // // init CODEC
+	ad1939_init(&hspi1);
+	init_intercom(&intercom_st, 0x10,&hi2c4);
+
+  /* USER CODE END 2 */
+
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
+	HAL_GPIO_WritePin(FSW_LED1_GPIO_Port, FSW_LED1_Pin, 0);
+	HAL_GPIO_WritePin(FSW_LED2_GPIO_Port, FSW_LED2_Pin, 0);
+	HAL_GPIO_WritePin(FSW_LED3_GPIO_Port, FSW_LED3_Pin, 0);
+	HAL_GPIO_WritePin(FSW_LED4_GPIO_Port, FSW_LED4_Pin, 0);
+
+	HAL_I2C_EnableListen_IT(&hi2c4);
+
+	SAB_fx_manager_init(&SAB_fx_manager_st, &intercom_st, &effects_io_port, &fsw_btn_1_pressed, &fsw_btn_2_pressed);
+
+	// Light the footswitch LEDs for the loaded mode right away. fsw_leds_update
+	// normally runs from fsw_process(), which is gated on ADC_READY_FLAG (first
+	// audio callback) -- without this the LEDs stay dark until audio starts.
+	fsw_leds_update(SAB_fx_manager_st.preset_mode_st.preset_mode_en, SAB_fx_manager_st.tuner_active_u8);
+	
+    /* Enable the TRC (Trace) */
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+
+    /* Unlock the DWT (LAR register) - required on Cortex-M7/STM32H7 */
+    DWT->LAR = 0xC5ACCE55;
+
+    /* Reset the cycle counter */
+    DWT->CYCCNT = 0;
+
+    /* Enable the cycle counter (CYCCNT freezes automatically on debugger halt,
+       so it can be read live over ST-Link with a full-width read) */
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+
+    clear_sdram_memory();
+    uint32_t last_blink_tick = 0;
+  while (1)
+  {
+//	  HAL_GPIO_WritePin(DSP_OK_GPIO_Port, DSP_OK_Pin, 0);
+//	  HAL_GPIO_TogglePin(DSP_OK_GPIO_Port, DSP_OK_Pin);
+     if ((HAL_GetTick() - last_blink_tick) >=250)
+      {
+    	 HAL_IWDG_Refresh(&hiwdg1);
+        HAL_GPIO_TogglePin(DSP_OK_GPIO_Port, DSP_OK_Pin);
+        last_blink_tick = HAL_GetTick();
+      }
+	 if(intercom_st.save_un.save_command>0){
+	 	SAB_save_preset_to_flash(&SAB_fx_manager_st);
+	 	intercom_st.save_un.save_command = 0;
+	 }
+	 if(intercom_st.dsp_fw_update_flg){
+	 	JumpToBootloader();
+	 }
+
+	   if(ADC_READY_FLAG){
+	 	  		  ADC_READY_FLAG = 0;
+	 	  	 	    fx_start_cycles = DWT->CYCCNT;
+    SAB_fx_manager_process(&SAB_fx_manager_st);
+    /* Record the guitar ADC input before the effects-chain routing. */
+    USBD_AudioIF_CaptureTick(effects_io_port.in1_i32);
+    fx_end_cycles = DWT->CYCCNT;
+    {
+        uint32_t tc = fx_end_cycles - fx_start_cycles;
+        fx_last_cycles = tc;
+        if (tc < fx_min_cycles) { fx_min_cycles = tc; }
+        if (tc > fx_max_cycles) { fx_max_cycles = tc; }
+        /* Headroom gauge: keep a short moving average of the per-sample cost,
+         * then report the budget minus that average. Counts higher while the FX
+         * pass is cheap (CPU unused) and lower while it's expensive (CPU
+         * overused); hits 0 only when the average cost reaches the budget.
+         * Integer EMA -- a zero step just holds the value when tc is steady. */
+        int32_t diff = (int32_t)tc - (int32_t)fx_ema_cycles;
+        int32_t step = diff / (int32_t)FX_EMA_DIV;
+        if (step != 0) { fx_ema_cycles = (uint32_t)((int32_t)fx_ema_cycles + step); }
+        int32_t hr = (int32_t)FX_BLOCK_BUDGET_CYCLES - (int32_t)fx_ema_cycles;
+        if (hr < 0) hr = 0;
+        cpu_headroom = hr;
+    }
+	 	 // Record the ending cycle count
+	 	    // endCycles = DWT->CYCCNT;
+
+	 	    // // Calculate the difference
+	 	    // totalCycles = endCycles - startCycles;
+
+	 	    // time_to_process_f32 = (float)totalCycles/550;
+	 	fsw_process(&SAB_fx_manager_st);
+
+
+
+	  }
+      /* Handle serial commands when no audio sample is awaiting processing. */
+      if (!ADC_READY_FLAG)
+      {
+        sab_cdc_process();
+        FW_Update_Process();
+        if (FW_Update_ResetRequested() != 0U)
+        {
+          JumpToBootloader();
+        }
+      }
+    /* USER CODE END WHILE */
+
+    /* USER CODE BEGIN 3 */
+  }
+  /* USER CODE END 3 */
+}
+
+/**
+  * @brief System Clock Configuration
+  * @retval None
+  */
+void SystemClock_Config(void)
+{
+  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+
+  /** Supply configuration update enable
+  */
+  HAL_PWREx_ConfigSupply(PWR_LDO_SUPPLY);
+
+  /** Configure the main internal regulator output voltage
+  */
+  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE0);
+
+  while(!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) {}
+
+  /** Initializes the RCC Oscillators according to the specified parameters
+  * in the RCC_OscInitTypeDef structure.
+  */
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI48|RCC_OSCILLATORTYPE_LSI
+                              |RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
+  RCC_OscInitStruct.HSI48State = RCC_HSI48_ON;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+  RCC_OscInitStruct.PLL.PLLM = 2;
+  RCC_OscInitStruct.PLL.PLLN = 44;
+  RCC_OscInitStruct.PLL.PLLP = 1;
+  RCC_OscInitStruct.PLL.PLLQ = 2;
+  RCC_OscInitStruct.PLL.PLLR = 2;
+  RCC_OscInitStruct.PLL.PLLRGE = RCC_PLL1VCIRANGE_3;
+  RCC_OscInitStruct.PLL.PLLVCOSEL = RCC_PLL1VCOWIDE;
+  RCC_OscInitStruct.PLL.PLLFRACN = 0;
+  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Initializes the CPU, AHB and APB buses clocks
+  */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2
+                              |RCC_CLOCKTYPE_D3PCLK1|RCC_CLOCKTYPE_D1PCLK1;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+  RCC_ClkInitStruct.SYSCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_HCLK_DIV2;
+  RCC_ClkInitStruct.APB3CLKDivider = RCC_APB3_DIV2;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_APB1_DIV2;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_APB2_DIV2;
+  RCC_ClkInitStruct.APB4CLKDivider = RCC_APB4_DIV2;
+
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
+
+/**
+  * @brief Peripherals Common Clock Configuration
+  * @retval None
+  */
+void PeriphCommonClock_Config(void)
+{
+  RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
+
+  /** Initializes the peripherals clock
+  */
+  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_SAI1|RCC_PERIPHCLK_SPI1;
+  PeriphClkInitStruct.PLL3.PLL3M = 5;
+  PeriphClkInitStruct.PLL3.PLL3N = 157;
+  PeriphClkInitStruct.PLL3.PLL3P = 8;
+  PeriphClkInitStruct.PLL3.PLL3Q = 2;
+  PeriphClkInitStruct.PLL3.PLL3R = 2;
+  PeriphClkInitStruct.PLL3.PLL3RGE = RCC_PLL3VCIRANGE_2;
+  PeriphClkInitStruct.PLL3.PLL3VCOSEL = RCC_PLL3VCOWIDE;
+  PeriphClkInitStruct.PLL3.PLL3FRACN = 2950;
+  PeriphClkInitStruct.Sai1ClockSelection = RCC_SAI1CLKSOURCE_PLL3;
+  PeriphClkInitStruct.Spi123ClockSelection = RCC_SPI123CLKSOURCE_PLL3;
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
+
+/* USER CODE BEGIN 4 */
+
+/* USER CODE END 4 */
+
+/**
+  * @brief  This function is executed in case of error occurrence.
+  * @retval None
+  */
+void Error_Handler(void)
+{
+  /* USER CODE BEGIN Error_Handler_Debug */
+	HAL_GPIO_WritePin(GPIOG, GPIO_PIN_5, GPIO_PIN_RESET);
+  /* User can add his own implementation to report the HAL error return state */
+  __disable_irq();
+  while (1)
+  {
+  }
+  /* USER CODE END Error_Handler_Debug */
+}
+#ifdef USE_FULL_ASSERT
+/**
+  * @brief  Reports the name of the source file and the source line number
+  *         where the assert_param error has occurred.
+  * @param  file: pointer to the source file name
+  * @param  line: assert_param error line source number
+  * @retval None
+  */
+void assert_failed(uint8_t *file, uint32_t line)
+{
+  /* USER CODE BEGIN 6 */
+  /* User can add his own implementation to report the file name and line number,
+     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+  /* USER CODE END 6 */
+}
+#endif /* USE_FULL_ASSERT */
