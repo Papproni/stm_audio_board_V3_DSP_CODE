@@ -34,6 +34,7 @@ typedef struct sab_intercom_st{
 
     fx_data_tst*    implemented_fx_data_ptr;
     uint8_t         num_of_implemented_effects;
+    uint16_t        fx_table_offset_u16; // byte offset into the fx table for chunked reg-22 reads
 
     uint8_t dsp_fw_update_flg;
 

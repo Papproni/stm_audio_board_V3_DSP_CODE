@@ -59,6 +59,16 @@ static void get_num_of_implemented_effects(struct sab_intercom_st *self)
 					 1000);
 }
 
+static void set_fx_table_offset(struct sab_intercom_st *self, uint16_t offset_u16)
+{
+	self->fx_table_offset_u16 = offset_u16;
+	HAL_I2C_Mem_Write(self->i2c_h, self->slave_addr_u8,
+					 SAB_I2C_REG_FX_TABLE_OFFSET,
+					 I2C_MEMADD_SIZE_8BIT,
+					 (uint8_t*)&self->fx_table_offset_u16, sizeof(uint16_t),
+					 1000);
+}
+
 static void get_implemented_effects(struct sab_intercom_st *self)
 {
 	get_num_of_implemented_effects(self);
@@ -73,11 +83,26 @@ static void get_implemented_effects(struct sab_intercom_st *self)
 		return;
 	}
 
-	HAL_I2C_Mem_Read(self->i2c_h, self->slave_addr_u8,
-					 SAB_I2C_REG_IMPLEMENTED_EFFECTS,
-					 I2C_MEMADD_SIZE_8BIT,
-					 (uint8_t*)self->implemented_fx_data_ptr, sizeof(fx_data_tst) * self->num_of_implemented_effects,
-					 1000);
+	// The table (num * sizeof(fx_data_tst)) can exceed the 255-byte I2C frame limit:
+	// fetch it in chunks of at most 255 bytes, writing the byte offset to the slave first
+	uint32_t total_bytes_u32 = sizeof(fx_data_tst) * self->num_of_implemented_effects;
+	uint32_t offset_u32 = 0;
+	while (offset_u32 < total_bytes_u32)
+	{
+		uint32_t chunk_bytes_u32 = total_bytes_u32 - offset_u32;
+		if (chunk_bytes_u32 > SAB_I2C_MAX_FRAME_LEN)
+		{
+			chunk_bytes_u32 = SAB_I2C_MAX_FRAME_LEN;
+		}
+		set_fx_table_offset(self, (uint16_t)offset_u32);
+
+		HAL_I2C_Mem_Read(self->i2c_h, self->slave_addr_u8,
+						 SAB_I2C_REG_IMPLEMENTED_EFFECTS,
+						 I2C_MEMADD_SIZE_8BIT,
+						 (uint8_t*)self->implemented_fx_data_ptr + offset_u32, chunk_bytes_u32,
+						 1000);
+		offset_u32 += chunk_bytes_u32;
+	}
 }
 
 // ----------------------------------SETTERS-------------------------------------------------
@@ -190,7 +215,13 @@ uint32_t sab_intercom_get_reg_data_ptr(struct sab_intercom_st *self)
 		return (uint32_t)&self->num_of_implemented_effects;
 
 	case SAB_I2C_REG_IMPLEMENTED_EFFECTS:
-		return (uint32_t)self->implemented_fx_data_ptr;
+		return (uint32_t)self->implemented_fx_data_ptr + self->fx_table_offset_u16; // fx table at the chunked-read byte offset
+
+	case SAB_I2C_REG_FX_TABLE_OFFSET:
+		return (uint32_t)&self->fx_table_offset_u16; // low byte of the fx table byte offset
+
+	case SAB_I2C_REG_FX_TABLE_OFFSET_HIGH:
+		return (uint32_t)(&self->fx_table_offset_u16 + 1); // high byte of the fx table byte offset
 
 	case SAB_I2c_REG_CURRENT_FX:
 		return (uint32_t)&self->current_fx_in_edit;
@@ -246,7 +277,20 @@ uint8_t sab_intercom_get_reg_data_size(struct sab_intercom_st *self)
 		return sizeof(uint8_t); // Returns pointer to the loop bypass union
 
 	case SAB_I2C_REG_IMPLEMENTED_EFFECTS:
-		return sizeof(fx_data_tst) * self->num_of_implemented_effects; // Returns pointer to the loop bypass union
+	{
+		uint32_t total_u32 = sizeof(fx_data_tst) * self->num_of_implemented_effects;
+		uint32_t offset_u32 = self->fx_table_offset_u16;
+		if (offset_u32 >= total_u32){ return 0; }
+		uint32_t remain_u32 = total_u32 - offset_u32;
+		// The I2C NBYTES counter is 8-bit: one transaction carries at most 255 bytes, so the master reads the table in chunks
+		return (remain_u32 > 255) ? 255 : (uint8_t)remain_u32;
+	}
+
+	case SAB_I2C_REG_FX_TABLE_OFFSET:
+		return sizeof(uint16_t); // both offset bytes written in one transaction
+
+	case SAB_I2C_REG_FX_TABLE_OFFSET_HIGH:
+		return sizeof(uint8_t);
 
 	case SAB_I2c_REG_CURRENT_FX:
 		return sizeof(uint8_t);
@@ -357,6 +401,7 @@ void init_intercom(struct sab_intercom_st *self, uint8_t slave_address_u8, I2C_H
 
 	self->num_of_implemented_effects = IMPLEMENTED_FX_DATA_COUNT;
 	self->implemented_fx_data_ptr = IMPLEMENTED_FX_DATA;
+	self->fx_table_offset_u16 = 0;
 }
 
 
