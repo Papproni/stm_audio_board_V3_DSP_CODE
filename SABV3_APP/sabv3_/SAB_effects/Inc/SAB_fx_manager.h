@@ -33,6 +33,7 @@ Generated on: 2024.11.28. */
 #include "SAB_bandpass.h"
 #include "SAB_mark2c.h"
 #include "SAB_step_response.h"
+#include "SAB_harmonizer.h"
 #include "stdint.h"
 #include "arm_math.h"
 
@@ -63,7 +64,8 @@ typedef enum {
     HPF,
     BANDPASS,
     MARK2C,
-    IMRE
+    IMRE,
+    HARMONIZER
 } EffectType;
 
 volatile typedef struct{

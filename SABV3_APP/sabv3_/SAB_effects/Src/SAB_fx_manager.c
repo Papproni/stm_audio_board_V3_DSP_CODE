@@ -51,6 +51,7 @@ uint32_t SAB_fx_slot_size_bytes(const SAB_fx_manager_tst *m, int slot)
         case HPF:           return (uint32_t)sizeof(SAB_hpf_tst);
         case MARK2C:        return (uint32_t)sizeof(SAB_mark2c_tst);
         case IMRE:          return (uint32_t)sizeof(SAB_step_response_tst);
+        case HARMONIZER:    return (uint32_t)sizeof(SAB_harmonizer_tst);
         default:            return 0U;
     }
 }
@@ -190,6 +191,14 @@ inline void init_effect_chain(GuitarEffect** chain, EffectType* fx_chain, int ch
             chain[i]->process = (void*)SAB_step_response_process;
             chain[i]->delete  = (void*)SAB_step_response_delete;
             break;
+        case HARMONIZER:
+            chain[i] = (GuitarEffect*)malloc(sizeof(SAB_harmonizer_tst));
+            if (chain[i] != NULL) {
+                chain[i]->init = (void*)SAB_harmonizer_init;
+                chain[i]->process = (void*)SAB_harmonizer_process;
+                chain[i]->delete = (void*)SAB_harmonizer_delete;
+            }
+            break;
         default:
             // TODO: ADD DUMMY DATA DEFINE HERE
              chain[i] = &DEFAULT_EMPTY_SLOT_FOR_FX_CHAIN;
@@ -247,6 +256,8 @@ EffectType get_fx_type(char* fx_name_char) {
         return MARK2C;
     } else if (strcmp(fx_name_char, "ImRe") == 0) {
         return IMRE;
+    } else if (strcmp(fx_name_char, "Harmonizr") == 0) {
+        return HARMONIZER;
     } else {
         
         // Handle unknown effect types

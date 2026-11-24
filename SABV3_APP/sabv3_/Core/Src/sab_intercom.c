@@ -299,7 +299,8 @@ DEFINE_FX_DATA(
     {.name = "Overdrive", 		.color = { 0, 255, 0 } },
     {.name = "Fuzz",     	.color = { 255, 0, 0 } },
 	{.name = "Tremolo",     	.color = { 0, 255, 0 } },
-	{.name = "Pitcshft",    .color = { 255, 0, 0 } }
+	{.name = "Pitcshft",    .color = { 255, 0, 0 } },
+    {.name = "Harmonizr",   .color = { 80, 180, 255 } }
 );
 
 // ----------------------------------INIT-------------------------------------------------
